@@ -1,0 +1,31 @@
+version: "3.7"
+services:
+  canids-v2-ingestion:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: mcmaster-circ/canids-v2-ingestion
+    container_name: canids-v2-ingestion
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "5"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    restart: unless-stopped
+    security_opt:
+      - apparmor:unconfined
+    environment:
+      - flags= # Change this to specify additional flags (eg. --insecure)
+      - asset=testdata2 # Change this to specify your asset name
+      - hostname=host.docker.internal:50000 # Change this to specify the address of the backend
+    volumes:
+      - ./logs:/logs # Change this to specify the location of your logs
+      - ./cert:/cert
+      - ingestiondb:/db
+
+volumes:
+  ingestiondb:

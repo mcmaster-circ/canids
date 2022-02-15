@@ -1,0 +1,19 @@
+localhost:80 0.0.0.0:80 {
+    root /app
+    header / {
+      -Server
+      Cache-Control "no-cache, no-store, must-revalidate"
+      Access-Control-Allow-Origin "*"
+    }
+    proxy / http://canids-v2-backend:6060 {
+      health_check /status
+      health_check_interval 10s
+      keepalive 32
+      transparent
+      except /dashboard
+    }
+    proxy /ingestion http://canids-v2-backend:50000 {
+      websocket
+      transparent
+    }
+}

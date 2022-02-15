@@ -1,0 +1,1680 @@
+openapi: "3.0.0"
+info:
+  title: McMaster CanIDS
+  version: 2.0.0
+  
+paths:
+  /:
+    get:
+      summary: Master Route
+      description: |
+        This route will peform conditional actions:
+        - If the system has not been initialized, it will redirect to `/setup`.
+        - If the middleware is disabled, or if the user is authenticated, it will redirect to `/dashboard`.
+        - Finally, if the user is not authenticated, it will redirect to `/login`.
+      tags:
+      - Primary
+      responses:
+        '307':
+          description: HTTP redirect
+
+  /login:
+    get:
+      summary: Login page
+      description: |
+        This will display the login page.
+      tags:
+      - Primary
+      responses:
+        '200':
+          description: "HTML login page"
+    post:
+      summary: Login page action
+      description: |
+        A post request is made when the user submits the login form. There are two possible responses:
+          - Success: the authentication was successful. The server will respond with an `X-State` token (the authentication token), and after 3 seconds, will redirect to the dashboard.
+          - Failure: the authentication failed. The user will have to try again.
+      tags:
+      - Primary
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: string
+                pass:
+                  type: string
+              required:
+                - user
+                - pass
+      responses:
+        '200':
+          description: "HTML login page"
+          
+  /logout:
+    get:
+      summary: Logout page
+      description: |
+        The page will clear the `X-State` token out of the browser's cookies. It will then display a page indicating that the user was successfully logged out.
+      tags:
+      - Primary
+      responses:
+        '200':
+          description: "HTML logout page"
+          
+  /setup:
+    get:
+      summary: Setup page
+      description: |
+        The setup page is responsible for creating the first user and initalizing the `auth` and `group` indexes.
+      tags:
+      - Primary
+      responses:
+        '200':
+          description: "HTML setup page"
+    post:
+      summary: Setup page action
+      description: |
+        A post request is made when the user submits the setup form. If a field is invalid (e.g. blank or non-equal passwords), an error will be returned.
+        
+        If successful, after 3 seconds, the user will be redirected to `/login`.
+      tags:
+      - Primary
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                pass:
+                  type: string
+                passConfirm:
+                  type: string
+                group:
+                  type: string
+              required:
+                - name
+                - email
+                - pass
+                - passConfirm
+                - group
+      responses:
+        '200':
+          description: "HTML setup page"
+          
+          
+  /requestReset:
+    get:
+      summary: Request password reset page
+      description: |
+        This will display the request password reset page.
+      tags:
+      - Primary
+      responses:
+        '200':
+          description: "HTML request password reset page"
+    post:
+      summary: Request password reset action
+      description: |
+        A post request is made when the user submits the request password reset form.
+        
+        If the account is registered and a password reset email can not be sent, an error will be returned. Else, even if the account isn't registered, a success message will be returned (for security purposes).
+      tags:
+      - Primary
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+              required:
+                - email
+      responses:
+        '200':
+          description: "HTML request password reset page"
+          
+          
+  /reset:
+    get:
+      summary: Password reset page
+      description: |
+        This will display the page where the user can provide a new password.
+      tags:
+      - Primary
+      responses:
+        '200':
+          description: "HTML password reset page"
+    post:
+      summary: Password reset action
+      description: |
+        A post request is made when the user submits the password reset form.
+        
+        If both passwords are equal, the token has not expired, and the database entry can be updated, a success message will be returned. Else, an error will be returned.
+      tags:
+      - Primary
+      parameters: 
+        - in: query
+          name: token
+          schema:
+            type: string
+          description: |
+            Password reset token from email.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                pass:
+                  type: string
+                passConfirm:
+                  type: string
+              required:
+                - pass
+                - passConfirm
+      responses:
+        '200':
+          description: "HTML request password reset page"
+
+  /register:
+    get:
+      summary: User registration page
+      description: |
+        This will display the user registration page.
+      tags:
+      - Primary
+      responses:
+        '200':
+          description: "HTML user registration page"
+    post:
+      summary: User registration page action
+      description: |
+        A post request is made when the user submits the registration form. If a field is invalid (e.g. blank or non-equal passwords), an error will be returned.
+        
+        If successful, after 6 seconds, the user will be redirected to `/login`.
+      tags:
+      - Primary
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                pass:
+                  type: string
+                passConfirm:
+                  type: string
+                group:
+                  type: string
+              required:
+                - name
+                - email
+                - pass
+                - passConfirm
+                - group
+      responses:
+        '200':
+          description: "HTML user registration page"
+          
+  /status:
+    get:
+      summary: System status 
+      description: |
+        The status endpoint returns real time information about the backend. It can be used to test the health of the backend.
+      tags:
+      - Health
+      responses:
+        '200':
+          description: "Status information"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: |
+                      Name of application
+                  build:
+                    type: string
+                    description: |
+                      Git commit hash
+                  isDocker:
+                    type: boolean
+                    description: |
+                      Indicator if running in Docker network
+                  elasticPing:
+                    type: boolean
+                    description: |
+                      Indicator if Elasticsearch is reachable
+                  time:
+                    type: string
+                    description: |
+                      Server time
+                  uptime:
+                    type: string
+                    description: |
+                      Backend uptime
+                required:
+                  - name
+                  - build
+                  - isDocker
+                  - elasticPing
+                  - time
+                  - uptime
+              example: {
+                "name": "McMaster CanIDS",
+                "build": "d9f2dc3",
+                "isDocker": true,
+                "elasticPing": true,
+                "time": "2020-02-21T20:56:29Z",
+                "uptime": "1h5m31.570680928s"
+              }
+
+  /api/user/info:
+    get:
+      summary: User info
+      description: |
+        Returns information about the current user.
+      tags:
+      - User
+      responses:
+        '200':
+          description: |
+            User Information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uuid:
+                    type: string
+                    description: |
+                      UUID of user
+                  type:
+                    type: string
+                    description: |
+                      User access control class
+                  name:
+                    type: string
+                    description: |
+                      Name of user
+                  group:
+                    type: string
+                    description: |
+                      UUID of group user belongs to
+                  activated:
+                    type: boolean
+                    description: |
+                      Indicator if account is activated
+                  exp:
+                    type: integer
+                    description: |
+                      JSON Web Token (JWT) expire time
+                  iat:
+                    type: integer
+                    description: |
+                      JSON Web Token (JWT) issue time
+                required:
+                  - uuid
+                  - type
+                  - name
+                  - group
+                  - activated
+                  - exp
+                  - iat
+              example: {
+                "uuid": "ryant3@mcmaster.ca",
+                "type": "superuser",
+                "name": "Tanner Ryan",
+                "group": "721e4fd5-7d89-4106-953d-158c49dd65a5",
+                "activated": true,
+                "exp": 1582940725,
+                "iat": 1582335925
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '500':
+          description: |
+            Internal server error
+            
+  /api/user/add:
+    post:
+      summary: Create new user
+      description: |
+        Create a user account on someone's behalf.
+        
+        Restrictions:
+          - `superuser` can create all types of accounts for all groups.
+          - `admin` can create `admin` and `standard` accounts for same `group` UUID.
+          - `standard` can not create accounts.
+          
+        If an account is successfully created, the user will be emailed with instructions to activate the account and set a password.
+      tags:
+      - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: |
+                    Name of user
+                uuid:
+                  type: string
+                  description: |
+                    Email address of user
+                class:
+                  type: string
+                  description: |
+                    Type of user account: `standard`, `admin`, `superuser`
+                group:
+                  type: string
+                  description: |
+                    Group UUID
+              required:
+                - name
+                - uuid
+                - class
+                - group
+            example: {
+              "name": "Tanner Ryan",
+              "uuid": "ryant3@mcmaster.ca",
+              "class": "admin",
+              "group": "175dd231-f547-4342-a33e-c45d5e99aa7e"
+            }
+      responses:
+        '200':
+          description: |
+            Account successfully created. User emailed with activation instructions.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "The user account has been successfully created. The user has been emailed to complete account activation."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Admin users can not add superusers."
+              }
+        '500':
+          description: |
+            Internal server error
+
+  /api/user/list:
+    get:
+      summary: List all users
+      description: |
+        List users in the system.
+        - If user performing request is `superuser`, all users in the system will be returned.
+        - If user performing request is `admin` or `standard`, users in the same group will be returned.
+      tags:
+      - User
+      responses:
+        '200':
+          description: |
+            List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: |
+                      Indicator if request was successful
+                  groups:
+                    type: array
+                    description: |
+                      List of groups
+                    items:
+                      type: object
+                      properties:
+                        group:
+                          type: string
+                          description: |
+                            Group UUID
+                        users:
+                          type: array
+                          description: |
+                            List of users belonging to group
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: |
+                                  Name of user
+                              uuid:
+                                type: string
+                                description: |
+                                  Email of user
+                              class:
+                                type: string
+                                description: |
+                                  Type of user account: `standard`, `admin`, `superuser`
+                              activated:
+                                type: boolean
+                                description: |
+                                  Indicator if account is activated
+                              updatePermission:
+                                type: boolean
+                                description: |
+                                  Indicator if requesting user can modify this account
+                            required: 
+                              - name
+                              - uuid
+                              - class
+                              - activated
+                              - updatePermission
+                      required:
+                        - group
+                        - users
+                required:
+                  - success
+                  - groups
+              example: {
+                "success": true,
+                "groups": [
+                  {
+                    "group": "6a7d3a03-5c06-4620-8325-583c8136b17f",
+                    "users": [
+                      {
+                        "name": "Tanner Ryan",
+                        "uuid": "ryant3@mcmaster.ca",
+                        "class": "superuser",
+                        "activated": true,
+                        "updatePermission": true
+                      }
+                    ]
+                  }
+                ]
+              }
+                  
+        '401':
+          description: |
+            User is not authenticated
+        '500':
+          description: |
+            Internal server error
+
+  /api/user/update:
+    post:
+      summary: Update existing user
+      description: |
+        Update an existing user account.
+        
+        If the `uuid` query parameter is present, this will modify the other user. If the query parameter is not present, this will modify the requesting user.
+        
+        Restrictions:
+          - `standard` can only modify own fields:
+            - `name`
+            - `uuid`
+          - `admin` can modify `admin` and `standard` fields:
+            - `name`
+            - `uuid`
+            - `class`
+            - `activated`
+          - `admin` can not promote anyone to `superuser`.
+          - `superuser` can everyone's fields:
+            - `name`
+            - `uuid`
+            - `class`
+            - `activated`
+            - `group`
+          
+        To prevent lockout, an `admin` and `superuser` can not modify their own `class` and `activated`.
+        
+        While the database is modified in real time, a logged in user may not notice changes for up to 1 minute. The APIs will update in real time. This is due to token caching.
+        
+      tags:
+      - User
+      parameters: 
+        - in: query
+          name: uuid
+          schema:
+            type: string
+          description: |
+            UUID of other user to modify.
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: |
+                    Name of user
+                uuid:
+                  type: string
+                  description: |
+                    Email address of user
+                class:
+                  type: string
+                  description: |
+                    Type of user account: `standard`, `admin`, `superuser`
+                activated:
+                    type: boolean
+                    description: |
+                      Indicator if account is activated
+                group:
+                  type: string
+                  description: |
+                    Group UUID
+              required:
+                - name
+                - uuid
+                - class
+                - activated
+                - group
+            example: {
+              "name": "Tanner Ryan",
+              "uuid": "ryant3@mcmaster.ca",
+              "class": "admin",
+              "activated": true,
+              "group": "175dd231-f547-4342-a33e-c45d5e99aa7e"
+            }
+      responses:
+        '200':
+          description: |
+            Account successfully updated. Changes will be applied within 1 minute.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "The user account has been successfully updated. Changes will be applied within 1 minute."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Standard users can only modify their own account."
+              }
+        '500':
+          description: |
+            Internal server error
+
+  /api/user/resetPass:
+    post:
+      summary: Reset password for other user
+      description: |
+        Sends a password reset email for another user.
+        
+        Restrictions:
+          - `standard` can not request reset.
+          - `admin` can request reset for users in same group.
+          - `superuser` request reset for all users.
+        
+      tags:
+      - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    Email of user account to request password reset
+              required:
+                - uuid
+            example: {
+              "uuid": "ryant3@mcmaster.ca",
+            }
+      responses:
+        '200':
+          description: |
+            Successfully requested password reset.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "A password reset has been successfully issued for the user."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Admin user can only request password reset for users in same group."
+              }
+        '500':
+          description: |
+            Internal server error
+            
+  /api/user/delete:
+    post:
+      summary: Delete existing user
+      description: |
+        Delete existing account.
+        
+        Restrictions:
+          - `standard` can not delete users.
+          - `admin` can delete users in same group.
+          - `superuser` delete all users.
+        
+        To prevent lockout, an `admin` and `superuser` can not delete their own account.
+        
+      tags:
+      - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    Email of user account to delete
+              required:
+                - uuid
+            example: {
+              "uuid": "ryant3@mcmaster.ca",
+            }
+      responses:
+        '200':
+          description: |
+            Account successfully deleted.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "The user account has been successfully deleted."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Admin user can only delete users in same group."
+              }
+        '500':
+          description: |
+            Internal server error
+
+  /api/group/list:
+    get:
+      summary: Group list
+      description: |
+        Returns info about the current group.
+        
+        If requested by `superuser`, an additional field `others` will be populated with all registered groups.
+      tags:
+      - Group
+      responses:
+        '200':
+          description: |
+            Group information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: |
+                      Indicator if request was successful
+                  current:
+                    type: object
+                    description: |
+                      Requesting user's group
+                    properties:
+                      uuid:
+                        type: string
+                        description: |
+                          Group UUID
+                      name:
+                        type: string
+                        description: |
+                          Common group name
+                      authorized:
+                        type: array
+                        description: |
+                          List of authorized assets
+                        items:
+                          type: string
+                          description: |
+                            Authorized asset
+                  others:
+                    type: object
+                    description: |
+                      Other groups in system
+                    properties:
+                      uuid:
+                        type: string
+                        description: |
+                          Group UUID
+                      name:
+                        type: string
+                        description: |
+                          Common group name
+                      authorized:
+                        type: array
+                        description: |
+                          List of authorized assets
+                        items:
+                          type: string
+                          description: |
+                            Authorized asset
+                    required:
+                      - uuid
+                      - name
+                      - authorized
+                required: 
+                  - success
+                  - current
+              example: {
+                "success": true,
+                "current": {
+                  "uuid": "6a7d3a03-5c06-4620-8325-583c8136b17f",
+                  "name": "McMaster University",
+                  "authorized": [
+                    "mcmaster_001",
+                    "mcmaster_002"
+                  ]
+                },
+                "others": [
+                  {
+                    "uuid": "db706bd1-7cac-48e5-ac9d-303077923ee7",
+                    "name": "Test University",
+                    "authorized": [
+                      "Test_Switch1",
+                      "Test_Switch2"
+                    ]
+                  }
+                ]
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '500':
+          description: |
+            Internal server error
+            
+  /api/group/add:
+    post:
+      summary: Create new group
+      description: |
+        Create a new group.
+        
+        Restrictions:
+          - `superuser` is the only class of accounts allowed to create groups.
+
+      tags:
+      - Group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: |
+                    Name of user
+                authorized:
+                  type: array
+                  description: |
+                    List of authorized assets
+                  items:
+                    type: string
+              required:
+                - name
+                - authorized
+            example: {
+              "name": "McMaster University",
+              "authorized": [
+                "mcmaster_001",
+                "mcmaster_002"
+              ],
+            }
+      responses:
+        '200':
+          description: |
+            Group successfully created.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "Group successfully created."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Only a superuser can update a group."
+              }
+        '500':
+          description: |
+            Internal server error
+
+  /api/group/update:
+    post:
+      summary: Update existing group
+      description: |
+        Update existing group.
+        
+        Restrictions:
+          - `superuser` is the only class of accounts allowed to update groups.
+
+      tags:
+      - Group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    UUID of group to update
+                name:
+                  type: string
+                  description: |
+                    Updated or existing group name
+                authorized:
+                  type: array
+                  description: |
+                    Updated or existing group assets
+                  items:
+                    type: string
+              required:
+                - uuid
+                - name
+                - authorized
+            example: {
+              "uuid": "175dd231-f547-4342-a33e-c45d5e99aa7e",
+              "name": "McMaster University",
+              "authorized": [
+                "asset1",
+                "asset2"
+              ]
+            }
+      responses:
+        '200':
+          description: |
+            Group successfully deleted.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "Successfully deleted group."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Only a superuser can delete a group."
+              }
+        '500':
+          description: |
+            Internal server error
+
+  /api/group/delete:
+    post:
+      summary: Delete existing group
+      description: |
+        Delete existing
+        
+        Restrictions:
+          - `superuser` is the only class of accounts allowed to delete groups.
+
+      tags:
+      - Group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    UUID of group to delete
+              required:
+                - uuid
+            example: {
+              "uuid": "175dd231-f547-4342-a33e-c45d5e99aa7e"
+            }
+      responses:
+        '200':
+          description: |
+            Group successfully updated.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "Successfully updated group."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Only a superuser can create a new group."
+              }
+        '500':
+          description: |
+            Internal server error
+            
+  /api/view/authorized:
+    get:
+      summary: List all authorized assets
+      description: |
+        Returns a list of authorized assets that are eligible to be included in a visualization.
+        
+        - `standard`, `admin` has access to group assets.
+        - `superuser` has access to all assets.
+        - All users have access to aggregate data from all assets.
+      tags:
+      - View
+      responses:
+        '200':
+          description: |
+            List of authorized assets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: |
+                      Indicator if request was success
+                  authorized:
+                    type: array
+                    items:
+                      type: string
+                      description: |
+                        Authorized asset
+                required:
+                - success
+                - authorized
+              example: {
+                "success": true,
+                "authorized": [
+                  "mcmaster_001",
+                  "mcmaster_002",
+                  "Aggregate"
+                ]
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '500':
+          description: |
+            Internal server error
+            
+  /api/view/list:
+    get:
+      summary: List all views
+      description: |
+        Returns a list of all views belonging to the group of the requesting user.
+        
+        A `superuser` may specify the `group` query parameter to return views for another group.
+      tags:
+      - View
+      parameters: 
+        - in: query
+          name: group
+          schema:
+            type: string
+          description: |
+            UUID of group to get views for.
+          required: false
+      responses:
+        '200':
+          description: |
+            List of views
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: |
+                      Indicator if request was success
+                  views:
+                    type: array
+                    description: |
+                      List of views for requested group
+                    items:
+                      type: object
+                      properties:
+                        uuid:
+                          type: string
+                          description: |
+                            UUID of view
+                        group:
+                          type: string
+                          description: |
+                            UUID of group view belongs to
+                        authorized:
+                          type: string
+                          description: |
+                            Authorized asset to populate view with (source index)
+                        name:
+                          type: string
+                          description: |
+                            Name of view
+                        class:
+                          type: string
+                          description: |
+                            Type of view: `line`, `bar`, `pie`, `table`
+                        field:
+                          type: string
+                          description: |
+                            Data field to use for view
+                        fieldName:
+                          type: string
+                          description: |
+                            Common field name
+                      required:
+                      - uuid
+                      - group
+                      - authorized
+                      - name
+                      - class
+                      - field
+                      - fieldName
+                required:
+                - success
+                - views
+              example: {
+                "success": true,
+                "views": [
+                  {
+                    "uuid": "70884425-0cab-4840-a99e-ee397a9dbc71",
+                    "group": "6a7d3a03-5c06-4620-8325-583c8136b17f",
+                    "authorized": "mcmaster_001",
+                    "name": "Packet Count JHE",
+                    "class": "line",
+                    "field": "packets",
+                    "fieldName": "Packets"
+                  }
+                ]
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '500':
+          description: |
+            Internal server error
+            
+  /api/view/add:
+    post:
+      summary: Create new view
+      description: |
+        Create a view group.
+        
+        Restrictions:
+          - `admin` can create views for their own group with authorized assets registered to their group.
+          - `superuser` can create views for any group with any authorized assets.
+  
+        Available view classes:
+          - `line`
+          - `bar`
+          - `pie`
+          - `table`
+      tags:
+      - View
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group:
+                  type: string
+                  description: |
+                    Group that view belongs to
+                authorized:
+                  type: string
+                  description: |
+                    Authorized asset to populate view with (source index)
+                name:
+                  type: string
+                  description: |
+                    Name of view
+                class:
+                  type: string
+                  description: |
+                    Type of view: `line`, `bar`, `pie`, `table`
+                field:
+                  type: string
+                  description: |
+                    Data field to use for view
+                fieldName:
+                  type: string
+                  description: |
+                    Common field name
+              required:
+                - group
+                - authorized
+                - name
+                - class
+                - field
+                - fieldName
+            example: {
+              "group": "6a7d3a03-5c06-4620-8325-583c8136b17f",
+              "authorized": "mcmaster_001",
+              "name": "JHE Incoming Packets",
+              "class": "line",
+              "field": "packets_incoming",
+              "fieldName": "Packets"
+            }
+      responses:
+        '200':
+          description: |
+            View successfully created.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "View successfully created."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Admin users can not add foreign views."
+              }
+        '500':
+          description: |
+            Internal server error
+            
+  /api/view/update:
+    post:
+      summary: Upate existing view
+      description: |
+        Update an existing view.
+        
+        Restrictions:
+          - `admin` can update views belonging to their group.
+          - `superuser` can update views belonging to any group.
+          
+      tags:
+      - View
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    UUID of view to update
+                group:
+                  type: string
+                  description: |
+                    Group that view belongs to
+                authorized:
+                  type: string
+                  description: |
+                    Authorized asset to populate view with (source index)
+                name:
+                  type: string
+                  description: |
+                    Name of view
+                class:
+                  type: string
+                  description: |
+                    Type of view: `line`, `bar`, `pie`, `table`
+                field:
+                  type: string
+                  description: |
+                    Data field to use for view
+                fieldName:
+                  type: string
+                  description: |
+                    Common field name
+              required:
+                - uuid
+                - group
+                - authorized
+                - name 
+                - class
+                - field
+                - fieldName
+            example: {
+              "uuid": "70884425-0cab-4840-a99e-ee397a9dbc71",
+              "group": "6a7d3a03-5c06-4620-8325-583c8136b17f",
+              "authorized": "mcmaster_001",
+              "name": "JHE Incoming Packets",
+              "class": "line",
+              "field": "packets_incoming",
+              "fieldName": "Packets"
+            }
+      responses:
+        '200':
+          description: |
+            View successfully updated.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "View successfully updated."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Admin users can not add foreign views."
+              }
+        '500':
+          description: |
+            Internal server error
+            
+  /api/view/delete:
+    post:
+      summary: Delete existing view
+      description: |
+        Delete an existing view.
+        
+        Restrictions:
+          - `admin` can delete views belonging to their group.
+          - `superuser` can delete views belonging to any group.
+          
+      tags:
+      - View
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    UUID of view to delete
+              required:
+                - uuid
+            example: {
+              "uuid": "70884425-0cab-4840-a99e-ee397a9dbc71"
+            }
+      responses:
+        '200':
+          description: |
+            View successfully deleted.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "View successfully deleted."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Admin users can not delete foreign views."
+              }
+        '500':
+          description: |
+            Internal server error
+
+  /api/dashboard/get:
+    get:
+      summary: Fetch dashboard
+      description: |
+        Returns the group dashboard. If a dashboard does not exist, automatically pre-loads views and the dashboard.
+        
+        `superuser` may specify `group` query parameter to fetch dashboard of other group.
+      tags:
+      - Dashboard
+      parameters: 
+        - in: query
+          name: group
+          schema:
+            type: string
+          description: |
+            UUID of group to get dashboard for.
+          required: false
+      responses:
+        '200':
+          description: |
+            Dashboard configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uuid:
+                    type: string
+                    description: |
+                      Dashboard UUID
+                  group:
+                    type: string
+                    description: |
+                      UUID of group dashboard belongs to
+                  name:
+                    type: string
+                    description: |
+                      Dashboard name
+                  views:
+                    type: array
+                    description: |
+                      List of views in dashboard
+                    items:
+                      type: string
+                      description: |
+                        View UUID in dashboard
+                  sizes:
+                    type: array
+                    description: |
+                      List of sizes corresponding to views: `half` or `full` width
+                    items:
+                      type: string
+                      description: |
+                        Size corresponding to UUID in dashboard
+                required:
+                - uuid
+                - group
+                - name
+                - views
+                - sizes
+              example: {
+                "uuid": "7290169e-9bdf-437b-8dd6-456b17341f05",
+                "group": "6a7d3a03-5c06-4620-8325-583c8136b17f",
+                "name": "McMaster University Dashboard",
+                "views": [
+                  "70884425-0cab-4840-a99e-ee397a9dbc71",
+                  "b93b03f2-64ce-45cd-8737-9f99ed885253"
+                ],
+                "sizes": [
+                  "half",
+                  "half"
+                ]
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '500':
+          description: |
+            Internal server error
+            
+  /api/dashboard/update:
+    post:
+      summary: Update dashboard
+      description: |
+        Update an existing view.
+        
+        Restrictions:
+          - `admin` can update their group's dashboard
+          - `superuser` can update any group's dashboard
+      tags:
+      - Dashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    Dashboard UUID
+                group:
+                  type: string
+                  description: |
+                    UUID of group dashboard belongs to
+                name:
+                  type: string
+                  description: |
+                    Dashboard name
+                views:
+                  type: array
+                  description: |
+                    List of views in dashboard
+                  items:
+                    type: string
+                    description: |
+                      View UUID in dashboard
+                sizes:
+                  type: array
+                  description: |
+                    List of sizes corresponding to views: `half` or `full` width
+                  items:
+                    type: string
+                    description: |
+                      Size corresponding to UUID in dashboard
+              required:
+              - uuid
+              - group
+              - name
+              - views
+              - sizes
+            example: {
+              "uuid": "7290169e-9bdf-437b-8dd6-456b17341f05",
+              "group": "6a7d3a03-5c06-4620-8325-583c8136b17f",
+              "name": "McMaster University Dashboard",
+              "views": [
+                "70884425-0cab-4840-a99e-ee397a9dbc71",
+                "b93b03f2-64ce-45cd-8737-9f99ed885253"
+              ],
+              "sizes": [
+                "full",
+                "full"
+              ]
+            }
+      responses:
+        '200':
+          description: |
+            Dashboard successfully updated.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "Dashboard successfully updated."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Admin users can not update foreign dashboard."
+              }
+        '500':
+          description: |
+            Internal server error

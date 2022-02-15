@@ -1,0 +1,10 @@
+canids-ingest-*
+canids-release-*
+config/
+.gitignore
+Caddyfile
+Caddyfile-production
+README.md
+
+frontend/node_modules/
+frontend/build/
