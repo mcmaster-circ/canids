@@ -32,36 +32,36 @@ cd ..
 # build & package server
 docker-compose -f deploy-prod.yml build
 
-mkdir canids-release-v1.0.0
-docker save mcmaster-circ/canids-v2-backend > canids-release-v1.0.0/canids-backend-v1.0.0.tar
-docker save mcmaster-circ/canids-v2-frontend > canids-release-v1.0.0/canids-frontend-v1.0.0.tar
-cp ./deploy-prod.yml ./canids-release-v1.0.0/docker-compose.yml
-cp ./Caddyfile ./canids-release-v1.0.0/Caddyfile
-cp -R ./cert ./canids-release-v1.0.0/cert
-cp -R ./config ./canids-release-v1.0.0/config
+mkdir canids-release-v2.0.0
+docker save mcmaster-circ/canids-v2-backend > canids-release-v2.0.0/canids-backend-v2.0.0.tar
+docker save mcmaster-circ/canids-v2-frontend > canids-release-v2.0.0/canids-frontend-v2.0.0.tar
+cp ./deploy-prod.yml ./canids-release-v2.0.0/docker-compose.yml
+cp ./Caddyfile ./canids-release-v2.0.0/Caddyfile
+cp -R ./cert ./canids-release-v2.0.0/cert
+cp -R ./config ./canids-release-v2.0.0/config
 
-tar -czvf canids-release-v1.0.0.tar.gz canids-release-v1.0.0/
+tar -czvf canids-release-v2.0.0.tar.gz canids-release-v2.0.0/
 
 # build & package ingestion client
 cd ingestion
 docker-compose build
 cd ..
 
-mkdir canids-ingest-v1.0.0
-docker save mcmaster-circ/canids-v2-ingestion > canids-ingest-v1.0.0/canids-ingestion-v1.0.0.tar
-cp ./ingestion/docker-compose.yml ./canids-ingest-v1.0.0/docker-compose.yml
-cp -R ./ingestion/cert ./canids-ingest-v1.0.0/cert
+mkdir canids-ingest-v2.0.0
+docker save mcmaster-circ/canids-v2-ingestion > canids-ingest-v2.0.0/canids-ingestion-v2.0.0.tar
+cp ./ingestion/docker-compose.yml ./canids-ingest-v2.0.0/docker-compose.yml
+cp -R ./ingestion/cert ./canids-ingest-v2.0.0/cert
 
-tar -czvf canids-ingest-v1.0.0.tar.gz canids-ingest-v1.0.0/
+tar -czvf canids-ingest-v2.0.0.tar.gz canids-ingest-v2.0.0/
 ```
 
 ## Running in Server Production
 ```sh
-tar xzf canids-release-v1.0.0.tar.gz
-cd canids-release-v1.0.0
+tar xzf canids-release-v2.0.0.tar.gz
+cd canids-release-v2.0.0
 
-docker load --input canids-backend-v1.0.0.tar
-docker load --input canids-frontend-v1.0.0.tar
+docker load --input canids-backend-v2.0.0.tar
+docker load --input canids-frontend-v2.0.0.tar
 
 docker-compose up -d --no-build
 ```
@@ -70,10 +70,10 @@ Opens ports 80 (HTTP), 443 (HTTPS) & 50000 (Ingestion client upload)
 
 ## Running in Ingestion Client Production
 ```sh
-tar xzf canids-ingest-v1.0.0.tar.gz
-cd canids-ingest-v1.0.0
+tar xzf canids-ingest-v2.0.0.tar.gz
+cd canids-ingest-v2.0.0
 
-docker load --input canids-ingestion-v1.0.0.tar
+docker load --input canids-ingestion-v2.0.0.tar
 
 docker-compose up -d --no-build
 
