@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/golang/protobuf v1.5.1
 	github.com/gorilla/mux v1.7.4
 	github.com/joho/godotenv v1.3.0
 	github.com/mcmaster-circ/canids-v2/protocol v0.0.0-00010101000000-000000000000
@@ -18,10 +17,11 @@ require (
 	github.com/yl2chen/cidranger v1.0.2
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	google.golang.org/grpc v1.36.0
+	google.golang.org/protobuf v1.26.0
 )
 
 require (
-	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/golang/protobuf v1.5.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.0 // indirect
 	github.com/oschwald/maxminddb-golang v1.6.0 // indirect
@@ -33,7 +33,6 @@ require (
 	golang.org/x/sys v0.0.0-20191224085550-c709ea063b76 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
-	google.golang.org/protobuf v1.26.0 // indirect
 )
 
 replace github.com/mcmaster-circ/canids-v2/protocol => ../protocol
