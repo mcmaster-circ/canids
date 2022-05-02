@@ -4,6 +4,13 @@
 An initial build will take a few minutes to setup the docker environment and run. Ensure that the keys are generated prior to building for development. Consecutive builds will utilize caching and will be much faster.
 
 ```sh
+# generate missing dependency files
+cd backend
+go mod vendor
+cd ../ingestion
+go mod vendor
+cd ..
+
 # generate certs
 cd certfiles
 ./gen-certs.sh CA Ontario Hamilton FYELABS Ingestion Backend host.docker.internal
@@ -22,6 +29,13 @@ Opens ports 80 (HTTP), 443 (HTTPS), 50000 (Ingestion client upload), 9200 (elast
 ## Building for Production
 ```sh
 # Update Caddyfile with your server's URL if it has one
+
+# generate missing dependency files
+cd backend
+go mod vendor
+cd ../ingestion
+go mod vendor
+cd ..
 
 # generate certs
 cd certfiles
