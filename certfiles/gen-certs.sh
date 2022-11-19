@@ -22,10 +22,10 @@ mkdir -p ../cert
 mkdir -p temp
 
 # Generate CA's private key and self-signed certificate
-openssl req -x509 -newkey rsa:4096 -days 9999 -nodes -keyout ./temp/ca-key.pem -out ../ingestion/cert/ca-cert.pem -subj "/C=$1/ST=$2/L=$3/O=$4/OU=$5/CN=$7/emailAddress=$email"
+openssl req -x509 -newkey rsa:4096 -days 9999 -nodes -keyout ./temp/ca-key.pem -out ../ingestion/cert/ca-cert.pem -subj "//Skip=skip/C=$1/ST=$2/L=$3/O=$4/OU=$5/CN=$7/emailAddress=$email"
 
 # Generate web server's private key and CSR
-openssl req -newkey rsa:4096 -nodes -keyout ../cert/server-key.pem -out ./temp/server-req.pem -subj "/C=$1/ST=$2/L=$3/O=$4/OU=$6/CN=$7/emailAddress=$email"
+openssl req -newkey rsa:4096 -nodes -keyout ../cert/server-key.pem -out ./temp/server-req.pem -subj "//Skip=skip/C=$1/ST=$2/L=$3/O=$4/OU=$6/CN=$7/emailAddress=$email"
 
 # # Use CA's private key to sign web server's CSR and get the signed certificate
 openssl x509 -req -in ./temp/server-req.pem -days 9999 -CA ../ingestion/cert/ca-cert.pem -CAkey ./temp/ca-key.pem -CAcreateserial -out ../cert/server-cert.pem -extfile ./server-ext.cnf

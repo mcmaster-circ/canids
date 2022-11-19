@@ -20,7 +20,7 @@ cd ..
 docker-compose -f deploy-dev.yml up -d --build
 
 # start ingestion client
-cd ../ingestion
+cd ingestion
 docker-compose up -d --build
 ```
 
