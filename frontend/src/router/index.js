@@ -18,11 +18,11 @@ const routes = [
     // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "about" */ '../views/Admin.vue')
   },
-  // {
-  //   path: '/alarms', TODO remove or uncomment this
-  //   name: 'Alarms',
-  //   component: () => import(/* webpackChunkName: "about" */ '../views/Alarms.vue')
-  // },
+  {
+    path: '/alarms',
+    name: 'Alarms',
+    component: () => import(/* webpackChunkName: "about" */ '../views/Alarms.vue')
+  },
   {
     path: '/dashboard/edit',
     name: 'DashboardEdit',

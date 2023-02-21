@@ -130,60 +130,48 @@ export default {
       endTime: new Date(),
       alarms: [
         {
-          time: "",
+          time: "3/15/21 10:59:51",
           asset: "asset1",
-          sourceIP: "",
-          sourcePort: 0,
-          destIP: "",
-          destPort: 0,
+          sourceIP: "192.168.2.81",
+          sourcePort: 9098,
+          destIP: "192.168.2.88",
+          destPort: 53,
           alarms: {
             filter1: true,
             filter2: false
           }
         },
         {
-          time: "",
+          time: "3/15/21 10:59:54",
           asset: "asset2",
-          sourceIP: "",
-          sourcePort: 0,
-          destIP: "",
-          destPort: 0,
+          sourceIP: "10.189.32.15",
+          sourcePort: 62423,
+          destIP: "54.210.100.101",
+          destPort: 443,
           alarms: {
             filter1: true,
             filter2: false
           }
         },
         {
-          time: "",
+          time: "3/15/21 12:00:05",
           asset: "asset3",
-          sourceIP: "",
-          sourcePort: 0,
-          destIP: "",
-          destPort: 0,
+          sourceIP: "192.168.2.81",
+          sourcePort: 59644,
+          destIP: "142.104.128.253",
+          destPort: 80,
           alarms: {
             filter1: true,
             filter2: false
           }
         },
         {
-          time: "",
+          time: "3/15/21 12:59:55",
           asset: "asset4",
-          sourceIP: "",
-          sourcePort: 0,
-          destIP: "",
-          destPort: 0,
-          alarms: {
-            filter1: true,
-            filter2: false
-          }
-        },
-        {
-          time: "",
-          asset: "asset5",
-          sourceIP: "",
-          sourcePort: 0,
-          destIP: "",
-          destPort: 0,
+          sourceIP: "192.168.2.81",
+          sourcePort: 39388,
+          destIP: "142.104.128.247",
+          destPort: 80,
           alarms: {
             filter1: true,
             filter2: false

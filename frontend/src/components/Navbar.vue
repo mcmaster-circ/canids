@@ -19,7 +19,7 @@
       <div id="navMenu" class="navbar-menu" v-bind:class="{ 'is-active': showNav }">
         <div class="navbar-start" v-on:click="condToggle">
           <router-link to="/" class="navbar-item"> Dashboard </router-link>
-          <!-- router-link to="/alarms" class="navbar-item"> Alarms </router-link -->
+          <router-link to="/alarms" class="navbar-item"> Alarms </router-link>
           <router-link to="/admin" class="navbar-item" v-if="user.class === 'superuser' || user.class === 'admin'"> Admin </router-link>
           <a href="/logout" class="navbar-item"> Logout </a>
           <div class="navbar-item">Currently logged in as: {{ user.name }}</div>
