@@ -3,7 +3,7 @@ services:
   canids-v2-ingestion:
     build:
       context: .
-      dockerfile: ./injestion/Dockerfile
+      dockerfile: ./ingestion/Dockerfile
     image: mcmaster-circ/canids-v2-ingestion
     container_name: canids-v2-ingestion
     logging:
@@ -23,8 +23,8 @@ services:
       - asset=testdata2 # Change this to specify your asset name
       - hostname=host.docker.internal:50000 # Change this to specify the address of the backend
     volumes:
-      - ./injestion/logs:/logs # Change this to specify the location of your logs
-      - ./injestion/cert:/cert
+      - ./ingestion/logs:/logs # Change this to specify the location of your logs
+      - ./ingestion/cert:/cert
       - ingestiondb:/db
 
 volumes:
