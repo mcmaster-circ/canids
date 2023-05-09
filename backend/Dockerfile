@@ -7,6 +7,7 @@ RUN apk --no-cache add ca-certificates tzdata git
 # builder w/ git injection
 FROM goalpine as build
 COPY backend/ /project
+COPY protocol/ /protocol
 COPY .git/ /project/.git/
 WORKDIR /project
 RUN go mod vendor
