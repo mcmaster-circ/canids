@@ -50,15 +50,16 @@
               multiple
               scrollable
               expanded
+              block
               aria-role="list">
-              <template #trigger>
+              <template #trigger="{ active }">
                 <b-button
                   type="is-primary"
-                  icon-right="menu-down">
-                  .{{ indicesText }}
+                  :icon-right="active ? 'menu-up' : 'menu-down'">
+                  {{ indicesText }}
                 </b-button>
               </template>
-              <b-dropdown-item v-for="index in indices" :key="index" :value="index">
+              <b-dropdown-item v-for="index in indices" :key="index" :value="index" aria-role="listitem">
                 <span>{{ index }}</span>
               </b-dropdown-item>
             </b-dropdown>
@@ -73,15 +74,16 @@
               multiple
               scrollable
               expanded
+              block
               aria-role="list">
-              <template #trigger>
+              <template #trigger="{ active }">
                 <b-button
                   type="is-primary"
-                  icon-right="menu-down">
-                  .{{ sourceListsText }}
+                  :icon-right="active ? 'menu-up' : 'menu-down'">
+                  {{ sourceListsText }}
                 </b-button>
               </template>
-              <b-dropdown-item v-for="source in alarmSourceLists" :key="source" :value="source">
+              <b-dropdown-item v-for="source in alarmSourceLists" :key="source" :value="source" aria-role="listitem">
                 <span>{{ source }}</span>
               </b-dropdown-item>
             </b-dropdown>
