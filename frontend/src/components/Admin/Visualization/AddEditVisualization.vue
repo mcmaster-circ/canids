@@ -4,10 +4,10 @@
       <article class="tile is-child box">
         <h1 style="font-size:50px;margin-bottom:20px; text-align:center">Visualization</h1>
         <b-steps
-        style="min-height:600px;width:100%;color:'red'"
+        style="min-height:400px;width:100%;color:'red'"
         v-model="activeStep"
         :has-navigation="false">
-          <b-step-item style="height:400px" label="Type">
+          <b-step-item style="height:300px" label="Type">
             <div class="has-text-centered">
               <h1 class="title has-text-centered">Select Display Type</h1>
               <p>{{ view.class == undefined ? "none" : view.class }} selected</p>
@@ -45,10 +45,10 @@
             </div>
           </b-step-item>
 
-          <b-step-item style="height:400px" label="Information">
+          <b-step-item style="height:300px" label="Information">
               <Information ref="info" :viewClass="view.class" :visualizationToEdit="visualizationToEdit"></Information>
           </b-step-item>
-          <b-step-item style="height:400px" label="Finish" disabled>
+          <b-step-item style="height:300px" label="Finish" disabled>
             <h1 class="title has-text-centered">Finish</h1>
             <div class="columns is-mobile is-centered">
               <div class="column is-half">

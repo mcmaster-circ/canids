@@ -6,6 +6,7 @@ package api
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/alarms"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/assets"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/dashboard"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/data"
@@ -44,6 +45,9 @@ func registerRoutes(s *state.State, a *auth.State, unsecure *mux.Router, secure 
 
 	// register fields service, require authentication: /api/fields
 	fields.RegisterRoutes(s, a, secure.PathPrefix("/fields/").Subrouter())
+
+	// register alarms service, require authentication: /api/alarms
+	alarms.RegisterRoutes(s, a, secure.PathPrefix("/alarms/").Subrouter())
 
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())
