@@ -88,7 +88,7 @@ import EditUser from "./EditUser";
 import AddUser from "./AddUser";
 
 export default {
-  name: "AddVisualization",
+  name: "ViewUsers",
   props: {
     type: String
   },

@@ -1,8 +1,8 @@
 // Copyright (c) 2020 Computing Infrastructure Research Centre (CIRC), McMaster
 // University. All rights reserved.
 
-// Package alarms provides the alarms API service for the backend.
-package alarms
+// Package alarm provides the alarms API service for the backend.
+package alarm
 
 import (
 	"net/http"
@@ -28,12 +28,8 @@ var (
 
 // RegisterRoutes registers routes to interact with the alarms.
 func RegisterRoutes(s *state.State, a *auth.State, r *mux.Router) {
-	// get alarms for dashboard /api/alarms/get
+	// get alarms for dashboard /api/alarm/get
 	r.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
 		getHandler(r.Context(), s, a, w, r)
-	})
-	// get alarm source lists for dashboard /api/alarms/list
-	r.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
-		listHandler(r.Context(), s, a, w, r)
 	})
 }

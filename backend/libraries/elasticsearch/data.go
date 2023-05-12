@@ -215,11 +215,6 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 		indices[i] = fmt.Sprintf("data-%s-*", index)
 	}
 
-	fmt.Println("indices GETALARMS: ")
-	for _, index := range indices {
-		fmt.Print(index)
-	}
-
 	r := elastic.NewRangeQuery("timestamp").
 		From(start.Format(time.RFC3339)).
 		To(end.Format(time.RFC3339))

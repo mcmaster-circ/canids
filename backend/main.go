@@ -30,14 +30,10 @@ func main() {
 	}
 
 	// begin scheduled refreshing of alarm ip sets
-	scheduler.Provision(map[string]string{
-		"firehol_abusers_1d":  "https://iplists.firehol.org/files/firehol_abusers_1d.netset",
-		"firehol_abusers_30d": "https://iplists.firehol.org/files/firehol_abusers_30d.netset",
-		"firehol_anonymous":   "https://iplists.firehol.org/files/firehol_anonymous.netset",
-		"firehol_level1":      "https://iplists.firehol.org/files/firehol_level1.netset",
-		"firehol_level2":      "https://iplists.firehol.org/files/firehol_level2.netset",
-		"firehol_level3":      "https://iplists.firehol.org/files/firehol_level3.netset",
-	}, 18*time.Hour, s.AlarmManager)
+	err = scheduler.Provision(s, 18*time.Hour, s.AlarmManager)
+	if err != nil {
+		s.Log.Fatal(err)
+	}
 
 	// provision API state
 	a, err := auth.Provision(s)

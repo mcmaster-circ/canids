@@ -277,12 +277,12 @@ export default {
         })
     },
     fetchLists() {
-      fetch('/api/alarms/list')
+      fetch('/api/blacklist/list')
         .then(response => {
           return response.json()
         })
         .then(json => {
-          this.alarmSourceLists = json.map(i => {
+          this.alarmSourceLists = json.blacklists.map(i => {
             return i.name
           })
           this.selectedSourceLists = [...this.alarmSourceLists]
@@ -302,13 +302,12 @@ export default {
       for (const source of this.selectedSourceLists) {
         params.append('source', source)
       }
-      const request = process.env.VUE_APP_ENDPOINT + 'alarms/get?' + params.toString()
+      const request = process.env.VUE_APP_ENDPOINT + 'alarm/get?' + params.toString()
       fetch(request)
         .then(response => {
           return response.json()
         })
         .then(data => {
-          console.log(data)
           this.alarms = data.alarms
           this.availableRows = data.availableRows
           this.updatePages()

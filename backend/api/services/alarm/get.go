@@ -1,8 +1,8 @@
 // Copyright (c) 2020 Computing Infrastructure Research Centre (CIRC), McMaster
 // University. All rights reserved.
 
-// Package alarms provides the alarms API service for the backend.
-package alarms
+// Package alarm provides the alarms API service for the backend.
+package alarm
 
 import (
 	"context"
@@ -40,12 +40,6 @@ func getHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 	endStr := v.Get("end")
 	maxSizeStr := v.Get("maxSize")
 	fromStr := v.Get("from")
-
-	// print indices
-	fmt.Println("Indices:")
-	for _, index := range indices {
-		fmt.Println(index)
-	}
 
 	// Parse "start" and "end" into time objects
 	start, err := time.Parse(time.RFC3339, startStr)
