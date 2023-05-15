@@ -1,5 +1,5 @@
 <template>
-  <div class="columns is-mobile is-centered" style="overflow-y: scroll; max-height: 500px">
+  <div class="columns is-mobile is-centered" style="overflow-y: scroll; max-height: 300px">
     <div class="column is-half">
       <b-field label="Group">
         <b-select expanded v-model="view.group" placeholder="Group...">

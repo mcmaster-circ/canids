@@ -78,7 +78,7 @@ type state struct {
 	ScannerAbort  chan struct{} // ScannerAbort is for signalling the recursive scanner to terminate
 	Debug         bool          // Debug indicates if debugging logging should be used
 	RetryDelay    time.Duration // RetryDelay is delay before attempting reconnect
-	FilePath      string        // FilePath is the file or direcotry to upload form
+	FilePath      string        // FilePath is the file or directory to upload form
 	FileMode      fileMode      // FileMode indicates type of file mode being used (regular file or directory provided)
 	FileScan      time.Duration // FileScan indicates how often to scan for new files on the file system
 	FileChunkSize int           // FileChunkSize indicates number of lines to send in frame

@@ -20,8 +20,7 @@ cd ..
 docker-compose -f deploy-dev.yml up -d --build
 
 # start ingestion client
-cd ingestion
-docker-compose up -d --build
+docker-compose -f deploy-ingestion.yml up -d --build
 ```
 
 Opens ports 80 (HTTP), 443 (HTTPS), 50000 (Ingestion client upload), 9200 (elasticsearch), 5601 (kibana), 8080 (swagger documentation) & 6060 (backend)
@@ -57,13 +56,11 @@ cp -R ./config ./canids-release-v2.0.0/config
 tar -czvf canids-release-v2.0.0.tar.gz canids-release-v2.0.0/
 
 # build & package ingestion client
-cd ingestion
-docker-compose build
-cd ..
+docker-compose -f deploy-ingestion.yml build
 
 mkdir canids-ingest-v2.0.0
 docker save mcmaster-circ/canids-v2-ingestion > canids-ingest-v2.0.0/canids-ingestion-v2.0.0.tar
-cp ./ingestion/docker-compose.yml ./canids-ingest-v2.0.0/docker-compose.yml
+cp ./deploy-ingestion.yml ./canids-ingest-v2.0.0/docker-compose.yml
 cp -R ./ingestion/cert ./canids-ingest-v2.0.0/cert
 
 tar -czvf canids-ingest-v2.0.0.tar.gz canids-ingest-v2.0.0/

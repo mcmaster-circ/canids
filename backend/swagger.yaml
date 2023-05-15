@@ -1000,12 +1000,12 @@ paths:
       responses:
         '200':
           description: |
-            Group successfully deleted.
+            Group successfully updated.
           content:
             application/json:
               example: {
                 "success": true,
-                "message": "Successfully deleted group."
+                "message": "Successfully updated group."
               }
         '400':
           description: |
@@ -1026,7 +1026,7 @@ paths:
             application/json:
               example: {
                 "success": false,
-                "message": "Only a superuser can delete a group."
+                "message": "Only a superuser can update a group."
               }
         '500':
           description: |
@@ -1036,7 +1036,7 @@ paths:
     post:
       summary: Delete existing group
       description: |
-        Delete existing
+        Delete existing group.
         
         Restrictions:
           - `superuser` is the only class of accounts allowed to delete groups.
@@ -1062,12 +1062,12 @@ paths:
       responses:
         '200':
           description: |
-            Group successfully updated.
+            Group successfully deleted.
           content:
             application/json:
               example: {
                 "success": true,
-                "message": "Successfully updated group."
+                "message": "Successfully deleted group."
               }
         '400':
           description: |
@@ -1674,6 +1674,482 @@ paths:
               example: {
                 "success": false,
                 "message": "Admin users can not update foreign dashboard."
+              }
+        '500':
+          description: |
+            Internal server error
+
+  /api/alarm/data:
+    post:
+      summary: Fetch alarms
+      description: |
+        Returns the alarms that fit given a set of parameters.
+      tags:
+      - Alarm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                index:
+                  type: array
+                  description: |
+                    List of indexes to pull alarms from
+                  items:
+                    type: string
+                source:
+                  type: array
+                  description: |
+                    List of blacklists to pull alarms from
+                  items:
+                    type: string  
+                start:
+                  type: string
+                  description: |
+                    Start timestamp of alarms query
+                end:
+                  type: string
+                  description: |
+                    End timestamp of alarms query
+                maxSize:
+                  type: integer
+                  description: |
+                    Maximum number of alarms per page
+                from:
+                  type: integer
+                  description: |
+                    Search offset of alarms query
+              required:
+                - index
+                - source
+                - start
+                - end
+                - maxSize
+                - from
+            example: {
+              "index": ["http.log.alarm", "dns.log.alarm"],
+              "source": ["firehol_abusers_1d", "firehol_abusers_30d", "firehol_anonymous", "firehol_level2"],
+              "start": "2019-05-01T12:41:55.000Z",
+              "end": "2023-05-15T13:11:55.495Zd",
+              "maxSize": 4,
+              "from": 0
+            }
+      responses:
+        '200':
+          description: |
+            List of alarms and the number of query matches found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alarms:
+                    type: array
+                    description: |
+                      List of alarms
+                    items:
+                      type: object
+                      properties:
+                        uid:
+                          type: string
+                          description: |
+                            Alarm UID
+                        host:
+                          type: string
+                          description: |
+                            Common blacklist name
+                        timestamp:
+                          type: string
+                          description: |
+                            Timestamp of log entry
+                        id_orig_h:
+                          type: string
+                          description: |
+                            Source IP address
+                        id_orig_p:
+                          type: integer
+                          description: |
+                            Soure port
+                        id_orig_h_pos:
+                          type: array
+                          description: |
+                            Source triggered blacklists
+                        id_resp_h:
+                          type: string
+                          description: |
+                            Destination IP address
+                        id_resp_p:
+                          type: integer
+                          description: |
+                            Destination port
+                        id_resp_h_pos:
+                          type: array
+                          description: |
+                            Destination triggered blacklists
+                      required:
+                        - uid
+                        - host
+                        - timestamp
+                        - id_orig_h
+                        - id_orig_p
+                        - id_orig_h_pos
+                        - id_resp_h
+                        - id_resp_p
+                        - id_resp_h_pos
+                  availableRows:
+                    type: integer
+                    description: |
+                      Total number of documents in elasticsearch query
+                required: 
+                  - alarms
+                  - availableRows
+              example: {
+                "alarms": [
+                  {
+                    "uid": "C93jwR1Bax8LG3ixXa",
+                    "host": "ocsp.digicert.com",
+                    "timestamp": "2021-03-15T16:42:08Z",
+                    "id_orig_h": "10.189.34.26",
+                    "id_orig_p": 53685,
+                    "id_orig_h_pos": [],
+                    "id_resp_h": "72.21.91.29",
+                    "id_resp_p": 80,
+                    "id_resp_h_pos": [
+                      "firehol_anonymous"
+                    ]
+                  },
+                  {
+                    "uid": "C93jwR1Bax8LG3ixXa",
+                    "host": "ocsp.digicert.com",
+                    "timestamp": "2021-03-15T16:42:08Z",
+                    "id_orig_h": "10.189.34.26",
+                    "id_orig_p": 53685,
+                    "id_orig_h_pos": [],
+                    "id_resp_h": "72.21.91.29",
+                    "id_resp_p": 80,
+                    "id_resp_h_pos": [
+                      "firehol_anonymous"
+                    ]
+                  },
+                  {
+                    "uid": "CI3U8U2GGe7Xgirsnh",
+                    "host": "ocsp.digicert.com",
+                    "timestamp": "2021-03-15T16:37:29Z",
+                    "id_orig_h": "10.189.34.26",
+                    "id_orig_p": 53636,
+                    "id_orig_h_pos": [],
+                    "id_resp_h": "72.21.91.29",
+                    "id_resp_p": 80,
+                    "id_resp_h_pos": [
+                      "firehol_anonymous"
+                    ]
+                  },
+                  {
+                    "uid": "CCoVOn4O59OdsLnMYi",
+                    "host": "205.189.33.125",
+                    "timestamp": "2021-03-15T16:37:25Z",
+                    "id_orig_h": "139.162.119.197",
+                    "id_orig_p": 53152,
+                    "id_orig_h_pos": [
+                      "firehol_anonymous"
+                    ],
+                    "id_resp_h": "192.168.2.125",
+                    "id_resp_p": 80,
+                    "id_resp_h_pos": []
+                  }
+                ],
+                "availableRows": 67
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '500':
+          description: |
+            Internal server error
+
+  /api/blacklist/list:
+    get:
+      summary: List all blacklists
+      description: |
+        Returns info about the current blacklists
+      tags:
+      - Blacklist
+      responses:
+        '200':
+          description: |
+            List of blacklists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: |
+                      Indicator if request was successful
+                  blacklists:
+                    type: array
+                    description: |
+                      List of blacklists 
+                    items:
+                      type: object
+                      properties:
+                        uuid:
+                          type: string
+                          description: |
+                            Blacklist UUID
+                        name:
+                          type: string
+                          description: |
+                            Common blacklist name
+                        url:
+                          type: string
+                          description: |
+                            URL that points to blacklist
+                      required:
+                        - uuid
+                        - name
+                        - url
+                required: 
+                  - success
+                  - blacklists
+              example: {
+                "success": true,
+                "blacklists": [
+                  {
+                    "uuid": "1a89f7bb-f84c-4f3d-b9e1-eea523dfb270",
+                    "name": "level1",
+                    "url": "https://iplists.firehol.org/files/firehol_level1.netset"
+                  },
+                  {
+                    "uuid": "2465fd87-39d3-4005-b4d0-833fc2920626",
+                    "name": "level2",
+                    "url": "https://iplists.firehol.org/files/firehol_level2.netset"
+                  },
+                  {
+                    "uuid": "71bb55ee-0a76-49a3-bbfd-04debee9f336",
+                    "name": "firehol_abusers_1d",
+                    "url": "https://iplists.firehol.org/files/firehol_abusers_1d.netset"
+                  }
+                ]
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '500':
+          description: |
+            Internal server error
+
+  /api/blacklist/add:
+    post:
+      summary: Add new blacklist
+      description: |
+        Create a new blacklist.
+        
+        Restrictions:
+          - `superuser` is the only class of accounts allowed to create blacklists.
+
+      tags:
+      - Blacklist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: |
+                    Name of blacklist
+                url:
+                  type: string
+                  description: |
+                    URL of blacklist
+              required:
+                - name
+                - url
+            example: {
+              "name": "firehol_level4",
+              "url": "https://iplists.firehol.org/files/firehol_level4.netset"
+            }
+      responses:
+        '200':
+          description: |
+            Blacklist successfully created.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "Blacklist successfully created."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Only a superuser can update a blacklist."
+              }
+        '500':
+          description: |
+            Internal server error
+
+  /api/blacklist/update:
+    post:
+      summary: Update existing blacklist
+      description: |
+        Update existing blacklist.
+        
+        Restrictions:
+          - `superuser` is the only class of accounts allowed to update blacklists.
+
+      tags:
+      - Blacklist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    UUID of blacklist to update
+                name:
+                  type: string
+                  description: |
+                    Updated or existing blacklist name
+                url:
+                  type: string
+                  description: |
+                    Updated or existing blacklist url
+              required:
+                - uuid
+                - name
+                - url
+            example: {
+              "uuid": "175dd231-f547-4342-a33e-c45d5e99aa7e",
+              "name": "fire4",
+              "url": "https://iplists.firehol.org/files/firehol_4.netset"
+            }
+      responses:
+        '200':
+          description: |
+            Blacklist successfully updated.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "Successfully updated blacklist."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Only a superuser can update a blacklist."
+              }
+        '500':
+          description: |
+            Internal server error
+
+  /api/blacklist/delete:
+    post:
+      summary: Delete existing blacklist
+      description: |
+        Delete existing blacklist.
+        
+        Restrictions:
+          - `superuser` is the only class of accounts allowed to delete blacklists.
+
+      tags:
+      - Blacklist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    UUID of blacklist to delete
+              required:
+                - uuid
+            example: {
+              "uuid": "175dd231-f547-4342-a33e-c45d5e99aa7e"
+            }
+      responses:
+        '200':
+          description: |
+            Blacklist successfully deleted.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "Successfully deleted blacklist."
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '401':
+          description: |
+            User is not authenticated
+        '403':
+          description: |
+            User does not have permissions to perform requested actions.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Only a superuser can create a new blacklist."
               }
         '500':
           description: |

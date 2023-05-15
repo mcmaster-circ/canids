@@ -6,8 +6,10 @@ RUN apk --no-cache add ca-certificates tzdata git
 
 # builder w/ git injection
 FROM goalpine as build
-COPY ./ /project/
+COPY ingestion/ /project/
+COPY protocol/ /protocol
 WORKDIR /project
+RUN go mod vendor
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -mod=vendor -installsuffix cgo -ldflags="-w -s" -o /entrypoint main.go
 
 # final

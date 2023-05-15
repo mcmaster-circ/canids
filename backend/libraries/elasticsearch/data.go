@@ -29,6 +29,21 @@ type DataField struct {
 	Type string `json:"type"`
 }
 
+var alarmFields = []string{"uid", "host", "timestamp", "id_orig_h", "id_orig_p", "id_orig_h_pos", "id_resp_h", "id_resp_p", "id_resp_h_pos"}
+
+// Alarm contains the data for an alarm.
+type Alarm struct {
+	UID               string   `json:"uid"`
+	Host              string   `json:"host"`
+	Timestamp         string   `json:"timestamp"`
+	SourceIP          string   `json:"id_orig_h"`
+	SourcePort        int      `json:"id_orig_p"`
+	SourceAlarms      []string `json:"id_orig_h_pos"`
+	DestinationIP     string   `json:"id_resp_h"`
+	DestinationPort   int      `json:"id_resp_p"`
+	DestinationAlarms []string `json:"id_resp_h_pos"`
+}
+
 // IndexPayload attempts to index the provided payload under the index name. It
 // will return the newly created document ID or an error.
 func IndexPayload(s *state.State, indexName string, payload []byte) (string, error) {
@@ -41,7 +56,7 @@ func IndexPayload(s *state.State, indexName string, payload []byte) (string, err
 }
 
 // GetAllDataMapping will fetch all data mappings. It returns a list of
-// fields+typfor each index type, or an error.
+// fields+type for each index type, or an error.
 func GetAllDataMapping(s *state.State) ([]IndexDataField, error) {
 	out := make([]IndexDataField, 0)
 
@@ -180,6 +195,53 @@ func ListDataAssets(s *state.State) ([]string, error) {
 		result = append(result, assetName)
 	}
 	return result, nil
+}
+
+// get alarms for a given asset in a given time range from a
+func GetAlarms(s *state.State, indices []string, sources []string, start time.Time, end time.Time, size int, from int) ([]Alarm, int, error) {
+	client, ctx := s.Elastic, s.ElasticCtx
+
+	// return empty array if no sources or indices
+	if len(sources) == 0 || len(indices) == 0 {
+		return []Alarm{}, 0, nil
+	}
+
+	alarmSources := make([]interface{}, len(sources))
+	for i, source := range sources {
+		alarmSources[i] = source
+	}
+
+	for i, index := range indices {
+		indices[i] = fmt.Sprintf("data-%s-*", index)
+	}
+
+	r := elastic.NewRangeQuery("timestamp").
+		From(start.Format(time.RFC3339)).
+		To(end.Format(time.RFC3339))
+	// query for all alarms in range and filter for either origSource or respSource being in alarmSources
+	origSources := elastic.NewTermsQuery("id_orig_h_pos", alarmSources...)
+	respSources := elastic.NewTermsQuery("id_resp_h_pos", alarmSources...)
+	hasSource := elastic.NewBoolQuery().Should(origSources, respSources)
+	query := elastic.NewBoolQuery().Must(r).Must(hasSource)
+	queryResult, err := client.Search().Index(indices...).
+		Query(query).Sort("timestamp", false).Size(size).From(from).Do(ctx)
+	if err != nil {
+		return []Alarm{}, 0, err
+	}
+
+	alarms := make([]Alarm, 0, len(queryResult.Hits.Hits))
+
+	// loop through each alarm and unmarshal it into an Alarm struct
+	for _, hit := range queryResult.Hits.Hits {
+		var alarm Alarm
+		err = json.Unmarshal(hit.Source, &alarm)
+		if err != nil {
+			return alarms, 0, err
+		}
+		alarms = append(alarms, alarm)
+	}
+
+	return alarms, int(queryResult.Hits.TotalHits.Value), nil
 }
 
 func QueryDataInRangeAggregated(s *state.State, indexPrefix, assetName string, xField string, yField string, start time.Time, end time.Time, interval int64) ([]interface{}, []interface{}, error) {
