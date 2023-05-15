@@ -290,20 +290,18 @@ export default {
     },
     fetchData() {
       this.updatePages()
-      const params = new URLSearchParams({
+      const req = {
+        index: this.selectedIndices,
+        source: this.selectedSourceLists,
         start: this.startTime.toISOString(),
         end: this.endTime.toISOString(),
-        maxSize: this.NUMBER_OF_CARDS.toString(),
-        from: (this.NUMBER_OF_CARDS * (this.cardPageNum - 1)).toString()
+        maxSize: this.NUMBER_OF_CARDS,
+        from: (this.NUMBER_OF_CARDS * (this.cardPageNum - 1))
+      }
+      fetch("/api/alarm/data", {
+        method: "post",
+        body: JSON.stringify(req)
       })
-      for (const index of this.selectedIndices) {
-        params.append('index', index)
-      }
-      for (const source of this.selectedSourceLists) {
-        params.append('source', source)
-      }
-      const request = process.env.VUE_APP_ENDPOINT + 'alarm/get?' + params.toString()
-      fetch(request)
         .then(response => {
           return response.json()
         })

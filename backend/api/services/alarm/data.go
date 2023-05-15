@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
@@ -19,40 +18,55 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
+type dataRequest struct {
+	Index   []string `json:"index"`   // Index is the list of indices to search
+	Source  []string `json:"source"`  // Source is the list of sources to search
+	Start   string   `json:"start"`   // Start is the start time of the search
+	End     string   `json:"end"`     // End is the end time of the search
+	MaxSize int      `json:"maxSize"` // MaxSize is the maximum number of documents to return
+	From    int      `json:"from"`    // From is the starting index of the search
+}
+
 type dataResponse struct {
-	Alarms        []elasticsearch.Alarm `json:"alarms"`
-	AvailableRows int                   `json:"availableRows"`
+	Alarms        []elasticsearch.Alarm `json:"alarms"`        // Alarms is the list of alarms
+	AvailableRows int                   `json:"availableRows"` // AvailableRows is the number of rows available from elasticsearch
 }
 
 const maxCards = 20
 
 // dataHandler is "/api/data. It is responsible for populating a view with the data related to that view.
-func getHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	_, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")
 
-	// get query parameters "start" and "end"
-	v := r.URL.Query()
-	indices := v["index"]
-	sources := v["source"]
-	startStr := v.Get("start")
-	endStr := v.Get("end")
-	maxSizeStr := v.Get("maxSize")
-	fromStr := v.Get("from")
-
-	// Parse "start" and "end" into time objects
-	start, err := time.Parse(time.RFC3339, startStr)
+	// attempt to parse request
+	var request dataRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		l.Errorf("error parsing start time '%s': %v", startStr, err)
+		l.Warn("invalid request format")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Bad request format.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	// Parse "start" into time objects
+	start, err := time.Parse(time.RFC3339, request.Start)
+	if err != nil {
+		l.Errorf("error parsing start time '%s': %v", request.Start, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(InternalServerError)
 		return
 	}
 
-	end, err := time.Parse(time.RFC3339, endStr)
+	// Parse "end" into time objects
+	end, err := time.Parse(time.RFC3339, request.End)
 	if err != nil {
-		l.Errorf("error parsing end time '%s': %v", endStr, err)
+		l.Errorf("error parsing end time '%s': %v", request.End, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(InternalServerError)
 		return
@@ -60,21 +74,9 @@ func getHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 
 	availableRows := 0
 
-	// parse maxSize from query parameter
-	maxSize, err := strconv.ParseInt(maxSizeStr, 10, 32)
-	if err != nil {
-		l.Error("error parsing max size string: ", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(GeneralResponse{
-			Success: false,
-			Message: "Could not parse max size string",
-		})
-		return
-	}
-
 	// make sure maxSize is greater than 0
-	if maxSize <= 0 {
-		l.Error("invalid max size: ", maxSize)
+	if request.MaxSize <= 0 {
+		l.Error("invalid max size: ", request.MaxSize)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(GeneralResponse{
 			Success: false,
@@ -84,8 +86,8 @@ func getHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 	}
 
 	// make sure maxSize is under or equal to max allowed value
-	if maxSize > maxCards {
-		l.Error("invalid max size: ", maxSize)
+	if request.MaxSize > maxCards {
+		l.Error("invalid max size: ", request.MaxSize)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(GeneralResponse{
 			Success: false,
@@ -94,20 +96,8 @@ func getHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 		return
 	}
 
-	// parse 'from' from query parameter
-	from, err := strconv.ParseInt(fromStr, 10, 32)
-	if err != nil {
-		l.Error("error parsing 'from' string: ", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(GeneralResponse{
-			Success: false,
-			Message: "Could not parse 'from' string",
-		})
-		return
-	}
-
 	// get data for the specified fields in the specified time range, sorted by timestamp
-	data, availableRows, err := elasticsearch.GetAlarms(s, indices, sources, start, end, int(maxSize), int(from))
+	data, availableRows, err := elasticsearch.GetAlarms(s, request.Index, request.Source, start, end, request.MaxSize, request.From)
 	if err != nil {
 		l.Error("error querying data conn: ", err)
 		w.WriteHeader(http.StatusInternalServerError)

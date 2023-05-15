@@ -28,8 +28,8 @@ var (
 
 // RegisterRoutes registers routes to interact with the alarms.
 func RegisterRoutes(s *state.State, a *auth.State, r *mux.Router) {
-	// get alarms for dashboard /api/alarm/get
-	r.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
-		getHandler(r.Context(), s, a, w, r)
+	// get alarms for dashboard /api/alarm/data
+	r.HandleFunc("/data", func(w http.ResponseWriter, r *http.Request) {
+		dataHandler(r.Context(), s, a, w, r)
 	})
 }
