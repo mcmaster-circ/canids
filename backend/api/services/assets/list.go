@@ -28,24 +28,6 @@ func listHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 
 	assetNameSet := make(map[string]bool)
 
-	// get all groups from database
-	groups, err := elasticsearch.AllGroup(s)
-	if err != nil {
-		l.Error("error querying groups: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(InternalServerError)
-		return
-	}
-
-	// get all authorized assets and add them to the set
-	for _, group := range groups {
-		for _, asset := range group.Authorized {
-			if !assetNameSet[asset] {
-				assetNameSet[asset] = true
-			}
-		}
-	}
-
 	// get all data-conn indices in the database and add them to the set
 	dataConns, err := elasticsearch.ListDataAssets(s)
 	if err != nil {

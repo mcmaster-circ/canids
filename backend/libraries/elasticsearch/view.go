@@ -45,12 +45,10 @@ var (
 // DocumentView represents a document from the "view" index.
 type DocumentView struct {
 	UUID       string    `json:"uuid"`       // UUID is unique view identifier
-	Group      string    `json:"group"`      // Group is the group UUID the visualization is accessible by
-	Authorized string    `json:"authorized"` // Authorized are authorized assets (index) used for generating data
 	Name       string    `json:"name"`       // Name is common visualization name
 	Class      ViewClass `json:"class"`      // Class is the class of view
 	DataIndex  string    `json:"index"`      // DataIndex is index fields are contained in
-	Fields     []string  `json:"fields"`     // Fields is the array of fields from Authorized to be used in this view
+	Fields     []string  `json:"fields"`     // Fields is the array of fields to be used in this view
 	FieldNames []string  `json:"fieldNames"` // FieldNames is the array of common field names
 }
 
@@ -70,8 +68,6 @@ func (d *DocumentView) Update(s *state.State, esDocID string) error {
 	_, err := client.Update().Index(indexView).Id(esDocID).
 		Doc(map[string]interface{}{
 			"uuid":       d.UUID,
-			"group":      d.Group,
-			"authorized": d.Authorized,
 			"name":       d.Name,
 			"class":      d.Class,
 			"index":      d.DataIndex,
@@ -108,32 +104,6 @@ func QueryViewByUUID(s *state.State, uuid string) (DocumentView, string, error) 
 	return d, view.Id, nil
 }
 
-// QueryViewByGroup will attempt to query the "view" index for all views
-// belonging to a group. It may return an error if the query cannot be
-// completed.
-func QueryViewByGroup(s *state.State, groupUUID string) ([]DocumentView, error) {
-	var out []DocumentView
-	client, ctx := s.Elastic, s.ElasticCtx
-
-	// perform query for views with provided group uuid
-	termQuery := elastic.NewTermQuery("group.keyword", groupUUID)
-	result, err := client.Search().Index(indexView).Query(termQuery).Size(1000).Do(ctx)
-	if err != nil {
-		return out, err
-	}
-	// select + parse views into DocumentView, append to the output list
-	for _, view := range result.Hits.Hits {
-		var d DocumentView
-		err = json.Unmarshal(view.Source, &d)
-		if err != nil {
-			return out, err
-		}
-		out = append(out, d)
-	}
-	// successful query
-	return out, nil
-}
-
 // DeleteViewByUUID will attempt to delete a document in the "view" index with
 // the specified UUID. It may return an error if the deletion cannot be
 // completed.
@@ -156,10 +126,10 @@ func AllView(s *state.State) ([]DocumentView, error) {
 	if err != nil {
 		return nil, err
 	}
-	// parse groups into DocumentView, append to out
-	for _, group := range results.Hits.Hits {
+	// parse views into DocumentView, append to out
+	for _, view := range results.Hits.Hits {
 		var d DocumentView
-		err := json.Unmarshal(group.Source, &d)
+		err := json.Unmarshal(view.Source, &d)
 		if err != nil {
 			return nil, err
 		}

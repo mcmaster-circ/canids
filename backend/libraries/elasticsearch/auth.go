@@ -23,7 +23,6 @@ type DocumentAuth struct {
 	Password  string            `json:"password"`  // Password is salted user password
 	Class     jwtauth.UserClass `json:"class"`     // Class is user class
 	Name      string            `json:"name"`      // Name is the user's name
-	Group     string            `json:"group"`     // Group is the user's group
 	Activated bool              `json:"activated"` // Activated if account is active
 }
 
@@ -46,7 +45,6 @@ func (d *DocumentAuth) Update(s *state.State, esDocID string) error {
 			"password":  d.Password,
 			"class":     d.Class,
 			"name":      d.Name,
-			"group":     d.Group,
 			"activated": d.Activated,
 		}).DetectNoop(true).Do(ctx)
 	return err
@@ -79,32 +77,6 @@ func QueryAuthByUUID(s *state.State, uuid string) (DocumentAuth, string, error) 
 	return d, user.Id, nil
 }
 
-// QueryAuthByGroup will attempt to query the "auth" index for all users
-// belonging to a group. It may return an error if the query cannot be
-// completed.
-func QueryAuthByGroup(s *state.State, groupUUID string) ([]DocumentAuth, error) {
-	var out []DocumentAuth
-	client, ctx := s.Elastic, s.ElasticCtx
-
-	// perform query for users with provided group uuid
-	termQuery := elastic.NewTermQuery("group.keyword", groupUUID)
-	result, err := client.Search().Index(indexAuth).Query(termQuery).Do(ctx)
-	if err != nil {
-		return out, err
-	}
-	// select + parse user into DocumentAuth, append to the output list
-	for _, user := range result.Hits.Hits {
-		var d DocumentAuth
-		err = json.Unmarshal(user.Source, &d)
-		if err != nil {
-			return out, err
-		}
-		out = append(out, d)
-	}
-	// successful query
-	return out, nil
-}
-
 // DeleteAuthByUUID will attempt to delete a document in the "auth" index with
 // the specified UUID. It may return an error if the deletion cannot be completed.
 func DeleteAuthByUUID(s *state.State, uuid string) error {
@@ -122,4 +94,28 @@ func UpdatePassword(s *state.State, docID string, newPass string) error {
 	updates := map[string]interface{}{"password": newPass}
 	_, err := client.Update().Index(indexAuth).Id(docID).Doc(updates).Do(ctx)
 	return err
+}
+
+// AllAuth will attempt to query the "auth" index and return all users in the
+// system. It may return an error if the query cannot be completed.
+func AllAuth(s *state.State) ([]DocumentAuth, error) {
+	var out []DocumentAuth
+	client, ctx := s.Elastic, s.ElasticCtx
+
+	// perform query for all documents
+	allQuery := elastic.NewMatchAllQuery()
+	results, err := client.Search().Index(indexAuth).Query(allQuery).Size(1000).Do(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// parse document into DocumentAuth, append to out
+	for _, document := range results.Hits.Hits {
+		var d DocumentAuth
+		err := json.Unmarshal(document.Source, &d)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, d)
+	}
+	return out, nil
 }

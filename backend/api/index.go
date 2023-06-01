@@ -14,7 +14,6 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/email"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
-	"github.com/mcmaster-circ/canids-v2/backend/libraries/uuid"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	"github.com/sirupsen/logrus"
 )
@@ -39,12 +38,11 @@ const (
 
 // page represents a user authentication page.
 type page struct {
-	Page             authPageType                  // page is the type of authentication page
-	SuccessMsg       string                        // successMsg is an success message
-	ErrorMsg         string                        // errorMsg is an error message
-	UserRegistration bool                          // UserRegistration indicates of registration link is shown on login
-	Version          string                        // Version is the application version
-	Groups           []elasticsearch.DocumentGroup // Groups is a list of registered groups used for registration dropdown
+	Page             authPageType // page is the type of authentication page
+	SuccessMsg       string       // successMsg is an success message
+	ErrorMsg         string       // errorMsg is an error message
+	UserRegistration bool         // UserRegistration indicates of registration link is shown on login
+	Version          string       // Version is the application version
 }
 
 // registerIndexAssets registers the index handlers.
@@ -84,7 +82,7 @@ func registerIndexAssets(s *state.State, a *auth.State, r *mux.Router) {
 
 // indexHandler receives "/" HTTP requests. If the system has not been
 // initialized, the page will be redirected to "/setup" to initalize an
-// authentication secret and create a superuser account. If middleware is
+// authentication secret and create an admin account. If middleware is
 // disabled, the page will redirect "/dashboard". Else, the function will
 // validate if the browser is authenticated. If a valid "X-State" cookie is
 // present, the page will redirect to "/dashboard". If the cookie is not present
@@ -298,10 +296,9 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		formEmail := r.FormValue("email")
 		formPass := r.FormValue("pass")
 		formPassConfirm := r.FormValue("passConfirm")
-		formGroup := r.FormValue("group")
 
 		// validate all fields
-		if formName == "" || formEmail == "" || formPass == "" || formPassConfirm == "" || formGroup == "" {
+		if formName == "" || formEmail == "" || formPass == "" || formPassConfirm == "" {
 			// return setup page with fields error
 			l.Info("[setup] not all fields specified")
 			a.AuthPage.Execute(w, page{
@@ -337,41 +334,6 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 			})
 			return
 		}
-		// create "group" index
-		err = elasticsearch.CreateIndex(s, "group")
-		if err != nil {
-			// return setup page with general error
-			l.Error("[setup] cannot create 'group' index ", err)
-			a.AuthPage.Execute(w, page{
-				Page:       setupPage,
-				SuccessMsg: "",
-				ErrorMsg:   "Please contact the system administrator.",
-				Version:    s.Hash,
-			})
-			return
-		}
-		groupUUID := uuid.Generate()
-		// create group entry
-		group := elasticsearch.DocumentGroup{
-			UUID:       groupUUID,
-			Name:       formGroup,
-			Authorized: []string{},
-		}
-		// index group in "group"
-		docID, err := group.Index(s)
-		if err != nil {
-			// return setup page with general error
-			l.Error("[setup] cannot index group ", err)
-			a.AuthPage.Execute(w, page{
-				Page:       setupPage,
-				SuccessMsg: "",
-				ErrorMsg:   "Please contact the system administrator.",
-				Version:    s.Hash,
-			})
-			return
-		}
-		l.Info("[setup] created new group group/", docID)
-
 		// create "auth" index
 		err = elasticsearch.CreateIndex(s, "auth")
 		if err != nil {
@@ -385,17 +347,16 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 			})
 			return
 		}
-		// create user entry as superuser
+		// create user entry as admin
 		user := elasticsearch.DocumentAuth{
 			UUID:      formEmail,
 			Password:  hashedPass,
-			Class:     jwtauth.UserSuperuser,
+			Class:     jwtauth.UserAdmin,
 			Name:      formName,
-			Group:     groupUUID,
 			Activated: true,
 		}
 		// index user in "auth"
-		docID, err = user.Index(s)
+		docID, err := user.Index(s)
 		if err != nil {
 			// return setup page with general error
 			l.Error("[setup] cannot index user ", err)
@@ -652,29 +613,15 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 		http.Redirect(w, r, "/setup", http.StatusTemporaryRedirect)
 		return
 	}
-	// fetch list of groups
-	groups, err := elasticsearch.AllGroup(s)
-	if err != nil {
-		// return register page with general error
-		l.Error("[register] cannot fetch list of groups ", err)
-		a.AuthPage.Execute(w, page{
-			Page:       registerPage,
-			SuccessMsg: "",
-			ErrorMsg:   "Please contact the system administrator.",
-			Version:    s.Hash,
-		})
-		return
-	}
 	if r.Method == "POST" {
 		// POST fields
 		formName := r.FormValue("name")
 		formEmail := r.FormValue("email")
 		formPass := r.FormValue("pass")
 		formPassConfirm := r.FormValue("passConfirm")
-		formGroup := r.FormValue("group")
 
 		// validate all fields
-		if formName == "" || formEmail == "" || formPass == "" || formPassConfirm == "" || formGroup == "" {
+		if formName == "" || formEmail == "" || formPass == "" || formPassConfirm == "" {
 			// return register page with fields error
 			l.Info("[register] not all fields specified")
 			a.AuthPage.Execute(w, page{
@@ -682,7 +629,6 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 				SuccessMsg: "",
 				ErrorMsg:   "All fields must be specified.",
 				Version:    s.Hash,
-				Groups:     groups,
 			})
 			return
 		}
@@ -695,12 +641,11 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 				SuccessMsg: "",
 				ErrorMsg:   "The passwords must be the same.",
 				Version:    s.Hash,
-				Groups:     groups,
 			})
 			return
 		}
 		// query elasticsearch by provided uuid
-		_, _, err = elasticsearch.QueryAuthByUUID(s, formEmail)
+		_, _, err := elasticsearch.QueryAuthByUUID(s, formEmail)
 		if err == nil {
 			// return register page with user already exists error
 			l.Error("[register] email already exists ", formEmail)
@@ -709,7 +654,6 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 				SuccessMsg: "",
 				ErrorMsg:   "Email address already registered.",
 				Version:    s.Hash,
-				Groups:     groups,
 			})
 			return
 		}
@@ -723,7 +667,6 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
 				Version:    s.Hash,
-				Groups:     groups,
 			})
 			return
 		}
@@ -733,7 +676,6 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 			Password:  hashedPass,
 			Class:     jwtauth.UserStandard,
 			Name:      formName,
-			Group:     formGroup,
 			Activated: s.Config.UserActivated,
 		}
 		// index user in "auth"
@@ -746,7 +688,6 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
 				Version:    s.Hash,
-				Groups:     groups,
 			})
 			return
 		}
@@ -762,7 +703,6 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 			SuccessMsg: successMsg,
 			ErrorMsg:   "",
 			Version:    s.Hash,
-			Groups:     groups,
 		})
 		return
 	}
@@ -772,7 +712,6 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 		SuccessMsg: "",
 		ErrorMsg:   "",
 		Version:    s.Hash,
-		Groups:     groups,
 	})
 }
 
@@ -801,7 +740,6 @@ func validateLogin(s *state.State, l *logrus.Entry, uuid string, pass string) (b
 		payload.UUID = db.UUID
 		payload.Class = db.Class
 		payload.Name = db.Name
-		payload.Group = db.Group
 		payload.Activated = db.Activated
 		return true, payload
 	}

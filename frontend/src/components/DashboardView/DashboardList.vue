@@ -18,7 +18,6 @@
           >
             <template slot-scope="props">
               <b-table-column label="Name" field="name" sortable searchable>{{props.row.name}}</b-table-column>
-              <b-table-column label="Groups" field="group" sortable searchable>{{props.row.group}}</b-table-column>
               <b-table-column field="actions">
                 <button
                   class="button is-primary"
@@ -67,13 +66,11 @@ export default {
       editDashboard: false,
       isOpen: 0,
       dashboardObject: {
-        group: undefined,
         name: undefined,
         views: [],
         sizes: []
       },
       views: {},
-      groups: {},
       dashboardData: []
     };
   },
@@ -82,28 +79,6 @@ export default {
   },
   methods: {
     fetchData() {
-      // Fetch Groups
-      fetch(process.env.VUE_APP_ENDPOINT + "group/list")
-        .then(response => {
-          if (response.ok) {
-            return Promise.all([response.ok, response.json()]);
-          } else {
-            return Promise.all([response.ok, response.text()]);
-          }
-        })
-        .then(response => {
-          this.groups = {};
-          const status = response[0];
-          const data = response[1];
-          if (!status) {
-            this.$buefy.snackbar.open(data);
-          }
-          this.groups[data.current.uuid] = data.current.name;
-
-          for (let i = 0; i < data.others.length; i++) {
-            this.groups[data.others[i].uuid] = data.others[i].name;
-          }
-        });
       // Fetch Views
       fetch(process.env.VUE_APP_ENDPOINT + "views/list")
         .then(response => {
@@ -114,7 +89,6 @@ export default {
           }
         })
         .then(response => {
-          this.groups = {};
           const status = response[0];
           const data = response[1];
           if (!status) {

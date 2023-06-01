@@ -14,7 +14,6 @@
           <template slot-scope="props">
             <b-table-column label="Name" field="name" sortable searchable>{{props.row.name}}</b-table-column>
             <b-table-column label="Email" field="uuid" sortable searchable>{{props.row.uuid}}</b-table-column>
-            <b-table-column label="Group" field="group" sortable searchable>{{groups[props.row.group]}}</b-table-column>
             <b-table-column label="Role" field="class" sortable searchable>{{props.row.class}}</b-table-column>
             <b-table-column
               label="Activated"
@@ -95,7 +94,6 @@ export default {
   data() {
     return {
       users: [],
-      groups: {},
       editUserData: false,
       addUserModal: false,
       dataToEdit: undefined,
@@ -121,38 +119,7 @@ export default {
           }
         })
         .then(json => {
-          this.users = [];
-          for (let i = 0; i < json.groups.length; i++) {
-            if (json.groups[i].users) {
-              for (let j = 0; j < json.groups[i].users.length; j++) {
-                const user = json.groups[i].users[j];
-                user.group = json.groups[i].group;
-                this.users.push(user);
-              }
-            }
-          }
-        });
-      fetch(process.env.VUE_APP_ENDPOINT + "group/list")
-        .then(response => {
-          if (response.ok) {
-            return Promise.all([response.ok, response.json()]);
-          } else {
-            return Promise.all([response.ok, response.text()]);
-          }
-        })
-        .then(response => {
-          this.groups = {};
-          const status = response[0];
-          const data = response[1];
-          if (!status) {
-            this.$buefy.snackbar.open(data);
-          }
-          this.groups[data.current.uuid] = data.current.name;
-          if (data.others) {
-            for (let i = 0; i < data.others.length; i++) {
-              this.groups[data.others[i].uuid] = data.others[i].name;
-            }
-          }
+          this.users = json.users;
         });
     },
     openAddModal() {

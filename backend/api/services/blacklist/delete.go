@@ -28,13 +28,13 @@ func deleteHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")
 
-	// only superusers can use this endpoint
-	if current.Class != jwtauth.UserSuperuser {
-		l.Warn("non superuser attempting to delete blacklist")
+	// only admins can use this endpoint
+	if current.Class != jwtauth.UserAdmin {
+		l.Warn("non admin attempting to delete blacklist")
 		w.WriteHeader(http.StatusForbidden)
 		out := GeneralResponse{
 			Success: false,
-			Message: "Only a superuser can delete blacklist.",
+			Message: "Only an admin can delete blacklist.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return

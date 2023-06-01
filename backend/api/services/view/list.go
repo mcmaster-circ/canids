@@ -23,36 +23,17 @@ type listResponse struct {
 }
 
 // listHandler is "/api/view/list". It is responsible for listing
-// visualizations. For all users, it will return the list of saved views for
-// their group. A superuser may also specify a "group" parameter to return
-// visualizations for another group.
+// visualizations. For all users, it will return the list of saved views.
 func listHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
-	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
+	_, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")
 
 	// output
 	out := listResponse{}
 
-	// check if superuser requesting another group's views
-	group := r.URL.Query().Get("group")
-	// only superuser can access other views
-	if group != "" && current.Class != jwtauth.UserSuperuser {
-		l.Warn("non superuser attempting to fetch foreign views")
-		w.WriteHeader(http.StatusForbidden)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Only superusers can specify a group parameter.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
-	}
-	// if group not specified, query using requesting user's group
-	if group == "" {
-		group = current.Group
-	}
-	// fetch all views belonging to the group
-	views, err := elasticsearch.QueryViewByGroup(s, group)
+	// fetch all views
+	views, err := elasticsearch.AllView(s)
 	if err != nil {
 		l.Error("error fetching views ", err)
 		w.WriteHeader(http.StatusInternalServerError)

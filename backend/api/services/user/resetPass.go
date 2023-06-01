@@ -23,8 +23,7 @@ type resetPassRequest struct {
 }
 
 // Pass is "/api/user/resetPass". It is responsible for sending a password reset
-// link to the provided user. A standard user can not use this endpoint. An
-// admin may request a password reset for any member in their group. A superuser
+// link to the provided user. A standard user can not use this endpoint. An admin
 // may request a password reset for any user. If the requesting user has
 // permissions and the provided user email is valid, the user will be emailed a
 // password reset link. If the requesting user does not have permissions or if
@@ -77,17 +76,6 @@ func resetPassHandler(ctx context.Context, s *state.State, a *auth.State, w http
 		out := GeneralResponse{
 			Success: false,
 			Message: "Invalid email provided.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
-	}
-	// admin user can only reset users in same group
-	if current.Class == jwtauth.UserAdmin && current.Group != existing.Group {
-		l.Warn("admin user attempting to reset password of user in other group")
-		w.WriteHeader(http.StatusForbidden)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Admin user can only request password reset for users in same group.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return

@@ -244,7 +244,7 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 	return alarms, int(queryResult.Hits.TotalHits.Value), nil
 }
 
-func QueryDataInRangeAggregated(s *state.State, indexPrefix, assetName string, xField string, yField string, start time.Time, end time.Time, interval int64) ([]interface{}, []interface{}, error) {
+func QueryDataInRangeAggregated(s *state.State, indexPrefix string, xField string, yField string, start time.Time, end time.Time, interval int64) ([]interface{}, []interface{}, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// query for docs in the given time range
@@ -257,7 +257,7 @@ func QueryDataInRangeAggregated(s *state.State, indexPrefix, assetName string, x
 		SubAggregation("aggY", elastic.NewAvgAggregation().Field(yField))
 
 	// do query
-	indexName := fmt.Sprintf("%s%s-*", indexPrefix, assetName)
+	indexName := fmt.Sprintf("%s-*", indexPrefix)
 	queryResult, err := client.Search().Index(indexName).Query(query).Size(0).Aggregation("aggT", aggregation).Do(ctx)
 	if err != nil {
 		return []interface{}{}, []interface{}{}, err
@@ -303,12 +303,12 @@ func QueryDataInRangeAggregated(s *state.State, indexPrefix, assetName string, x
 
 // QueryDataInRange queries the specified asset for all fields specified,
 // returns an array of data for each field
-func QueryDataInRange(s *state.State, indexPrefix, assetName string, fields []string, start time.Time, end time.Time, size int, from int) ([][]interface{}, int, error) {
+func QueryDataInRange(s *state.State, indexPrefix string, fields []string, start time.Time, end time.Time, size int, from int) ([][]interface{}, int, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// query for all data conn documents for this asset in the given timerange,
 	// sorted in descending time
-	indexName := fmt.Sprintf("%s%s-*", indexPrefix, assetName)
+	indexName := fmt.Sprintf("%s-*", indexPrefix)
 	queryResult, err := client.Search().Index(indexName).
 		Query(elastic.NewRangeQuery("timestamp").
 			From(start.Format(time.RFC3339)).
@@ -341,7 +341,7 @@ func QueryDataInRange(s *state.State, indexPrefix, assetName string, fields []st
 	return result, int(queryResult.Hits.TotalHits.Value), nil
 }
 
-func CountDataInRange(s *state.State, indexPrefix, assetName string, field string, start time.Time, end time.Time) ([]string, []int64, error) {
+func CountDataInRange(s *state.State, indexPrefix, field string, start time.Time, end time.Time) ([]string, []int64, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// Get the mapping
@@ -363,7 +363,7 @@ func CountDataInRange(s *state.State, indexPrefix, assetName string, field strin
 	}
 
 	// query for all data conn documents for this asset in the given timerange, sorted in ascending time
-	indexName := fmt.Sprintf("%s%s-*", indexPrefix, assetName)
+	indexName := fmt.Sprintf("%s-*", indexPrefix)
 	queryResult, err := client.Search().Index(indexName).
 		Query(elastic.NewRangeQuery("timestamp").
 			From(start.Format(time.RFC3339)).
@@ -393,7 +393,7 @@ func CountDataInRange(s *state.State, indexPrefix, assetName string, field strin
 	return keys, counts, nil
 }
 
-func CountTotalDataInRange(s *state.State, assetName string, field string, start time.Time, end time.Time) ([]string, []int64, error) {
+func CountTotalDataInRange(s *state.State, field string, start time.Time, end time.Time) ([]string, []int64, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// Create Range Aggregation
@@ -415,7 +415,7 @@ func CountTotalDataInRange(s *state.State, assetName string, field string, start
 	}
 
 	// query for all data conn documents for this asset in the given timerange, sorted in ascending time
-	indexName := fmt.Sprintf("data-*%s*", assetName)
+	indexName := "data-*"
 	queryResult, err := client.Search().Index(indexName).
 		Query(elastic.NewRangeQuery("timestamp").
 			From(start.Format(time.RFC3339)).

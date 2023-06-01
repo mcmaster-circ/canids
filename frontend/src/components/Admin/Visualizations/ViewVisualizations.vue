@@ -20,10 +20,6 @@
                   {{ props.row.name }}
               </b-table-column>
 
-              <b-table-column field="authorized" label="Authorized" style="cursor:pointer;">
-                  {{ props.row.authorized }}
-              </b-table-column>
-
               <b-table-column field="class" label="Class" style="cursor:pointer;">
                   {{ props.row.class }}
               </b-table-column>

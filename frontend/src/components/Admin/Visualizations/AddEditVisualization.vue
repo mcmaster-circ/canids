@@ -100,8 +100,6 @@ export default {
   data() {
     return {
       view: {
-        group: undefined,
-        authorized: undefined,
         name: "",
         class: "",
         selectedIndex: {},
@@ -110,16 +108,12 @@ export default {
         fieldNames: []
       },
       activeStep: 0,
-      allGroups: [],
-      authorizedAssets: [],
       allFields: []
     };
   },
   mounted() {
     // if we passed an object to edit
     if (this.visualizationToEdit.class) {
-      this.view.group = this.visualizationToEdit.group.uuid
-      this.view.authorized = this.visualizationToEdit.authorized
       this.view.name = this.visualizationToEdit.name
       this.view.class = this.visualizationToEdit.class
       this.view.index = this.visualizationToEdit.index
@@ -151,8 +145,6 @@ export default {
       if (this.visualizationToEdit.class) {
         const body = {
           uuid: this.visualizationToEdit.uuid,
-          group: this.view.group,
-          authorized: this.view.authorized,
           name: this.view.name,
           class: this.view.class,
           index: this.view.selectedIndex.index,
@@ -173,8 +165,6 @@ export default {
           })
       } else {
         const body = {
-          group: this.view.group,
-          authorized: this.view.authorized,
           name: this.view.name,
           class: this.view.class,
           index: this.view.selectedIndex.index,

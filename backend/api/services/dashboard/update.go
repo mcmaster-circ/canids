@@ -22,8 +22,7 @@ type updateRequest struct {
 }
 
 // updateHandler is "/api/dashboard/update". It is responsible for updating an
-// existing dashboard. An admin can update the dashboard for their group. A
-// superuser can update the dashboard for any group.
+// existing dashboard. An admin can update the dashboard for everyone.
 func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
@@ -54,7 +53,7 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		return
 	}
 	// ensure all fields are present
-	if request.UUID == "" || request.Group == "" || request.Name == "" {
+	if request.UUID == "" || request.Name == "" {
 		l.Warn("not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
@@ -64,17 +63,6 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		json.NewEncoder(w).Encode(out)
 		return
 
-	}
-	// if admin is updating, ensure it is for same group
-	if current.Class == jwtauth.UserAdmin && request.Group != current.Group {
-		l.Warn("admin user attempting to update foreign dashboard")
-		w.WriteHeader(http.StatusForbidden)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Admin users can not update foreign dashboard.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
 	}
 	// query current dashboard to update
 	dashboard, esDocID, err := elasticsearch.QueryDashboardByUUID(s, request.UUID)
@@ -104,7 +92,6 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		}
 	}
 	// update dashboard with new parameters
-	dashboard.Group = request.Group
 	dashboard.Name = request.Name
 	dashboard.Views = request.Views
 	dashboard.Sizes = request.Sizes

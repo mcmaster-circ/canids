@@ -23,8 +23,7 @@ type deleteRequest struct {
 
 // deleteHandler is "/api/user/delete". It is responsible for deleting users. A
 // user can not delete their own account. A standard user can not delete an
-// account. Admins can delete other users in their group. Superusers can delete
-// all users.
+// account. Admins can delete all users.
 func deleteHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
@@ -77,24 +76,13 @@ func deleteHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		return
 	}
 	// query user from database
-	existing, _, err := elasticsearch.QueryAuthByUUID(s, request.UUID)
+	_, _, err = elasticsearch.QueryAuthByUUID(s, request.UUID)
 	if err != nil {
 		l.Error("error getting user specified in request ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
 			Message: "Invalid email provided.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
-	}
-	// admin user can only delete users in same group
-	if current.Class == jwtauth.UserAdmin && current.Group != existing.Group {
-		l.Warn("admin user attempting to delete user in other group")
-		w.WriteHeader(http.StatusForbidden)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Admin user can only delete users in same group.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return
