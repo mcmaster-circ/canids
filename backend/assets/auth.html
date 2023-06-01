@@ -174,15 +174,6 @@
                 <label for="passwordConfirm">Confirm Password</label>
                 <input type="password" class="form-control" id="passwordConfirm" placeholder="MyV3rySecurePassw0rd" name="passConfirm" required>
             </div>
-            <div class="mb-3 text-left">
-                <label for="group">Group</label>
-                <select class="form-control" id="group" name="group" required>
-                    {{range .Groups}}
-                    <option value="{{.UUID}}">{{.Name}}</option>
-                    {{end}}
-                </select>
-            </div>
-            <p>If your group is not listed, please contact the system admistrator.</p>
             <button class="btn btn-primary btn-lg btn-block" type="submit">Register</button>
         </form>
         {{end}}
@@ -226,11 +217,7 @@
                 <label for="passwordConfirm">Confirm Password</label>
                 <input type="password" class="form-control" id="passwordConfirm" placeholder="MyV3rySecurePassw0rd" name="passConfirm" required>
             </div>
-            <div class="mb-3 text-left">
-                <label for="group">Group</label>
-                <input type="text" class="form-control" id="group" placeholder="McMaster University" name="group" required>
-            </div>
-            <p>This user will be created with superuser permissions.</p>
+            <p>This user will be created with admin permissions.</p>
             <button class="btn btn-primary btn-lg btn-block" type="submit">Activate</button>
         </form>
         {{end}}

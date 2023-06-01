@@ -19,19 +19,16 @@ import (
 // updateView is the format of the update view request.
 type updateRequest struct {
 	UUID       string   `json:"uuid"`       // UUID is unique view identifier
-	Group      string   `json:"group"`      // Group is the group UUID the visualization is accessible by
-	Authorized string   `json:"authorized"` // Authorized is authorized asset (index) used for generating data
 	Name       string   `json:"name"`       // Name is common visualization name
 	Class      string   `json:"class"`      // Class is the class of view
 	DataIndex  string   `json:"index"`      // DataIndex is index fields are contained in
-	Fields     []string `json:"fields"`     // Fields is the array of fields from Authorized to be used in this view
+	Fields     []string `json:"fields"`     // Fields is the array of fields to be used in this view
 	FieldNames []string `json:"fieldNames"` // FieldNames is the array of common field names
 }
 
 // updateHandler is "/api/view/update". It is responsible for updating an
-// existing view. A standard user cannot update views. An admin can update views
-// for their group. A superuser can update all groups. The same restrictions
-// regarding addHandler and authorized assets apply here.
+// existing view. A standard user cannot update views. An admin can update
+// any view. The same restrictions regarding addHandler apply here.
 func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
@@ -48,6 +45,7 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		json.NewEncoder(w).Encode(out)
 		return
 	}
+
 	// attempt to parse request
 	var request updateRequest
 	err := json.NewDecoder(r.Body).Decode(&request)
@@ -63,7 +61,7 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 	}
 
 	// ensure all fields are present
-	if request.UUID == "" || request.Group == "" || request.Name == "" || request.Class == "" || request.DataIndex == "" {
+	if request.UUID == "" || request.Name == "" || request.Class == "" || request.DataIndex == "" {
 		l.Warn("not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
@@ -123,72 +121,6 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		}
 	}
 
-	// if admin is updating, ensure it is for same group
-	if current.Class == jwtauth.UserAdmin && request.Group != current.Group {
-		l.Warn("admin user attempting to add foreign views")
-		w.WriteHeader(http.StatusForbidden)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Admin users can not add foreign views.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
-	}
-
-	// allowed admin or superuser here, ensure group actually exists
-	group, _, err := elasticsearch.QueryGroupByUUID(s, request.Group)
-	if err != nil {
-		l.Warn("invalid group ", request.Group)
-		w.WriteHeader(http.StatusBadRequest)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Invalid group provided.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
-	}
-
-	// admin can add authorized assets in group
-	authorizedAssets := group.Authorized
-
-	// a superuser can create visualizations with any authorized asset
-	if current.Class == jwtauth.UserSuperuser {
-		// need to fetch all authorized assets in all groups
-		authorizedAssets = []string{}
-		groups, err := elasticsearch.AllGroup(s)
-		if err != nil {
-			l.Error("cannot fetch all groups ", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(InternalServerError)
-			return
-		}
-		// for each group, add each authorized asset to the list of authorized
-		// assets
-		for _, group := range groups {
-			for _, authorized := range group.Authorized {
-				authorizedAssets = append(authorizedAssets, authorized)
-			}
-		}
-	}
-	// ensure provided asset actually exists for requesting user
-	validAsset := false
-	for _, authorized := range authorizedAssets {
-		if request.Authorized == authorized {
-			// found valid asset
-			validAsset = true
-			break
-		}
-	}
-	if request.Authorized != "Aggregate" && !validAsset {
-		l.Warn("invalid authorized asset ", request.Authorized)
-		w.WriteHeader(http.StatusBadRequest)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Invalid asset provided.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
-	}
 	// query elasticsearch for existing document ID
 	_, esDocID, err := elasticsearch.QueryViewByUUID(s, request.UUID)
 	if err != nil {
@@ -201,17 +133,17 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		json.NewEncoder(w).Encode(out)
 		return
 	}
+
 	// create new document to update
 	updatedDoc := elasticsearch.DocumentView{
 		UUID:       request.UUID,
-		Group:      request.Group,
-		Authorized: request.Authorized,
 		Name:       request.Name,
 		Class:      class,
 		DataIndex:  request.DataIndex,
 		Fields:     request.Fields,
 		FieldNames: request.FieldNames,
 	}
+
 	// update document
 	err = updatedDoc.Update(s, esDocID)
 	if err != nil {
@@ -220,6 +152,7 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		json.NewEncoder(w).Encode(InternalServerError)
 		return
 	}
+
 	// success
 	l.Info("successfully updated view ", request.UUID)
 	out := GeneralResponse{

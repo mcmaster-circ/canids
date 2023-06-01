@@ -23,19 +23,19 @@ type updateRequest struct {
 }
 
 // updateHandler is "/api/blacklist/update". It is responsible for updating an
-// existing blacklist. Only a superuser can request for a blacklist to be updated.
+// existing blacklist. Only an admin can request for a blacklist to be updated.
 func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")
 
-	// only superusers can use this endpoint
-	if current.Class != jwtauth.UserSuperuser {
-		l.Warn("non superuser attempting to update blacklist")
+	// only admins can use this endpoint
+	if current.Class != jwtauth.UserAdmin {
+		l.Warn("non admin attempting to update blacklist")
 		w.WriteHeader(http.StatusForbidden)
 		out := GeneralResponse{
 			Success: false,
-			Message: "Only a superuser can update blacklist.",
+			Message: "Only an admin can update blacklist.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return

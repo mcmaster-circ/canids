@@ -22,15 +22,12 @@ type updateRequest struct {
 	UUID      string `json:"uuid"`      // UUID is desired user email
 	Class     string `json:"class"`     // Class is desired user class
 	Activated bool   `json:"activated"` // Activated is desired user activation status
-	Group     string `json:"group"`     // Group is desired user group
 }
 
-// updateHandler is "/api/user/update". It allows for standard users, admins,
-// and superusers to update a user account. Standard user may change: name,
-// email. Admin user may change: name, email, class of other users (between
-// standard/admin), activation of other users. Superuser may change: name,
-// email, class of other users, activation of other users, group. An
-// admin/superuser cannot change their own class/activation to prevent
+// updateHandler is "/api/user/update". It allows for standard users and admins
+// to update a user account. Standard user may change: name, email. Admin user
+// may change: name, email, class of other users amd activation
+// of other users. An admin cannot change their own class/activation to prevent
 // accidental lockout. Another user is required for this. If a uuid query
 // parameter is specified, it will attempt to modify another user. Else, it will
 // attempt to modify the current user.
@@ -60,7 +57,7 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		return
 	}
 	// ensure all fields are present
-	if request.Name == "" || request.UUID == "" || request.Class == "" || request.Group == "" {
+	if request.Name == "" || request.UUID == "" || request.Class == "" {
 		l.Warn("not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
@@ -88,17 +85,15 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 
 	// find current user status
 	isStandard := current.Class == jwtauth.UserStandard
-	isAdmin := current.Class == jwtauth.UserAdmin
 
 	// check what parameters are being modified
 	nameModified := existing.Name != request.Name
 	emailModified := existing.UUID != request.UUID
 	classModified := string(existing.Class) != request.Class
 	activatedModified := existing.Activated != request.Activated
-	groupModified := existing.Group != request.Group
 
 	// check if things have to change
-	if !nameModified && !emailModified && !classModified && !activatedModified && !groupModified {
+	if !nameModified && !emailModified && !classModified && !activatedModified {
 		l.Info("no changes in user update")
 		out := GeneralResponse{
 			Success: true,
@@ -119,8 +114,8 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		return
 	}
 	// standard can change: name, email
-	if isStandard && (classModified || activatedModified || groupModified) {
-		l.Warn("standard user attempting to change class/activation/group")
+	if isStandard && (classModified || activatedModified) {
+		l.Warn("standard user attempting to change class/activation")
 		w.WriteHeader(http.StatusForbidden)
 		out := GeneralResponse{
 			Success: false,
@@ -129,35 +124,13 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		json.NewEncoder(w).Encode(out)
 		return
 	}
-	// admin can change: name, email, class, activation
-	if isAdmin && groupModified {
-		l.Warn("admin user attempting to change group")
-		w.WriteHeader(http.StatusForbidden)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Admin users can not modify group.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
-	}
-	// prevent lockout: admin/superusers cannot modify own class/activation
+	// prevent lockout: admins cannot modify own class/activation
 	if modifyingSelf && (classModified || activatedModified) {
 		l.Warn("user attempting to modify own class/activation")
 		w.WriteHeader(http.StatusForbidden)
 		out := GeneralResponse{
 			Success: false,
 			Message: "Users can not modify their own class or activation.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
-	}
-	// admins cannot promote users to superusers
-	if isAdmin && request.Class == string(jwtauth.UserSuperuser) {
-		l.Warn("admin user attempting to promote user to superuser")
-		w.WriteHeader(http.StatusForbidden)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Admins can not promote users to superuser.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return
@@ -192,27 +165,12 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 			return
 		}
 	}
-	// if group modified, ensure group is valid
-	if groupModified {
-		_, _, err = elasticsearch.QueryGroupByUUID(s, request.Group)
-		if err != nil {
-			l.Warn("invalid group ", request.Group)
-			w.WriteHeader(http.StatusBadRequest)
-			out := GeneralResponse{
-				Success: false,
-				Message: "Invalid group provided.",
-			}
-			json.NewEncoder(w).Encode(out)
-			return
-		}
-	}
 
 	// passed all the tests, update existing user as requested
 	existing.Name = request.Name
 	existing.UUID = request.UUID
 	existing.Class = jwtauth.UserClassMap[request.Class]
 	existing.Activated = request.Activated
-	existing.Group = request.Group
 
 	// attempt to commit changes to database
 	err = existing.Update(s, esDocID)

@@ -28,10 +28,6 @@ var (
 
 // RegisterRoutes registers routes to interact with the views.
 func RegisterRoutes(s *state.State, a *auth.State, r *mux.Router) {
-	// list of authorized resources /api/view/authorized
-	r.HandleFunc("/authorized", func(w http.ResponseWriter, r *http.Request) {
-		authorizedHandler(r.Context(), s, a, w, r)
-	})
 	// list of saved visualizations /api/view/list
 	r.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
 		listHandler(r.Context(), s, a, w, r)

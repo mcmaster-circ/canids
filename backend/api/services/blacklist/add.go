@@ -25,20 +25,20 @@ type addRequest struct {
 }
 
 // addHandler is "/api/blacklist/add". It is responsible for creating a new blacklist.
-// Only a superuser can request for a new blacklist to be created. The blacklist UUID
+// Only an admin can request for a new blacklist to be created. The blacklist UUID
 // must not exist and the blacklist name must be unique.
 func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")
 
-	// only superusers can use this endpoint
-	if current.Class != jwtauth.UserSuperuser {
-		l.Warn("non superuser attempting to create new blacklist")
+	// only admins can use this endpoint
+	if current.Class != jwtauth.UserAdmin {
+		l.Warn("non admin attempting to create new blacklist")
 		w.WriteHeader(http.StatusForbidden)
 		out := GeneralResponse{
 			Success: false,
-			Message: "Only a superuser can create a new blacklist.",
+			Message: "Only an admin can create a new blacklist.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return

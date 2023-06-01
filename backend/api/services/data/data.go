@@ -71,7 +71,7 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 	}
 
 	// generate indexName to query
-	indexName := "data-" + view.DataIndex + "-"
+	indexName := "data-" + view.DataIndex
 
 	// Get data in whatever way the given view class requires
 	data := [][]interface{}{}
@@ -88,10 +88,10 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 		var keys []string
 		var counts []int64
 
-		if view.Name == fmt.Sprintf("%s %s", elasticsearch.DefaultViewName, view.Authorized) {
-			keys, counts, err = elasticsearch.CountTotalDataInRange(s, view.Authorized, view.Fields[0], start, end)
+		if view.Name == elasticsearch.DefaultViewName {
+			keys, counts, err = elasticsearch.CountTotalDataInRange(s, view.Fields[0], start, end)
 		} else {
-			keys, counts, err = elasticsearch.CountDataInRange(s, indexName, view.Authorized, view.Fields[0], start, end)
+			keys, counts, err = elasticsearch.CountDataInRange(s, indexName, view.Fields[0], start, end)
 		}
 		if err != nil {
 			l.Error("error querying data conn: ", err)
@@ -155,8 +155,7 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 		}
 
 		// get data for the specified fields in the specified time range
-		// TODO(Tanner)
-		xdata, ydata, err := elasticsearch.QueryDataInRangeAggregated(s, indexName, view.Authorized, view.Fields[0], view.Fields[1], start, end, interval)
+		xdata, ydata, err := elasticsearch.QueryDataInRangeAggregated(s, indexName, view.Fields[0], view.Fields[1], start, end, interval)
 		if err != nil {
 			l.Error("error querying data conn: ", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -216,7 +215,7 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 
 		// get data for the specified fields in the specified time range, sorted by timestamp
 		// TODO(Tanner)
-		data, availableRows, err = elasticsearch.QueryDataInRange(s, indexName, view.Authorized, view.Fields, start, end, int(maxSize), int(from))
+		data, availableRows, err = elasticsearch.QueryDataInRange(s, indexName, view.Fields, start, end, int(maxSize), int(from))
 		if err != nil {
 			l.Error("error querying data conn: ", err)
 			w.WriteHeader(http.StatusInternalServerError)

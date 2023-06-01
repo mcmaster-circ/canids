@@ -22,20 +22,19 @@ type deleteRequest struct {
 }
 
 // deleteHandler is "/api/view/deleteHandler". It is responsible for deleting a
-// view. A standard user cannot delete views. An admin can delete views for
-// their group. A superuser can delete any view.
+// view. A standard user cannot delete views. An admin can delete any view.
 func deleteHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")
 
-	// only superusers can use this endpoint
-	if current.Class != jwtauth.UserSuperuser {
-		l.Warn("non superuser attempting to delete view")
+	// only admins can use this endpoint
+	if current.Class != jwtauth.UserAdmin {
+		l.Warn("non admin attempting to delete view")
 		w.WriteHeader(http.StatusForbidden)
 		out := GeneralResponse{
 			Success: false,
-			Message: "Only a superuser can delete view.",
+			Message: "Only an admin can delete view.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return
@@ -78,20 +77,6 @@ func deleteHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		}
 		json.NewEncoder(w).Encode(out)
 		return
-	}
-
-	// if admin is deleting, ensure it is for same group
-	if current.Class == jwtauth.UserAdmin {
-		if view.Group != current.Group {
-			l.Warn("admin user attempting to delete foreign views")
-			w.WriteHeader(http.StatusForbidden)
-			out := GeneralResponse{
-				Success: false,
-				Message: "Admin users can not delete foreign views.",
-			}
-			json.NewEncoder(w).Encode(out)
-			return
-		}
 	}
 
 	// prevent deletion of a view that is currently in a dashboard

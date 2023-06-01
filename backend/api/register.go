@@ -12,7 +12,6 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/dashboard"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/data"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/fields"
-	"github.com/mcmaster-circ/canids-v2/backend/api/services/group"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/user"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/view"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
@@ -31,9 +30,6 @@ func registerRoutes(s *state.State, a *auth.State, unsecure *mux.Router, secure 
 
 	// register user service, require authentication: /api/user
 	user.RegisterRoutes(s, a, secure.PathPrefix("/user/").Subrouter())
-
-	// register group service, require authentication: /api/group
-	group.RegisterRoutes(s, a, secure.PathPrefix("/group/").Subrouter())
 
 	// register view service, require authentication: /api/view
 	view.RegisterRoutes(s, a, secure.PathPrefix("/view/").Subrouter())

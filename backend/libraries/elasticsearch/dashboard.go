@@ -37,7 +37,6 @@ var (
 // DocumentDashboard represents a document from the "dashboard" index.
 type DocumentDashboard struct {
 	UUID  string      `json:"uuid"`  // UUID is unique dashboard identifier
-	Group string      `json:"group"` // Group is group dashboard belongs to
 	Name  string      `json:"name"`  // Name is dashboard name
 	Views []string    `json:"views"` // Views is a list of views on the dashboard
 	Sizes []SizeClass `json:"sizes"` // Sizes is a list of sizes corresponding to each view
@@ -59,7 +58,6 @@ func (d *DocumentDashboard) Update(s *state.State, esDocID string) error {
 	_, err := client.Update().Index(indexDashboard).Id(esDocID).
 		Doc(map[string]interface{}{
 			"uuid":  d.UUID,
-			"group": d.Group,
 			"name":  d.Name,
 			"views": d.Views,
 			"sizes": d.Sizes,
@@ -94,33 +92,6 @@ func QueryDashboardByUUID(s *state.State, uuid string) (DocumentDashboard, strin
 	return d, dashboard.Id, nil
 }
 
-// QueryDashboardByGroup will attempt to query the "dashboard" index for the
-// dashboard belonging to a group. It may return an error if the query cannot be
-// completed.
-func QueryDashboardByGroup(s *state.State, groupUUID string) (DocumentDashboard, string, error) {
-	var d DocumentDashboard
-	client, ctx := s.Elastic, s.ElasticCtx
-
-	// perform query for dashboard with provided uuid
-	termQuery := elastic.NewTermQuery("group.keyword", groupUUID)
-	result, err := client.Search().Index(indexDashboard).Query(termQuery).Do(ctx)
-	if err != nil {
-		return d, "", err
-	}
-	// ensure dashboard was returned
-	if result.Hits.TotalHits.Value == 0 {
-		return d, "", errors.New("dashboard: no document for group uuid found")
-	}
-	// select + parse dashboard into DocumentDashboard
-	dashboard := result.Hits.Hits[0]
-	err = json.Unmarshal(dashboard.Source, &d)
-	if err != nil {
-		return d, "", err
-	}
-	// successful query
-	return d, dashboard.Id, nil
-}
-
 // AllDashboard will attempt to query the "dashboard" index and return all dashboards in the
 // system. It may return an error if the query cannot be completed.
 func AllDashboard(s *state.State) ([]DocumentDashboard, error) {
@@ -133,14 +104,38 @@ func AllDashboard(s *state.State) ([]DocumentDashboard, error) {
 	if err != nil {
 		return nil, err
 	}
-	// parse groups into DocumentDashboard, append to out
-	for _, group := range results.Hits.Hits {
+	// parse dashboards into DocumentDashboard, append to out
+	for _, dashboard := range results.Hits.Hits {
 		var d DocumentDashboard
-		err := json.Unmarshal(group.Source, &d)
+		err := json.Unmarshal(dashboard.Source, &d)
 		if err != nil {
 			return nil, err
 		}
 		out = append(out, d)
 	}
 	return out, nil
+}
+
+// GetDashboard will attempt to query the "dashboard" index and return the first dashboard.
+// It may return an error if the query cannot be completed.
+func GetDashboard(s *state.State) (DocumentDashboard, error) {
+	client, ctx := s.Elastic, s.ElasticCtx
+
+	// perform query for all documents
+	allQuery := elastic.NewMatchAllQuery()
+	results, err := client.Search().Index(indexDashboard).Query(allQuery).Size(1000).Do(ctx)
+	if err != nil {
+		return DocumentDashboard{}, err
+	}
+	// parse dashboard into DocumentDashboard
+	hits := results.Hits.Hits
+	if len(hits) == 0 {
+		return DocumentDashboard{}, errors.New("dashboard: no documents found")
+	}
+	var dashboard DocumentDashboard
+	err = json.Unmarshal(hits[0].Source, &dashboard)
+	if err != nil {
+		return DocumentDashboard{}, err
+	}
+	return dashboard, nil
 }

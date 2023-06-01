@@ -28,9 +28,7 @@ var (
 type UserClass string
 
 const (
-	// UserSuperuser is a user that has full root privileges
-	UserSuperuser UserClass = "superuser"
-	// UserAdmin is a user that has admin privileges
+	// UserAdmin is a user that has full root privileges
 	UserAdmin UserClass = "admin"
 	// UserStandard is a user that has regular privileges
 	UserStandard UserClass = "standard"
@@ -39,9 +37,8 @@ const (
 var (
 	// UserClassMap maps the string representation back to UserClass
 	UserClassMap = map[string]UserClass{
-		"superuser": UserSuperuser,
-		"admin":     UserAdmin,
-		"standard":  UserStandard,
+		"admin":    UserAdmin,
+		"standard": UserStandard,
 	}
 )
 
@@ -58,7 +55,6 @@ type Payload struct {
 	UUID      string    `json:"uuid"`      // UUID is unique user identifier (email)
 	Class     UserClass `json:"class"`     // Class is user class
 	Name      string    `json:"name"`      // Name is the user's name
-	Group     string    `json:"group"`     // Group is the user's group
 	Activated bool      `json:"activated"` // Activated if account is active
 	jwt.StandardClaims
 }

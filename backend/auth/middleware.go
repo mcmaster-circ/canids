@@ -131,7 +131,6 @@ func Middleware(s *state.State, a *State, next http.Handler) http.Handler {
 			user.UUID = esUser.UUID
 			user.Class = esUser.Class
 			user.Name = esUser.Name
-			user.Group = esUser.Group
 			user.Activated = esUser.Activated
 
 			// update time + generate new token

@@ -12,7 +12,7 @@
     <PieChart :chart-data="chartData" :options="chartOptions" />
   </div>
   <div v-else-if="isTable">
-    <h1 style="text-align: center; font-size: 25px; font-weight: 400">{{ this.view.name + ' (' + this.view.authorized + ')' }}</h1>
+    <h1 style="text-align: center; font-size: 25px; font-weight: 400">{{ this.view.name }}</h1>
     <b-field label="Page Size">
         <b-input
             v-model="tablePageSize"
@@ -126,7 +126,7 @@ export default {
       maintainAspectRatio: false,
       title: {
         display: true,
-        text: this.view.name + ' (' + this.view.authorized + ')',
+        text: this.view.name,
         fontSize: 26
       },
       tooltips: {

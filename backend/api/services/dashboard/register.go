@@ -28,11 +28,11 @@ var (
 
 // RegisterRoutes registers routes to interact with the dashboards.
 func RegisterRoutes(s *state.State, a *auth.State, r *mux.Router) {
-	// get group dashboard /api/dashboard/get
+	// get dashboard /api/dashboard/get
 	r.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
 		getHandler(r.Context(), s, a, w, r)
 	})
-	// update group dashboard /api/dashboard/update
+	// update dashboard /api/dashboard/update
 	r.HandleFunc("/update", func(w http.ResponseWriter, r *http.Request) {
 		updateHandler(r.Context(), s, a, w, r)
 	})

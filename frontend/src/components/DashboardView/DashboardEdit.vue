@@ -5,11 +5,6 @@
     </header>
     <section class="modal-card-body">
       <div>
-        <b-field label="Groups">
-          <b-select disabled expanded v-model="dashboardObject.group" placeholder="Group...">
-            <option v-for="group in groups" :value="group.uuid" :key="group.uuid">{{ group.name }}</option>
-          </b-select>
-        </b-field>
         <b-field label="Name">
           <b-input v-model="dashboardObject.name"></b-input>
         </b-field>
@@ -46,7 +41,6 @@ export default {
   name: "Dashboard Edit",
   props: {
     dashboardObject: {
-      group: undefined,
       name: undefined,
       views: [],
       sizes: []
@@ -56,34 +50,11 @@ export default {
     return {
       isOpen: 0,
       views: {},
-      groups: {},
       dashboardData: []
     };
   },
   methods: {
     fetchData() {
-      // Fetch Groups
-      fetch(process.env.VUE_APP_ENDPOINT + "group/list")
-        .then(response => {
-          if (response.ok) {
-            return Promise.all([response.ok, response.json()]);
-          } else {
-            return Promise.all([response.ok, response.text()]);
-          }
-        })
-        .then(response => {
-          this.groups = {};
-          const status = response[0];
-          const data = response[1];
-          if (!status) {
-            this.$buefy.snackbar.open(data);
-          }
-          this.groups[data.current.uuid] = data.current.name;
-
-          for (let i = 0; i < data.others.length; i++) {
-            this.groups[data.others[i].uuid] = data.others[i].name;
-          }
-        });
       // Fetch Views
       fetch(process.env.VUE_APP_ENDPOINT + "views/list")
         .then(response => {
@@ -94,7 +65,6 @@ export default {
           }
         })
         .then(response => {
-          this.groups = {};
           const status = response[0];
           const data = response[1];
           if (!status) {

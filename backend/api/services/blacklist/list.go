@@ -27,7 +27,7 @@ func listHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 	_, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")
 
-	// fetch all blacklists if superuser
+	// fetch all blacklists if admin
 	blacklists, err := elasticsearch.AllBlacklists(s)
 	if err != nil {
 		l.Error("error fetching all blacklists ", err)

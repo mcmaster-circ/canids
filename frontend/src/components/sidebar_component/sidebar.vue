@@ -32,7 +32,7 @@
           </section>
         </template>
       </b-table>
-      <button style="margin-top:20px;width:100%;" class="button is-primary" type="button" @click="$emit('saveViews')" v-if="role === 'superuser' || role === 'admin'"><b-icon icon="check"></b-icon><span>Save</span></button>
+      <button style="margin-top:20px;width:100%;" class="button is-primary" type="button" @click="$emit('saveViews')" v-if="role === 'admin'"><b-icon icon="check"></b-icon><span>Save</span></button>
     </div>
   </div>
 </template>
