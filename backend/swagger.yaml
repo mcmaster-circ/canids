@@ -1081,7 +1081,7 @@ paths:
                 - views
                 - sizes
               example: {
-                "uuid": "7290169e-9bdf-437b-8dd6-456b17341f05",d
+                "uuid": "7290169e-9bdf-437b-8dd6-456b17341f05",
                 "name": "McMaster University Dashboard",
                 "views": [
                   "70884425-0cab-4840-a99e-ee397a9dbc71",
@@ -1289,6 +1289,8 @@ paths:
                           type: array
                           description: |
                             Source triggered blacklists
+                          items:
+                            type: string
                         id_resp_h:
                           type: string
                           description: |
@@ -1301,6 +1303,8 @@ paths:
                           type: array
                           description: |
                             Destination triggered blacklists
+                          items:
+                            type: string
                       required:
                         - uid
                         - host
