@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
@@ -65,6 +66,18 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 		out := GeneralResponse{
 			Success: false,
 			Message: "Name field must be specified.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	_, err = url.ParseRequestURI(request.URL)
+	if err != nil {
+		l.Warn("blacklist url not valid")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Invalid URL.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return
