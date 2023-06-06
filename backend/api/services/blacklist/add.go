@@ -7,8 +7,12 @@ package blacklist
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
@@ -72,7 +76,7 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 	}
 
 	_, err = url.ParseRequestURI(request.URL)
-	if err != nil {
+	if err != nil || !validateURLforIPAddr(request.URL) {
 		l.Warn("blacklist url not valid")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
@@ -133,4 +137,32 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 		Message: "Blacklist successfully created.",
 	}
 	json.NewEncoder(w).Encode(out)
+}
+
+func validateURLforIPAddr(url string) bool {
+	response, err := http.Get(url)
+	if err != nil {
+		return false
+	}
+	defer response.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return false
+	}
+
+	// Extract IP addresses from the response body
+	ipList := strings.Split(string(body), "\n")
+
+	for _, ipAddress := range ipList {
+		fmt.Println(ipAddress)
+		if len(ipAddress) > 0 && string(ipAddress[0]) == "#" {
+			continue
+		}
+		if net.ParseIP(ipAddress) == nil {
+			return false
+		}
+	}
+	return true
 }
