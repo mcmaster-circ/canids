@@ -7,7 +7,6 @@ package blacklist
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -76,7 +75,9 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 	}
 
 	_, err = url.ParseRequestURI(request.URL)
-	if err != nil || !validateURLforIPAddr(request.URL) {
+	validUrl := validateURLforIPAddr(request.URL)
+
+	if err != nil || !validUrl {
 		l.Warn("blacklist url not valid")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
@@ -156,7 +157,9 @@ func validateURLforIPAddr(url string) bool {
 	ipList := strings.Split(string(body), "\n")
 
 	for _, ipAddress := range ipList {
-		fmt.Println(ipAddress)
+		if len(ipAddress) == 0 {
+			continue
+		}
 		if len(ipAddress) > 0 && string(ipAddress[0]) == "#" {
 			continue
 		}
