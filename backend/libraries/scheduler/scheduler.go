@@ -119,7 +119,7 @@ func Refresh(s *state.State) {
 func getIPsFromText(text string) []string {
 
 	textLines := strings.Split(text, "\n")
-	results := make([]string, 0)
+	results := make([]string, 0, len(textLines))
 	for _, line := range textLines {
 		if len(line) > 0 && string(line[0]) == "#" {
 			continue
