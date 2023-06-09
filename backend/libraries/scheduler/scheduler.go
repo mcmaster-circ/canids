@@ -1,9 +1,8 @@
 package scheduler
 
 import (
-	"bytes"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -87,13 +86,12 @@ func ProvisionOnce(
 			return err
 		}
 
-		var bodyBuffer bytes.Buffer
-		_, err = io.Copy(&bodyBuffer, resp.Body)
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}
 
-		loadedSets[name] = getIPsFromText(bodyBuffer.String())
+		loadedSets[name] = getIPsFromText(string(bodyBytes))
 	}
 	fmt.Printf("Loaded set queries: %d ms\n", time.Now().Sub(t0).Milliseconds())
 
