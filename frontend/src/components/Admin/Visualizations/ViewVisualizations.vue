@@ -130,9 +130,11 @@ export default {
     },
     addedVisualization(view) {
       this.visualizations.push(view)
+      this.$buefy.toast.open({ message: "View Added", position: "is-top", type: "is-success" })
       setTimeout(this.fetchData, 1500)
     },
     editedVisualization(view) {
+      this.$buefy.toast.open({ message: "View Updated", position: "is-top", type: "is-success" })
       setTimeout(this.fetchData, 1500)
     }
   },

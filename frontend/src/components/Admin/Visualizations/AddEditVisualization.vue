@@ -167,7 +167,6 @@ export default {
               this.$buefy.snackbar.open(data[1]);
             } else {
               this.$parent.close()
-              this.$buefy.toast.open({ message: "View Updated", position: "is-top", type: "is-success" })
               this.$emit('editedView', this.view)
             }
           });
@@ -195,7 +194,6 @@ export default {
               this.$buefy.snackbar.open(data[1]);
             } else {
               this.$parent.close()
-              this.$buefy.toast.open({ message: "View Added", position: "is-top", type: "is-success" })
               this.$emit('addedVisualization', this.view)
             }
           });

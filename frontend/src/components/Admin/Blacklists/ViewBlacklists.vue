@@ -92,12 +92,12 @@ export default {
       this.blacklistModalActive = true
     },
     addedBlacklist(blacklist) {
-      this.$buefy.toast.open({ message: "Blacklist added", position: "is-top", type: "is-success" })
+      this.$buefy.toast.open({ message: "Blacklist Added", position: "is-top", type: "is-success" })
       this.blacklists.push(blacklist)
       setTimeout(this.fetchData, 1500)
     },
     editedBlacklist() {
-      this.$buefy.toast.open({ message: "Blacklist edited", position: "is-top", type: "is-success" })
+      this.$buefy.toast.open({ message: "Blacklist Updated", position: "is-top", type: "is-success" })
       setTimeout(this.fetchData, 1500)
     },
     changeType(type) {
