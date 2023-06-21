@@ -109,14 +109,22 @@ export default {
             method: 'post',
             body: JSON.stringify(body)
           })
-            .then(response => response)
-            .then(data => {
-              if (data.status === 200) {
-                this.visualizations.splice(index, 1)
-                this.$buefy.toast.open({ message: "Visualization Deleted", position: "is-top", type: "is-success" })
-                setTimeout(this.fetchData, 1500)
+            .then(response => {
+              if (response.ok) {
+                return Promise.all([response.ok, response.json()]);
+              } else {
+                return Promise.all([response.ok, response.text()]);
               }
             })
+            .then(response => {
+              if (response[0] === true) {
+                this.$buefy.toast.open({ message: "Visualization Deleted", type: "is-success", position: "is-top" })
+                this.visualizations.splice(index, 1)
+                setTimeout(this.fetchData, 1500);
+              } else {
+                this.$buefy.toast.open({ message: response[1], position: "is-top", type: "is-danger" })
+              }
+            });
         }
       })
     },

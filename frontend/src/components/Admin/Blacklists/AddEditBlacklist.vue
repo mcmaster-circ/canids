@@ -43,11 +43,20 @@ export default {
           method: "post",
           body: JSON.stringify(this.blacklist)
         })
-          .then(response => response)
+          .then(response => {
+            if (response.ok) {
+              return Promise.all([response.ok, response.json()]);
+            } else {
+              return Promise.all([response.ok, response.text()]);
+            }
+          })
           .then(data => {
-            if (data.status === 200) {
+            if (data[0] === false) {
+              this.$buefy.snackbar.open(data[1]);
+            } else {
               this.$parent.close()
-              this.$emit('editedBlacklist')
+              this.$buefy.toast.open({ message: "Blacklist Updated", position: "is-top", type: "is-success" })
+              this.$emit('editedBlacklist', this.blacklist)
             }
           });
       } else {
@@ -55,10 +64,19 @@ export default {
           method: "post",
           body: JSON.stringify(this.blacklist)
         })
-          .then(response => response)
+          .then(response => {
+            if (response.ok) {
+              return Promise.all([response.ok, response.json()]);
+            } else {
+              return Promise.all([response.ok, response.text()]);
+            }
+          })
           .then(data => {
-            if (data.status === 200) {
+            if (data[0] === false) {
+              this.$buefy.snackbar.open(data[1]);
+            } else {
               this.$parent.close()
+              this.$buefy.toast.open({ message: "Blacklist Added", position: "is-top", type: "is-success" })
               this.$emit('addedBlacklist', this.blacklist)
             }
           });

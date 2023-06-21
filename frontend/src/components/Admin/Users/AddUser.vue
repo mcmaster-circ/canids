@@ -68,8 +68,9 @@ export default {
           if (data[0] === false) {
             this.$buefy.snackbar.open(data[1]);
           } else {
+            this.$parent.close()
+            this.$buefy.toast.open({ message: "User Added", position: "is-top", type: "is-success" })
             this.$emit('addedUser', this.user)
-            this.$parent.close();
           }
         });
     }
