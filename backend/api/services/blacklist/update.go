@@ -56,7 +56,7 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 	}
 
 	// ensure all fields are specified
-	if request.Name == "" || request.UUID == "" {
+	if request.Name == "" || request.UUID == "" || request.URL == "" {
 		l.Warn("not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
