@@ -44,7 +44,7 @@
       </div>
       <div class="tile is-parent">
         <article class="tile is-child box">
-          <b-field label="Select">
+          <b-field label="Select Logs">
             <b-dropdown
               v-model="selectedIndices"
               multiple
