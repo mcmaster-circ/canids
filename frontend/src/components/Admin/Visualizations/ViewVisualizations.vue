@@ -125,6 +125,7 @@ export default {
       setTimeout(this.fetchData, 1500)
     },
     editedVisualization(view) {
+      console.log(view);
       setTimeout(this.fetchData, 1500)
     }
   },

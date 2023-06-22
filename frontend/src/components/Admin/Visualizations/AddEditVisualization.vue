@@ -158,9 +158,11 @@ export default {
           .then(response => response)
           .then(data => {
             if (data.status === 200) {
+              this.visualizationToEdit.name = this.view.name
+              this.visualizationToEdit.class = this.view.class
               this.$parent.close()
               this.$buefy.toast.open({ message: "View Edited", position: "is-top", type: "is-success" })
-              this.$emit('edited', this.view)
+              this.$emit('editedVisualization', this.view)
             }
           })
       } else {
