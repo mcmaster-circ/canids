@@ -73,7 +73,7 @@
       </article>
     </section>
     <b-modal :active.sync="editUserData" has-modal-card>
-      <EditUser :passedObject="dataToEdit" @editedUser="editedUser"></EditUser>
+      <EditUser :passedObject="dataToEdit" @editedUser="editedUser" @fetchData="fetchData"></EditUser>
     </b-modal>
     <b-modal :active.sync="addUserModal" has-modal-card>
       <AddUser @addedUser="addedUser"></AddUser>
