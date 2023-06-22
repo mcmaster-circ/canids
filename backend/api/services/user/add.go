@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
@@ -70,6 +71,19 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 		json.NewEncoder(w).Encode(out)
 		return
 	}
+
+	validEmail := IsValidEmail(request.UUID)
+	if !validEmail {
+		l.Warn("invalid email")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Invalid email.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
 	// ensure class is valid
 	class, ok := jwtauth.UserClassMap[request.Class]
 	if !ok {
@@ -139,4 +153,16 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 		Message: "The user account has been successfully created. The user has been emailed to complete account activation.",
 	}
 	json.NewEncoder(w).Encode(out)
+}
+
+func IsValidEmail(email string) bool {
+	// Regular expression pattern for email validation
+	pattern := `^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`
+
+	match, err := regexp.MatchString(pattern, email)
+	if err != nil {
+		return false
+	}
+
+	return match
 }

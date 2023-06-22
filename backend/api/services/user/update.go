@@ -67,6 +67,18 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		json.NewEncoder(w).Encode(out)
 		return
 	}
+
+	validEmail := IsValidEmail(request.UUID)
+	if !validEmail {
+		l.Warn("invalid email")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Invalid email.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
 	// query user from database
 	existing, esDocID, err := elasticsearch.QueryAuthByUUID(s, userToUpdate)
 	if err != nil {
