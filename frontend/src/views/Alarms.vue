@@ -15,7 +15,7 @@
       <div class="tile is-parent">
         <article class="tile is-child box">
           <b-field label="Start time:">
-            <b-datetimepicker v-model="startTime">
+            <b-datetimepicker v-model="startTime" :max-datetime="new Date()" :datepicker="{ yearsRange }">
               <template slot="left">
                 <button class="button is-primary"
                     @click="startTime = new Date()">
@@ -30,7 +30,7 @@
       <div class="tile is-parent">
         <article class="tile is-child box">
           <b-field label="End Time:">
-            <b-datetimepicker v-model="endTime">
+            <b-datetimepicker v-model="endTime" :max-datetime="new Date()" :datepicker="{ yearsRange }">
               <template slot="left">
                 <button class="button is-primary"
                     @click="endTime = new Date()">
@@ -216,6 +216,7 @@ export default {
     return {
       startTime: new Date(),
       endTime: new Date(),
+      yearsRange: [-100, 200],
       indices: [],
       selectedIndices: [],
       indicesText: 'None Selected',
