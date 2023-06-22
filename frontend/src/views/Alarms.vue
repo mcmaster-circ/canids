@@ -303,13 +303,21 @@ export default {
         body: JSON.stringify(req)
       })
         .then(response => {
-          return response.json()
+          if (response.ok) {
+            return response.json()
+          } else {
+            return response.text()
+          }
         })
         .then(data => {
-          this.alarms = data.alarms
-          this.availableRows = data.availableRows
-          this.updatePages()
-        })
+          if (typeof data === 'string' && data.includes('false')) {
+            this.$buefy.snackbar.open(data);
+          } else {
+            this.alarms = data.alarms
+            this.availableRows = data.availableRows
+            this.updatePages()
+          }
+        });
     },
     updatePages() {
       this.cardPages = []

@@ -55,7 +55,6 @@ export default {
               this.$buefy.snackbar.open(data[1]);
             } else {
               this.$parent.close()
-              // this.$buefy.toast.open({ message: "Blacklist Updated", position: "is-top", type: "is-success" })
               this.$emit('editedBlacklist', this.blacklist)
             }
           });
@@ -76,7 +75,6 @@ export default {
               this.$buefy.snackbar.open(data[1]);
             } else {
               this.$parent.close()
-              // this.$buefy.toast.open({ message: "Blacklist Added", position: "is-top", type: "is-success" })
               this.$emit('addedBlacklist', this.blacklist)
             }
           });

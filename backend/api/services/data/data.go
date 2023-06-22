@@ -61,6 +61,15 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 		return
 	}
 
+	//Checking that end time is after start time
+	if end.Before(start) {
+		l.Error("End time is before start time")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(GeneralResponse{
+			Success: false,
+			Message: "End time is before start time",
+		})
+	}
 	// get view from database
 	view, _, err := elasticsearch.QueryViewByUUID(s, visualizationUUID)
 	if err != nil {

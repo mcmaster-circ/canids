@@ -72,6 +72,18 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 		return
 	}
 
+	//Checking if end time is after start time
+	if end.Before(start) {
+		l.Error("End time is before start time")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(GeneralResponse{
+			Success: false,
+			Message: "End time is before start time",
+		})
+		return
+	}
+
+
 	availableRows := 0
 
 	// make sure maxSize is greater than 0
