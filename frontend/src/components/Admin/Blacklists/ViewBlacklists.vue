@@ -75,7 +75,9 @@ export default {
   },
   watch: {
     blacklistModalActive: function(val) {
-      this.fetchData()
+      if (this.blacklistModalActive === false) {
+        this.fetchData()
+      }
     }
   },
   methods: {

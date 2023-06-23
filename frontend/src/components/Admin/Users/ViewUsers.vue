@@ -105,6 +105,13 @@ export default {
   mounted() {
     this.fetchData();
   },
+  watch: {
+    editUserData: function(val) {
+      if (this.editUserData === false) {
+        this.fetchData()
+      }
+    }
+  },
   methods: {
     fetchData() {
       this.role = JSON.parse(localStorage.getItem("User")).class;
