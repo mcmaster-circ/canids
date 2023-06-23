@@ -160,6 +160,9 @@ export default {
             if (data.status === 200) {
               this.visualizationToEdit.name = this.view.name
               this.visualizationToEdit.class = this.view.class
+              this.visualizationToEdit.index = this.view.index
+              this.visualizationToEdit.fields = this.view.fields
+              this.visualizationToEdit.fieldNames = this.view.fieldNames
               this.$parent.close()
               this.$buefy.toast.open({ message: "View Edited", position: "is-top", type: "is-success" })
               this.$emit('editedVisualization', this.view)
