@@ -310,13 +310,9 @@ export default {
           }
         })
         .then(data => {
-          if (typeof data === 'string' && data.includes('false')) {
-            this.$buefy.snackbar.open(data);
-          } else {
-            this.alarms = data.alarms
-            this.availableRows = data.availableRows
-            this.updatePages()
-          }
+          this.alarms = data.alarms
+          this.availableRows = data.availableRows
+          this.updatePages()
         });
     },
     updatePages() {

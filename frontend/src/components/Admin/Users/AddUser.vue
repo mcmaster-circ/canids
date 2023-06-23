@@ -68,8 +68,8 @@ export default {
           if (data[0] === false) {
             this.$buefy.snackbar.open(data[1]);
           } else {
-            this.$parent.close()
             this.$emit('addedUser', this.user)
+            this.$parent.close();
           }
         });
     }
