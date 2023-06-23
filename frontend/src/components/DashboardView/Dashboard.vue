@@ -18,7 +18,7 @@
                 <b-datetimepicker v-model="startTime" :max-datetime="endTime" :datepicker="{ yearsRange }">
                   <template slot="left">
                     <button class="button is-primary"
-                        @click="startTime = new Date()">
+                        @click="startTime=endTime">
                         <b-icon icon="clock"></b-icon>
                         <span>Now</span>
                     </button>
