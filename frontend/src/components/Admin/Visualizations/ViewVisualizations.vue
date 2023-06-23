@@ -76,6 +76,13 @@ export default {
   mounted() {
     this.fetchData();
   },
+  watch: {
+    visualizationModalActive: function() {
+      if (this.visualizationModalActive === false) {
+        this.fetchData()
+      }
+    }
+  },
   methods: {
     addVisualization () {
       this.visualizationToEdit = {}
@@ -125,6 +132,7 @@ export default {
       setTimeout(this.fetchData, 1500)
     },
     editedVisualization(view) {
+      console.log(view);
       setTimeout(this.fetchData, 1500)
     }
   },

@@ -7,7 +7,7 @@
           class="is-centered"
           type="is-primary"
           style="float:right"
-          @click="openAddModal"
+          @click="addUserModal = true;"
           :disabled="role == Roles.Standard"
         >Create User</b-button>
         <b-table :data="users" ref="table">
@@ -73,10 +73,10 @@
       </article>
     </section>
     <b-modal :active.sync="editUserData" has-modal-card>
-      <EditUser :passedObject="dataToEdit" @editedUser="editedUser"></EditUser>
+      <EditUser :passedObject="dataToEdit" @editedUser="editedUser" @fetchData="fetchData"></EditUser>
     </b-modal>
     <b-modal :active.sync="addUserModal" has-modal-card>
-      <AddUser @addedUser="addedUser" @editedUser="editedUser"></AddUser>
+      <AddUser @addedUser="addedUser"></AddUser>
     </b-modal>
   </div>
 </template>
@@ -105,6 +105,13 @@ export default {
   mounted() {
     this.fetchData();
   },
+  watch: {
+    editUserData: function(val) {
+      if (this.editUserData === false) {
+        this.fetchData()
+      }
+    }
+  },
   methods: {
     fetchData() {
       this.role = JSON.parse(localStorage.getItem("User")).class;
@@ -121,16 +128,6 @@ export default {
         .then(json => {
           this.users = json.users;
         });
-    },
-    openAddModal() {
-      const modal = this.$buefy.modal.open({
-        parent: this,
-        component: AddUser,
-        hasModalCard: true
-      });
-      modal.$on("close", () => {
-        this.fetchData();
-      });
     },
     changeType(type) {
       this.graphType = type;
