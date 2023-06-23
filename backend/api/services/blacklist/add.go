@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
@@ -58,8 +59,11 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 		return
 	}
 
+	//ensure that the blacklist name is not " " or "  "
+	trimmed := strings.TrimSpace(request.Name)
+
 	// ensure name is not empty
-	if request.Name == "" {
+	if request.Name == "" || len(trimmed) == 0 {
 		l.Warn("blacklist name not specified specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
