@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
@@ -55,8 +56,11 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		return
 	}
 
+	//ensure that the blacklist name is not " " or "  "
+	trimmed := strings.TrimSpace(request.Name)
+
 	// ensure all fields are specified
-	if request.Name == "" || request.UUID == "" || request.URL == "" {
+	if request.Name == "" || request.UUID == "" || len(trimmed) == 0 {
 		l.Warn("not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{

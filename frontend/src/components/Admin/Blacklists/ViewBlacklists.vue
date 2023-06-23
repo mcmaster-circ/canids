@@ -49,7 +49,7 @@
       </article>
     </section>
     <b-modal :active.sync="blacklistModalActive" has-modal-card>
-      <AddEditBlacklist :blacklistToEdit="blacklistToEdit" @addedBlacklist="addedBlacklist" @editedBlacklist="editedBlacklist"></AddEditBlacklist>
+      <AddEditBlacklist :blacklistToEdit="blacklistToEdit" @addedBlacklist="addedBlacklist" @editedBlacklist="editedBlacklist" @fetchData="fetchData"></AddEditBlacklist>
     </b-modal>
   </div>
 </template>
@@ -72,6 +72,13 @@ export default {
   },
   mounted() {
     this.fetchData();
+  },
+  watch: {
+    blacklistModalActive: function(val) {
+      if (this.blacklistModalActive === false) {
+        this.fetchData()
+      }
+    }
   },
   methods: {
     fetchData() {

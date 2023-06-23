@@ -13,7 +13,7 @@
         </b-field>
       </section>
       <footer class="modal-card-foot" style="display: flex;justify-content: flex-end">
-        <b-button class="button" type="button" @click="$parent.close()">Close</b-button>
+        <b-button class="button" type="button" @click="cancel">Close</b-button>
         <b-button type="is-primary" @click="save">Save</b-button>
       </footer>
     </div>
@@ -37,6 +37,10 @@ export default {
     }
   },
   methods: {
+    cancel() {
+      this.$emit('fetchData', this.blacklist);
+      this.$parent.close();
+    },
     save() {
       if (this.blacklistToEdit.name) {
         fetch("/api/blacklist/update", {

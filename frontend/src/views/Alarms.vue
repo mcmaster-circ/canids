@@ -15,10 +15,10 @@
       <div class="tile is-parent">
         <article class="tile is-child box">
           <b-field label="Start time:">
-            <b-datetimepicker v-model="startTime">
+            <b-datetimepicker v-model="startTime" :max-datetime="endTime" :datepicker="{ yearsRange }">
               <template slot="left">
                 <button class="button is-primary"
-                    @click="startTime = new Date()">
+                    @click="startTime=endTime">
                     <b-icon icon="clock"></b-icon>
                     <span>Now</span>
                 </button>
@@ -30,7 +30,7 @@
       <div class="tile is-parent">
         <article class="tile is-child box">
           <b-field label="End Time:">
-            <b-datetimepicker v-model="endTime">
+            <b-datetimepicker v-model="endTime" :min-datetime="startTime" :max-datetime="new Date()" :datepicker="{ yearsRange }">
               <template slot="left">
                 <button class="button is-primary"
                     @click="endTime = new Date()">
@@ -44,7 +44,7 @@
       </div>
       <div class="tile is-parent">
         <article class="tile is-child box">
-          <b-field label="Select">
+          <b-field label="Select Logs">
             <b-dropdown
               v-model="selectedIndices"
               multiple
@@ -213,9 +213,12 @@
 export default {
   name: 'Alarms',
   data: () => {
+    var startTime = new Date()
+    var endTime = new Date()
     return {
-      startTime: new Date(),
-      endTime: new Date(),
+      startTime: startTime,
+      endTime: endTime,
+      yearsRange: [-100, 200],
       indices: [],
       selectedIndices: [],
       indicesText: 'None Selected',
