@@ -73,6 +73,11 @@ export default {
   mounted() {
     this.fetchData();
   },
+  watch: {
+    blacklistModalActive: function(val) {
+      this.fetchData()
+    }
+  },
   methods: {
     fetchData() {
       fetch('/api/blacklist/list')
