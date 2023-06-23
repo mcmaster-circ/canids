@@ -192,12 +192,12 @@ export default {
       })
     },
     addedUser(user) {
-      // this.$buefy.toast.open({ message: "User added", position: "is-top", type: "is-success" })
+      this.$buefy.toast.open({ message: "User Added", position: "is-top", type: "is-success" })
       this.users.push(user)
       setTimeout(this.fetchData, 1500)
     },
     editedUser() {
-      // this.$buefy.toast.open({ message: "User edited", position: "is-top", type: "is-success" })
+      this.$buefy.toast.open({ message: "User Updated", position: "is-top", type: "is-success" })
       setTimeout(this.fetchData, 1500)
     }
   },
