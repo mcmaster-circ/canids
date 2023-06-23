@@ -220,8 +220,6 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 		To(end.Format(time.RFC3339))
 	// query for all alarms in range and filter for either origSource or respSource being in alarmSources
 	origSources := elastic.NewTermsQuery("id_orig_h_pos", alarmSources...)
-	// respSources := elastic.NewTermsQuery("id_resp_h_pos", alarmSources...)
-	// hasSource := elastic.NewBoolQuery().Should(origSources, respSources)
 	query := elastic.NewBoolQuery().Must(r).Must(origSources)
 	queryResult, err := client.Search().Index(indices...).
 		Query(query).Sort("timestamp", false).Size(size).From(from).Do(ctx)
