@@ -172,7 +172,7 @@ export default {
               this.visualizationToEdit.fields = this.view.fields
               this.visualizationToEdit.fieldNames = this.view.fieldNames
               this.$parent.close()
-              this.$emit('editedVisualization', this.view) 
+              this.$emit('editedVisualization', this.view)
             }
           });
       } else {
