@@ -101,6 +101,7 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 	if err == nil {
 		// no error means we located a user
 		l.Warn("uuid already exists ", request.UUID)
+		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
 			Message: "UUID email address provided already has account.",

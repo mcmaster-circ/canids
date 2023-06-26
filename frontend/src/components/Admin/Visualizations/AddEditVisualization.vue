@@ -155,19 +155,26 @@ export default {
           method: 'post',
           body: JSON.stringify(body)
         })
-          .then(response => response)
+          .then(response => {
+            if (response.ok) {
+              return Promise.all([response.ok, response.json()]);
+            } else {
+              return Promise.all([response.ok, response.text()]);
+            }
+          })
           .then(data => {
-            if (data.status === 200) {
+            if (data[0] === false) {
+              this.$buefy.snackbar.open(data[1]);
+            } else {
               this.visualizationToEdit.name = this.view.name
               this.visualizationToEdit.class = this.view.class
               this.visualizationToEdit.index = this.view.index
               this.visualizationToEdit.fields = this.view.fields
               this.visualizationToEdit.fieldNames = this.view.fieldNames
               this.$parent.close()
-              this.$buefy.toast.open({ message: "View Edited", position: "is-top", type: "is-success" })
               this.$emit('editedVisualization', this.view)
             }
-          })
+          });
       } else {
         const body = {
           name: this.view.name,
@@ -180,14 +187,21 @@ export default {
           method: 'post',
           body: JSON.stringify(body)
         })
-          .then(response => response)
-          .then(data => {
-            if (data.status === 200) {
-              this.$parent.close()
-              this.$buefy.toast.open({ message: "View Added", position: "is-top", type: "is-success" })
-              this.$emit('addedVisualization', this.view)
+          .then(response => {
+            if (response.ok) {
+              return Promise.all([response.ok, response.json()]);
+            } else {
+              return Promise.all([response.ok, response.text()]);
             }
           })
+          .then(data => {
+            if (data[0] === false) {
+              this.$buefy.snackbar.open(data[1]);
+            } else {
+              this.$parent.close()
+              this.$emit('addedVisualization', this.view)
+            }
+          });
       }
     },
     stepForward() {
