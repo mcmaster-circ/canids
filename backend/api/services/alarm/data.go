@@ -55,8 +55,6 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 	}
 
 	// Parse "start" into time objects
-	print("Start:   ")
-	println(request.Start)
 	start, err := time.Parse(time.RFC3339, request.Start)
 	if err != nil {
 		l.Errorf("error parsing start time '%s': %v", request.Start, err)
@@ -66,8 +64,6 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 	}
 
 	// Parse "end" into time objects
-	print("End:   ")
-	println(request.End)
 	end, err := time.Parse(time.RFC3339, request.End)
 	if err != nil {
 		l.Errorf("error parsing end time '%s': %v", request.End, err)

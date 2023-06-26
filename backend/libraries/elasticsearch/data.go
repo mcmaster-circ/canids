@@ -215,9 +215,6 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 		indices[i] = fmt.Sprintf("data-%s-*", index)
 	}
 
-	fmt.Print(start)
-	fmt.Print(end)
-
 	r := elastic.NewRangeQuery("timestamp").
 		From(start.Format(time.RFC3339)).
 		To(end.Format(time.RFC3339))
@@ -237,33 +234,10 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 		var alarm Alarm
 		err = json.Unmarshal(hit.Source, &alarm)
 
-		//Time stamp in RFC3339 (UTC)
-		//Convert to UTC time object
-		//Convert to local time
-		//Convert back to string
 		if err != nil {
 
 			return alarms, 0, err
 		}
-
-		ts := alarm.Timestamp
-		fmt.Print("ts: ")
-		fmt.Println(ts)
-		t, err := time.Parse(time.RFC3339, ts)
-		fmt.Print("t: ")
-		fmt.Println(t)
-		if err != nil {
-			return alarms, 0, err
-		}
-		utc := t.UTC()
-		fmt.Print("UTC: ")
-		fmt.Println(utc)
-
-		local := utc.Local()
-		fmt.Print("Local: ")
-		fmt.Println(local)
-
-		fmt.Println(time.Local)
 
 		alarms = append(alarms, alarm)
 	}
