@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"unicode"
 
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
@@ -66,6 +67,22 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		}
 		json.NewEncoder(w).Encode(out)
 		return
+	}
+
+	for i, character := range request.Name {
+
+		if unicode.IsSpace(character) {
+			if i == 0 || i == (len(request.Name)-1) {
+				l.Warn("Name cannot begin or end in whitespace")
+				w.WriteHeader(http.StatusBadRequest)
+				out := GeneralResponse{
+					Success: false,
+					Message: "Name cannot begin or end in whitespace",
+				}
+				json.NewEncoder(w).Encode(out)
+				return
+			}
+		}
 	}
 
 	validEmail := IsValidEmail(request.UUID)
