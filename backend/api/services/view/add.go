@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"unicode"
 
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
@@ -70,6 +71,65 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 		}
 		json.NewEncoder(w).Encode(out)
 		return
+	}
+
+	// Ensure name of visualization is not beginning or ending in whitespace
+	for i, character := range request.Name {
+
+		if unicode.IsSpace(character) {
+			if i == 0 || i == (len(request.Name)-1) {
+				l.Warn("Name cannot begin or end in whitespace")
+				w.WriteHeader(http.StatusBadRequest)
+				out := GeneralResponse{
+					Success: false,
+					Message: "Name cannot begin or end in whitespace",
+				}
+				json.NewEncoder(w).Encode(out)
+				return
+			}
+		}
+	}
+
+	// Ensure no field names are beginning or ending in whitespace
+	for _, name := range request.FieldNames {
+		for i, character := range name {
+
+			if unicode.IsSpace(character) {
+				if i == 0 || i == (len(name)-1) {
+					l.Warn("Field name cannot begin or end in whitespace")
+					w.WriteHeader(http.StatusBadRequest)
+					out := GeneralResponse{
+						Success: false,
+						Message: "Field name cannot begin or end in whitespace",
+					}
+					json.NewEncoder(w).Encode(out)
+					return
+				}
+			}
+		}
+	}
+
+	// Ensure there are no duplicate names
+	views, err := elasticsearch.AllView(s)
+	if err != nil {
+		l.Error("error fetching all views ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(InternalServerError)
+		return
+	}
+
+	for _, view := range views {
+		if view.Name == request.Name {
+			l.Warn("Cannot have two visualizations with the same name")
+			w.WriteHeader(http.StatusBadRequest)
+			out := GeneralResponse{
+				Success: false,
+				Message: "Cannot have two visualizations with the same name",
+			}
+
+			json.NewEncoder(w).Encode(out)
+			return
+		}
 	}
 
 	// ensure class is valid

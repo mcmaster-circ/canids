@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"unicode"
 
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
@@ -72,6 +73,23 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 		}
 		json.NewEncoder(w).Encode(out)
 		return
+	}
+
+	// Ensure name of blacklist is not beginning or ending in whitespace
+	for i, character := range request.Name {
+
+		if unicode.IsSpace(character) {
+			if i == 0 || i == (len(request.Name)-1) {
+				l.Warn("Blacklist name cannot begin or end in whitespace")
+				w.WriteHeader(http.StatusBadRequest)
+				out := GeneralResponse{
+					Success: false,
+					Message: "Blacklist name cannot begin or end in whitespace",
+				}
+				json.NewEncoder(w).Encode(out)
+				return
+			}
+		}
 	}
 
 	// generate new blacklist

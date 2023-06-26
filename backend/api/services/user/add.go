@@ -73,6 +73,7 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 		return
 	}
 
+	// Ensure name of user is not beginning or ending in whitespace
 	for i, character := range request.Name {
 
 		if unicode.IsSpace(character) {
