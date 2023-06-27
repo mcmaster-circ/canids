@@ -183,17 +183,6 @@
         </article>
       </div>
 
-      <!-- pagination -->
-      <div class="tile is-parent is-3" style="justify-content: space-between;">
-        <article class="is-child">
-          <b-field>
-            <b-select v-model="numberOfCards" expanded>
-              <option v-for="num in pageOptions" :value="num" :key="num"> {{ num }} </option>
-            </b-select>
-          </b-field>
-        </article>
-      </div>
-
       <!-- pagination arrows -->
       <div class="tile is-parent is-3">
         <article class="tile is-child">
@@ -245,11 +234,11 @@ export default {
       cardPageNum: 1,
       cardPages: [1, 2, 3, 4],
       pageOptions: [2, 4, 6, 8],
-      numberOfCards: 4
+      alarmCardWidth: 230
     }
   },
   created() {
-    this.NUMBER_OF_CARDS = this.numberOfCards
+    this.NUMBER_OF_CARDS = Math.floor(window.innerWidth / this.alarmCardWidth)
     this.fetchIndices()
     this.fetchLists()
     this.fetchData()
@@ -259,6 +248,13 @@ export default {
     this.startTime = new Date()
     this.endTime = new Date()
     this.startTime.setMinutes(this.startTime.getMinutes() - 30)
+    window.addEventListener('resize', () => {
+      this.NUMBER_OF_CARDS = Math.floor(window.innerWidth / this.alarmCardWidth)
+      for (let i = 0; i < this.NUMBER_OF_CARDS; i++) {
+        this.cardPages[i] = i
+      }
+      this.fetchData()
+    })
   },
   watch: {
     startTime: function (val) {
@@ -268,15 +264,6 @@ export default {
       this.fetchData()
     },
     cardPageNum: function (val) {
-      this.fetchData()
-    },
-    numberOfCards: function (val) {
-      this.NUMBER_OF_CARDS = this.numberOfCards
-      for (let i = 0; i < this.numberOfCards; i++) {
-        this.cardPages[i] = i
-      }
-      console.log(this.NUMBER_OF_CARDS)
-      console.log(this.cardPages)
       this.fetchData()
     },
     selectedIndices: function (val) {
