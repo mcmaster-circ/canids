@@ -1,3 +1,4 @@
+<!--
 <template>
   <div class="modal-card" style="width:800px">
     <section class="info-tiles" style="margin-top:50px">
@@ -92,6 +93,113 @@
     </section>
   </div>
 </template>
+-->
+
+<template>
+  <div class="modal-card" style="width:800px">
+    <section class="info-tiles" style="margin-top: 50px">
+      <article class="tile is-child box">
+        <h1 style="font-size: 25px; margin-bottom: 20px; text-align: center">Visualization</h1>
+        <b-steps
+          style="min-height: 200px; width: 100%; color: 'red'"
+          v-model="activeStep"
+          :has-navigation="true"
+        >
+          <b-step-item style="min-height: 100px" label="Type">
+            <div class="has-text-centered">
+              <h1 class="title has-text-centered" style="font-size: 25px">Select Display Type</h1>
+              <!--<p>{{ view.class == undefined ? "none" : view.class }} selected</p>-->
+              <div class="type-buttons">
+                <b-button
+                  class="type-button"
+                  size="is-medium"
+                  icon-left="chart-line"
+                  @click="setViewClass('line')"
+                  :type="view.class == 'line' ? 'is-primary' : 'none'"
+                >Line</b-button>
+                <b-button
+                  class="type-button"
+                  size="is-medium"
+                  icon-left="chart-bar"
+                  @click="setViewClass('bar')"
+                  :type="view.class == 'bar' ? 'is-primary' : 'none'"
+                >Bar</b-button>
+                <b-button
+                  class="type-button"
+                  size="is-medium"
+                  icon-left="chart-pie"
+                  @click="setViewClass('pie')"
+                  :type="view.class == 'pie' ? 'is-primary' : 'none'"
+                >Pie</b-button>
+                <b-button
+                  class="type-button"
+                  size="is-medium"
+                  icon-left="table"
+                  @click="setViewClass('table')"
+                  :type="view.class == 'table' ? 'is-primary' : 'none'"
+                >Table</b-button>
+              </div>
+            </div>
+          </b-step-item>
+
+          <b-step-item style="min-height: 100px" label="Information">
+            <Information
+              ref="info"
+              :viewClass="view.class"
+              :visualizationToEdit="visualizationToEdit"
+            ></Information>
+          </b-step-item>
+          <b-step-item style="min-height: 100px" label="Finish" disabled>
+            <h1 class="title has-text-centered">Finish</h1>
+            <div class="columns is-mobile is-centered">
+              <div class="column is-half">
+                <b-field label="Visualization Name">
+                  <b-input v-model="view.name" placeholder="Enter a name..." required></b-input>
+                </b-field>
+                <b-button
+                  @click="saveView"
+                  type="is-primary"
+                  style="float: right; width: 100%"
+                ><b-icon icon="check"></b-icon><span>Submit</span></b-button>
+              </div>
+            </div>
+          </b-step-item>
+        </b-steps>
+      </article>
+    </section>
+  </div>
+</template>
+
+<style scoped>
+@media (max-width: 768px) {
+  .modal-card {
+    width: 90%;
+  }
+}
+
+.type-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.type-button {
+  margin: 5px;
+}
+
+.navigation-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+  .navigation-buttons {
+    flex-direction: column;
+  }
+}
+</style>
 
 <script>
 import Information from './views/Information'
