@@ -179,13 +179,15 @@ export default {
               if (response.ok) {
                 return Promise.all([response.ok, response.json()]);
               } else {
-                this.$buefy.snackbar.open({ message: response.text(), position: "is-top", type: "is-danger" })
+                this.$buefy.snackbar.open({ message: "User cannot delete own account.", position: "is-top", type: "is-danger" })
                 return Promise.all([response.ok, response.text()]);
               }
             })
-            .then(response => {
-              this.$buefy.toast.open({ message: "User Deleted", position: "is-top", type: "is-success" })
-              this.users.splice(index, 1)
+            .then(([ok, data]) => {
+              if (ok && data.success) {
+                this.$buefy.toast.open({ message: "User Deleted", position: "is-top", type: "is-success" })
+                this.users.splice(index, 1)
+              }
               setTimeout(this.fetchData, 1500);
             });
         }
