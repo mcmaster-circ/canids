@@ -95,6 +95,7 @@
 
 <script>
 import Information from './views/Information'
+import format from '@/_helpers/snackbar.js'
 export default {
   props: ['visualizationToEdit'],
   data() {
@@ -164,7 +165,7 @@ export default {
           })
           .then(data => {
             if (data[0] === false) {
-              this.$buefy.snackbar.open(data[1]);
+              this.$buefy.snackbar.open(format(data));
             } else {
               this.visualizationToEdit.name = this.view.name
               this.visualizationToEdit.class = this.view.class
@@ -196,7 +197,7 @@ export default {
           })
           .then(data => {
             if (data[0] === false) {
-              this.$buefy.snackbar.open(data[1]);
+              this.$buefy.snackbar.open(format(data));
             } else {
               this.$parent.close()
               this.$emit('addedVisualization', this.view)

@@ -92,7 +92,7 @@ export default {
           const status = response[0];
           const data = response[1];
           if (!status) {
-            this.$buefy.snackbar.open(data);
+            this.$buefy.snackbar.open(data.message);
           }
           for (let i = 0; i < data.views.length; i++) {
             this.views[data.views[i].uuid] = data.views[i].name;

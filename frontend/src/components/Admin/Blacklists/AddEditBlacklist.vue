@@ -21,6 +21,7 @@
 </template>
 
 <script>
+import format from "@/_helpers/snackbar.js"
 export default {
   props: ['blacklistToEdit'],
   data() {
@@ -56,7 +57,7 @@ export default {
           })
           .then(data => {
             if (data[0] === false) {
-              this.$buefy.snackbar.open(data[1]);
+              this.$buefy.snackbar.open(format(data));
             } else {
               this.$parent.close()
               this.$emit('editedBlacklist', this.blacklist)
@@ -76,7 +77,7 @@ export default {
           })
           .then(data => {
             if (data[0] === false) {
-              this.$buefy.snackbar.open(data[1]);
+              this.$buefy.snackbar.open(format(data));
             } else {
               this.$parent.close()
               this.$emit('addedBlacklist', this.blacklist)

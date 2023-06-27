@@ -5,8 +5,7 @@
 </template>
 
 <script>
-import Dashboard from '@/components/DashboardView/Dashboard.vue'
-
+import Dashboard from "@/components/DashboardView/Dashboard.vue"
 export default {
   name: 'Home',
   components: {
@@ -22,12 +21,10 @@ export default {
         }
       })
       .then((response) => {
-        const status = response[0]
-        const data = response[1]
-        if (!status) {
-          this.$buefy.snackbar.open(data)
+        if (!response[0]) {
+          this.$buefy.snackbar.open(response)
         }
-        localStorage.setItem('User', JSON.stringify(data));
+        localStorage.setItem('User', JSON.stringify(response[1]));
       })
   }
 }

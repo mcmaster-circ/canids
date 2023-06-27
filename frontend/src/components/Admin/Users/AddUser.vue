@@ -32,6 +32,7 @@
 
 <script>
 import { Role } from "@/_helpers/role.js";
+import { format } from "@/_helpers/snackbar.js";
 
 export default {
   data() {
@@ -66,7 +67,7 @@ export default {
         })
         .then(data => {
           if (data[0] === false) {
-            this.$buefy.snackbar.open(data[1]);
+            this.$buefy.snackbar.open(format(data))
           } else {
             this.$emit('addedUser', this.user)
             this.$parent.close();
