@@ -183,6 +183,17 @@
         </article>
       </div>
 
+      <!-- pagination -->
+      <div class="tile is-parent is-3" style="justify-content: space-between;">
+        <article class="is-child">
+          <b-field>
+            <b-select v-model="numberOfCards" expanded>
+              <option v-for="num in pageOptions" :value="num" :key="num"> {{ num }} </option>
+            </b-select>
+          </b-field>
+        </article>
+      </div>
+
       <!-- pagination arrows -->
       <div class="tile is-parent is-3">
         <article class="tile is-child">
@@ -232,11 +243,13 @@ export default {
       },
       alarms: [],
       cardPageNum: 1,
-      cardPages: [1, 2, 3, 4]
+      cardPages: [1, 2, 3, 4],
+      pageOptions: [2, 4, 6, 8],
+      numberOfCards: 4
     }
   },
   created() {
-    this.NUMBER_OF_CARDS = 4
+    this.NUMBER_OF_CARDS = this.numberOfCards
     this.fetchIndices()
     this.fetchLists()
     this.fetchData()
@@ -255,6 +268,15 @@ export default {
       this.fetchData()
     },
     cardPageNum: function (val) {
+      this.fetchData()
+    },
+    numberOfCards: function (val) {
+      this.NUMBER_OF_CARDS = this.numberOfCards
+      for (let i = 0; i < this.numberOfCards; i++) {
+        this.cardPages[i] = i
+      }
+      console.log(this.NUMBER_OF_CARDS)
+      console.log(this.cardPages)
       this.fetchData()
     },
     selectedIndices: function (val) {
