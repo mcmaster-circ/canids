@@ -85,7 +85,7 @@
 import { Role } from "@/_helpers/role.js";
 import EditUser from "./EditUser";
 import AddUser from "./AddUser";
-import format from "@/_helpers/snackbar.js"
+import { format } from "@/_helpers/snackbar.js"
 
 export default {
   name: "ViewUsers",

@@ -32,7 +32,7 @@
 
 <script>
 import { Role } from '@/_helpers/role.js';
-import format from '@/_helpers/snackbar.js';
+import { format } from '@/_helpers/snackbar.js';
 
 export default {
   props: {
@@ -76,7 +76,7 @@ export default {
         })
         .then(data => {
           if (data[0] === false) {
-            this.$buefy.snackbar.open();
+            this.$buefy.snackbar.open(format(data));
           } else {
             this.$emit('editedUser', this.user)
             this.$parent.close();

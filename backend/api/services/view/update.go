@@ -119,7 +119,7 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 	}
 
 	for _, view := range views {
-		if view.Name == request.Name {
+		if view.Name == request.Name && request.UUID != view.UUID {
 			l.Warn("Cannot have two visualizations with the same name")
 			w.WriteHeader(http.StatusBadRequest)
 			out := GeneralResponse{

@@ -72,6 +72,18 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		return
 	}
 
+	//ensure url is not empty
+	if request.URL == "" {
+		l.Warn("blacklist url not specified specified")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Url field must be specified.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
 	// Ensure name of blacklist is not beginning or ending in whitespace
 	for i, character := range request.Name {
 
@@ -82,6 +94,23 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 				out := GeneralResponse{
 					Success: false,
 					Message: "Blacklist name cannot begin or end in whitespace",
+				}
+				json.NewEncoder(w).Encode(out)
+				return
+			}
+		}
+	}
+
+	// Ensure url of blacklist is not beginning or ending in whitespace
+	for i, character := range request.URL {
+
+		if unicode.IsSpace(character) {
+			if i == 0 || i == (len(request.Name)-1) {
+				l.Warn("Blacklist url cannot begin or end in whitespace")
+				w.WriteHeader(http.StatusBadRequest)
+				out := GeneralResponse{
+					Success: false,
+					Message: "Blacklist url cannot begin or end in whitespace",
 				}
 				json.NewEncoder(w).Encode(out)
 				return
@@ -100,7 +129,7 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 
 	// ensure request name is unique
 	for _, blacklist := range blacklists {
-		if request.Name == blacklist.Name {
+		if request.Name == blacklist.Name && blacklist.UUID != request.UUID {
 			l.Warn("blacklist name in use")
 			w.WriteHeader(http.StatusBadRequest)
 			out := GeneralResponse{

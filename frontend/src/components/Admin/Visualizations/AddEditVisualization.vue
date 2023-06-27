@@ -95,7 +95,7 @@
 
 <script>
 import Information from './views/Information'
-import format from '@/_helpers/snackbar.js'
+import { format } from '@/_helpers/snackbar.js'
 export default {
   props: ['visualizationToEdit'],
   data() {

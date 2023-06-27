@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import format from "@/_helpers/snackbar.js"
+import { format } from "@/_helpers/snackbar.js"
 export default {
   props: ['blacklistToEdit'],
   data() {
