@@ -232,11 +232,13 @@ export default {
       },
       alarms: [],
       cardPageNum: 1,
-      cardPages: [1, 2, 3, 4]
+      cardPages: [1, 2, 3, 4],
+      pageOptions: [2, 4, 6, 8],
+      alarmCardWidth: 230
     }
   },
   created() {
-    this.NUMBER_OF_CARDS = 4
+    this.NUMBER_OF_CARDS = Math.floor(window.innerWidth / this.alarmCardWidth)
     this.fetchIndices()
     this.fetchLists()
     this.fetchData()
@@ -246,6 +248,13 @@ export default {
     this.startTime = new Date()
     this.endTime = new Date()
     this.startTime.setMinutes(this.startTime.getMinutes() - 30)
+    window.addEventListener('resize', () => {
+      this.NUMBER_OF_CARDS = Math.floor(window.innerWidth / this.alarmCardWidth)
+      for (let i = 0; i < this.NUMBER_OF_CARDS; i++) {
+        this.cardPages[i] = i
+      }
+      this.fetchData()
+    })
   },
   watch: {
     startTime: function (val) {
