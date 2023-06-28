@@ -102,13 +102,11 @@
         <h1 style="font-size: 25px; margin-bottom: 20px; text-align: center">Visualization</h1>
         <b-steps
           style="min-height: 200px; width: 100%; color: 'red'"
-          v-model="activeStep"
           :has-navigation="true"
         >
           <b-step-item style="min-height: 100px" label="Type">
             <div class="has-text-centered">
               <h1 class="title has-text-centered" style="font-size: 25px">Select Display Type</h1>
-              <!--<p>{{ view.class == undefined ? "none" : view.class }} selected</p>-->
               <div class="type-buttons">
                 <b-button
                   class="type-button"
