@@ -54,7 +54,9 @@ services:
       - backend
     volumes:
       - caddy:/data
-      - ./config/Caddyfile-staging:/etc/caddy/Caddyfile
+    configs:
+      - source: canids_staging_caddy_config
+        target: /etc/caddy/Caddyfile
     deploy:
       labels:
         caddy: canids-khaos.staging.fyelabs.com
@@ -64,6 +66,10 @@ secrets:
   canids_staging_server_cert:
     external: true
   canids_staging_server_key:
+    external: true
+
+configs:
+  canids_staging_caddy_config:
     external: true
 
 volumes:
