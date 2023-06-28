@@ -37,6 +37,8 @@ services:
       - canids_staging_server_cert
       - canids_staging_server_key
     deploy:
+      placement:
+        constraints: [node.hostname == bacchus-w]
       labels:
         caddy: canids-khaos.staging.fyelabs.com
         caddy.@backend.path: /*
@@ -58,6 +60,8 @@ services:
       - source: canids_staging_caddy_config
         target: /etc/caddy/Caddyfile
     deploy:
+      placement:
+        constraints: [node.hostname == bacchus-w]
       labels:
         caddy: canids-khaos.staging.fyelabs.com
         caddy.route.2_reverse_proxy: "{{upstreams 3000}}"
