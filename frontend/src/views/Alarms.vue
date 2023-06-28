@@ -120,7 +120,7 @@
                 <b>Time:</b>
               </span>
               <span class="alarm-row-data">
-                {{alarm.timestamp}}
+                {{new Date(alarm.timestamp).toString()}}
               </span>
             </div>
 
