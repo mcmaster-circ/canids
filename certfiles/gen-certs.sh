@@ -1,3 +1,4 @@
+#!/bin/bash
 if [ "$1" = "-h" ] ; then
     echo "Usage: `basename $0` [Country] [State or Province] [City] [Backend Name] [Frontend Name] [Name] [Email Address (can be blank)]"
     echo "For example: gen.sh CA Ontario Hamilton FYELABS Ingestion Backend host.docker.internal"

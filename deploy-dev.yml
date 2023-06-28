@@ -65,6 +65,7 @@ services:
     env_file:
       - config/config.env
       - config/secret.env
+      - config/cert-dev.env
     expose:
       - 6060 # internal HTTP port
       - 50000 # grpc
@@ -79,10 +80,11 @@ services:
     networks:
       - vlan
     restart: unless-stopped
+    secrets:
+      - canids_server_cert
+      - canids_server_key
     security_opt:
       - apparmor:unconfined
-    volumes:
-      - ./cert:/cert
 
   canids-v2-frontend:
     build:
@@ -101,7 +103,6 @@ services:
       - vlan
     ports:
       - 80:80 # external HTTP port
-      - 443:443 # external HTTPS port
     restart: unless-stopped
     security_opt:
       - apparmor:unconfined
@@ -110,8 +111,8 @@ services:
         soft: 65536
         hard: 65536
     volumes:
-      - ./Caddyfile:/etc/Caddyfile
-      - caddy:/root/.caddy
+      - caddy:/data
+      - ./config/Caddyfile-dev:/etc/caddy/Caddyfile
 
   swagger:
     image: swaggerapi/swagger-ui
@@ -141,3 +142,9 @@ networks:
 volumes:
   caddy:
   elasticsearch:
+
+secrets:
+  canids_server_cert:
+    file: ./cert/server-cert.pem
+  canids_server_key:
+    file: ./cert/server-key.pem

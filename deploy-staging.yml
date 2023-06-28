@@ -1,0 +1,71 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.6.0
+    env_file:
+      - config/config.env
+      - config/secret.env
+    volumes:
+      - elasticsearch:/usr/share/elasticsearch/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "5"
+    restart: unless-stopped
+    security_opt:
+      - apparmor:unconfined
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    deploy:
+      placement:
+        constraints: [node.hostname == bacchus-w]
+
+  backend:
+    image: 192.0.2.1:5000/canids-v2-staging-backend:latest
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      - elasticsearch
+    env_file:
+      - config/config.env
+      - config/secret.env
+      - config/cert-staging.env
+    secrets:
+      - canids_staging_server_cert
+      - canids_staging_server_key
+    deploy:
+      labels:
+        caddy: canids-khaos.staging.fyelabs.com
+        caddy.@backend.path: /*
+        caddy.@backend.not: path /dashboard* /ingestion 
+        caddy.route.1_reverse_proxy: "@backend {{upstreams 6060}}"
+        caddy.route.1_reverse_proxy.health_uri: /status
+        caddy.route.1_reverse_proxy.health_interval: 10s
+
+  frontend:
+    image: 192.0.2.1:5000/canids-v2-staging-frontend:latest
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      - backend
+    volumes:
+      - caddy:/data
+      - ./config/Caddyfile-staging:/etc/caddy/Caddyfile
+    deploy:
+      labels:
+        caddy: canids-khaos.staging.fyelabs.com
+        caddy.route.2_reverse_proxy: "{{upstreams 3000}}"
+
+secrets:
+  canids_staging_server_cert:
+    external: true
+  canids_staging_server_key:
+    external: true
+
+volumes:
+  elasticsearch:
+  caddy:

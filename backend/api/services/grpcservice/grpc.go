@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"time"
+	"os"
 
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	"github.com/mcmaster-circ/canids-v2/protocol"
@@ -47,7 +48,7 @@ func Provision(ctx context.Context, s *state.State) error {
 	}
 
 	var creds credentials.TransportCredentials
-	creds, err = credentials.NewServerTLSFromFile("../cert/server-cert.pem", "../cert/server-key.pem")
+	creds, err = credentials.NewServerTLSFromFile(os.Getenv("CANIDS_SERVER_CERT"), os.Getenv("CANIDS_SERVER_KEY"))
 
 	if err != nil {
 		log.Fatalf("failed to retrieve TLS credentials ", err)
