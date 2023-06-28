@@ -79,21 +79,24 @@ func ProvisionOnce(
 	ipSetsMgr *ipsetmgr.IPSetsManager,
 ) error {
 	t0 := time.Now()
+	print("\n\n\n\n")
 	loadedSets := make(map[string][]string)
 	for name, url := range urls {
 		resp, err := http.Get(url)
 		if err != nil {
 			return err
 		}
-
+		println(url)
+		startBadTime := time.Now()
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		fmt.Printf("Elapsed time for above url: %d ms \n\n", time.Now().Sub(startBadTime).Milliseconds())
 		if err != nil {
 			return err
 		}
 
 		loadedSets[name] = getIPsFromText(string(bodyBytes))
 	}
-	fmt.Printf("Loaded set queries: %d ms\n", time.Now().Sub(t0).Milliseconds())
+	fmt.Printf("Loaded set queries: %d ms\n\n\n\n", time.Now().Sub(t0).Milliseconds())
 
 	t0 = time.Now()
 	ipSetsMgr.ReloadIPs(loadedSets)
