@@ -48,7 +48,7 @@ func Provision(ctx context.Context, s *state.State) error {
 	}
 
 	var creds credentials.TransportCredentials
-	creds, err = credentials.NewServerTLSFromFile(os.Getenv("CANIDS_SERVER_CERT"), os.Getenv("CANIDS_SERVER_KEY"))
+	creds, err = credentials.NewServerTLSFromFile("/run/secrets/canids_server_cert", "/run/secrets/canids_server_key")
 
 	if err != nil {
 		log.Fatalf("failed to retrieve TLS credentials ", err)

@@ -22,10 +22,14 @@ services:
       - flags= # Change this to specify additional flags (eg. --insecure)
       - asset=testdata2 # Change this to specify your asset name
       - hostname=host.docker.internal:50000 # Change this to specify the address of the backend
+    secrets:
+      - canids_ca_cert
     volumes:
       - ./ingestion/logs:/logs # Change this to specify the location of your logs
-      - ./ingestion/cert:/cert
       - ingestiondb:/db
 
+secrets:
+  canids_ca_cert:
+    file: ./ingestion/cert
 volumes:
   ingestiondb:

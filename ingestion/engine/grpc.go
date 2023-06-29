@@ -38,7 +38,7 @@ func Connect(s *state, db *database, endpoint string) error {
 		log.Printf("[CanIDS] attempting connection to %s\n", endpoint)
 
 		var creds credentials.TransportCredentials
-		creds, err = credentials.NewClientTLSFromFile("../cert/ca-cert.pem", "")
+		creds, err = credentials.NewClientTLSFromFile("/run/secrets/canids_ca_cert", "")
 		if err != nil {
 			log.Printf("cannot load TLS credentials: ", err)
 		}

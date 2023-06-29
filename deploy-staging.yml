@@ -32,10 +32,9 @@ services:
     env_file:
       - config/config.env
       - config/secret.env
-      - config/cert-staging.env
     secrets:
-      - canids_staging_server_cert
-      - canids_staging_server_key
+      - canids_server_cert
+      - canids_server_key
     deploy:
       placement:
         constraints: [node.hostname == bacchus-w]
@@ -65,12 +64,36 @@ services:
       labels:
         caddy: canids-khaos.staging.fyelabs.com
         caddy.route.2_reverse_proxy: "{{upstreams 3000}}"
+  
+  ingestion:
+    image: 192.0.2.1:5000/canids-v2-staging-ingestion:latest
+    build:
+      context: .
+      dockerfile: ingestion/Dockerfile
+    environment:
+      - flags=
+      - asset=testdata2
+      - hostname=backend:50000
+    secrets:
+      - canids_ca_cert
+    volumes: 
+      - /opt/zeek/logs/current:/logs
+      - ingestiondb:/db
+    deploy: #TODO: Replicate this globally once all servers are configured with zeek
+      #mode: global
+      placement:
+        constraints: [node.hostname == bacchus-w]
 
 secrets:
-  canids_staging_server_cert:
+  canids_server_cert:
     external: true
-  canids_staging_server_key:
+    name: canids_staging_server_cert
+  canids_server_key:
+    name: canids_staging_server_key
     external: true
+  canids_ca_cert:
+    external: true
+    name: canids_staging_ca_cert
 
 configs:
   canids_staging_caddy_config:
@@ -79,3 +102,4 @@ configs:
 volumes:
   elasticsearch:
   caddy:
+  ingestiondb:
