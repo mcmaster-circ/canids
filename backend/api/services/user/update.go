@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
@@ -31,7 +30,7 @@ type updateRequest struct {
 // accidental lockout. Another user is required for this. If a uuid query
 // parameter is specified, it will attempt to modify another user. Else, it will
 // attempt to modify the current user.
-func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")

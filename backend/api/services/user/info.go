@@ -9,13 +9,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
 // infoHandler is "/api/user/info". It returns the authenticated user info.
-func infoHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func infoHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get user from request
 	current := jwtauth.FromContext(ctx)
 	w.Header().Set("Content-Type", "application/json")

@@ -11,6 +11,7 @@ import (
 
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
+	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	log "github.com/sirupsen/logrus"
 )
@@ -41,7 +42,7 @@ var (
 // and older than RenewAge, the middleware will query the database and update
 // the token automatically. The request will then proceed normally. If the token
 // is valid and not older than RenewAge, the request will proceed normally.
-func Middleware(s *state.State, a *State, next http.Handler) http.Handler {
+func Middleware(s *state.State, a *jwtauth.Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// get log context from request
 		ctx := r.Context()
@@ -64,7 +65,7 @@ func Middleware(s *state.State, a *State, next http.Handler) http.Handler {
 			return
 		}
 		// validate the state token
-		user, err := a.JWTState.ParseToken(cookie.Value)
+		user, err := a.ParseToken(cookie.Value)
 		if err != nil {
 			// token is not valid, return 401
 			l.Warn("[middleware] invalid X-State cookie")
@@ -135,7 +136,7 @@ func Middleware(s *state.State, a *State, next http.Handler) http.Handler {
 
 			// update time + generate new token
 			user.IssuedAt = time.Now().Unix()
-			token, err := a.JWTState.CreateToken(user, ExpireAge)
+			token, err := a.CreateToken(user, ExpireAge)
 			if err != nil {
 				// can't issue new token, return error
 				l.Error("[middleware] failed to renew token", err)

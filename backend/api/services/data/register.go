@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/mcmaster-circ/canids-v2/backend/auth"
+	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
@@ -27,7 +27,7 @@ var (
 )
 
 // RegisterRoutes registers routes to interact with the data.
-func RegisterRoutes(s *state.State, a *auth.State, r *mux.Router) {
+func RegisterRoutes(s *state.State, a *jwtauth.Config, r *mux.Router) {
 	// get data for visualization /api/data
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		dataHandler(r.Context(), s, a, w, r)

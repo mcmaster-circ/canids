@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/email"
@@ -31,7 +30,7 @@ type addRequest struct {
 // specified or if the current user does not hold permissions to perform the action.
 // If the account was successfully created, an email will be sent for the new user
 // to set a password.
-func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")
@@ -129,7 +128,7 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 
 	// generate account activation token (24 hour expiry)
 	payload := &jwtauth.Payload{UUID: user.UUID}
-	token, err := a.JWTState.CreateToken(payload, 24*time.Hour)
+	token, err := a.CreateToken(payload, 24*time.Hour)
 	if err != nil {
 		l.Error("failed to generate acccount activation token ", err)
 		w.WriteHeader(http.StatusInternalServerError)

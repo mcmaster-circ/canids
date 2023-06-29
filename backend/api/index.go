@@ -46,14 +46,14 @@ type page struct {
 }
 
 // registerIndexAssets registers the index handlers.
-//  - /: redirect to /setup, /login, /dashboard
-//  - /login: login page
-//  - /logout: logout page
-//  - /setup: system setup page
-//  - /requestReset: request password reset page
-//  - /reset: password reset page (sent in email)
-//  - /registration: user registration page (only if enabled)
-func registerIndexAssets(s *state.State, a *auth.State, r *mux.Router) {
+//   - /: redirect to /setup, /login, /dashboard
+//   - /login: login page
+//   - /logout: logout page
+//   - /setup: system setup page
+//   - /requestReset: request password reset page
+//   - /reset: password reset page (sent in email)
+//   - /registration: user registration page (only if enabled)
+func registerIndexAssets(s *state.State, a *jwtauth.Config, r *mux.Router) {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		indexHandler(s, a, w, r)
 	})
@@ -87,7 +87,7 @@ func registerIndexAssets(s *state.State, a *auth.State, r *mux.Router) {
 // validate if the browser is authenticated. If a valid "X-State" cookie is
 // present, the page will redirect to "/dashboard". If the cookie is not present
 // or is invalid, the page will redirect to "/login".
-func indexHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func indexHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -112,7 +112,7 @@ func indexHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		return
 	}
 	// validate the state token
-	_, err = a.JWTState.ParseToken(cookie.Value)
+	_, err = a.ParseToken(cookie.Value)
 	if err != nil {
 		l.Info("[index] X-State cookie present but token not valid, redirecting to /login")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
@@ -130,7 +130,7 @@ func indexHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 // is successful, the "X-State" and "X-Class" cookies will be set and the page
 // will display a login successful, redirecting to the dashboard. If the login
 // is not successful, an error is returned.
-func loginHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func loginHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -149,7 +149,7 @@ func loginHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		if success {
 			// generate + send cookie
 			user.IssuedAt = time.Now().Unix()
-			token, err := a.JWTState.CreateToken(user, auth.ExpireAge)
+			token, err := a.CreateToken(user, auth.ExpireAge)
 			if err != nil {
 				// can't issue new token, return login page with error
 				l.Error("[login] failed to create authentication token ", err)
@@ -226,7 +226,7 @@ func loginHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 // logoutHandler receives "/logout" HTTP requests. It will redirect to the setup
 // page if the system has not been initialized. It will delete the "X-State" and
 // "X-Class" cookies and return a logout success page.
-func logoutHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func logoutHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -281,7 +281,7 @@ func logoutHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http
 // the creation is successful, the page will display a setup successful message,
 // redirecting to the login. If the creation is not successful, an error is
 // returned.
-func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func setupHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -395,7 +395,7 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 // performed, it will capture the email address and will display message that
 // the email has been sent. For security purposes, it will not tell the user if
 // the email was found in the system.
-func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func requestResetHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -431,7 +431,7 @@ func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r
 		}
 		// generate reset token with provided expiry
 		payload := &jwtauth.Payload{UUID: user.UUID}
-		token, err := a.JWTState.CreateToken(payload, auth.ResetDuration)
+		token, err := a.CreateToken(payload, auth.ResetDuration)
 		if err != nil {
 			l.Error("[request reset] failed to generate password reset token ", err)
 			a.AuthPage.Execute(w, page{
@@ -478,7 +478,7 @@ func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r
 // page if the system has not been initialized. If a GET request is performed,
 // it will return the page to set a password. If a POST request is performed, it
 // will attempt to update the hashed password in Elasticsearch.
-func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func resetHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -501,7 +501,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 			return
 		}
 		// parse + validate token
-		payload, err := a.JWTState.ParseToken(token)
+		payload, err := a.ParseToken(token)
 		if err != nil {
 			l.Error("[reset] new password token cannot be parsed ", err)
 			a.AuthPage.Execute(w, page{
@@ -604,7 +604,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 // the creation is successful, the page will display a successful message,
 // redirecting to a login. If the creation is is not successful, an error
 // message is returned.
-func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func registerHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

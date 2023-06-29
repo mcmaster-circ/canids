@@ -14,14 +14,14 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/fields"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/user"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/view"
-	"github.com/mcmaster-circ/canids-v2/backend/auth"
+	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
 // registerRoutes registers all routes required for the HTTP service. Routes
 // registered with the unsecure router will not require authentication for
 // access. Routes registered with the secure router will require authentication.
-func registerRoutes(s *state.State, a *auth.State, unsecure *mux.Router, secure *mux.Router) {
+func registerRoutes(s *state.State, a *jwtauth.Config, unsecure *mux.Router, secure *mux.Router) {
 	// register index assets
 	registerIndexAssets(s, a, unsecure)
 
