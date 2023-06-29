@@ -178,8 +178,11 @@ export default {
             .then(response => {
               if (response.ok) {
                 return Promise.all([response.ok, response.json()]);
+              } else if (response.status === 403) {
+                this.$buefy.snackbar.open({ message: "User cannot delete their own account.", position: "is-top", type: "is-danger" })
+                return Promise.all([response.ok, response.text()]);
               } else {
-                this.$buefy.snackbar.open({ message: "User cannot delete own account.", position: "is-top", type: "is-danger" })
+                this.$buefy.snackbar.open({ message: "An error occurred.", position: "is-top", type: "is-danger" })
                 return Promise.all([response.ok, response.text()]);
               }
             })

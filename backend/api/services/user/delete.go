@@ -32,7 +32,7 @@ func deleteHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 	// standard user can not delete user
 	if current.Class == jwtauth.UserStandard {
 		l.Warn("standard user attempting to delete user")
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
 			Message: "Standard user can not delete users.",
