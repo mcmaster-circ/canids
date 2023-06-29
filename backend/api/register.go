@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/alarm"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/assets"
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/blacklist"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/dashboard"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/data"
@@ -51,4 +52,6 @@ func registerRoutes(s *state.State, a *jwtauth.Config, unsecure *mux.Router, sec
 
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())
+
+	auth.RegisterRoutes(s, a, secure.PathPrefix("/auth/").Subrouter())
 }

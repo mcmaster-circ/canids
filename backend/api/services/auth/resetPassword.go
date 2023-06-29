@@ -16,7 +16,7 @@ type resetFields struct {
 	PasswordConfirm string `json:"passwordConfirm"`
 }
 
-// Resets the password of the
+// Resets the password of the user with email link
 func resetHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 
 	var request resetFields
