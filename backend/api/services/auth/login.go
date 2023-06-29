@@ -23,6 +23,7 @@ type GeneralResponse struct {
 	Message string `json:"message"` // Message describes the request response
 }
 
+// Handles login requests
 func loginHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 
 	var request loginInfo
@@ -42,9 +43,13 @@ func loginHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *h
 	}
 
 	if !s.AuthReady {
-		l.Info("[login] authentication not ready")
+		w.WriteHeader(http.StatusInternalServerError)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Authentication not ready",
+		}
+		json.NewEncoder(w).Encode(out)
 
-		// Create default user etc etc
 		return
 	}
 

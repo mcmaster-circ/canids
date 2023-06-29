@@ -5,8 +5,11 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"time"
 
+	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
@@ -21,12 +24,6 @@ const (
 	// ResetDuration is 24 hours, how long a reset token is valid for
 	ResetDuration = 24 * time.Hour
 )
-
-// // State contains the API authentication state.
-// type State struct {
-// 	JWTState *jwtauth.Config    // JWTState is the authentication state
-// 	AuthPage *template.Template // AuthPage is the parsed authentication templates
-// }
 
 // Provision initializes a State for the API microservice. It accepts the main
 // program state. It will initialize the authentication state and authentication
@@ -64,49 +61,61 @@ func provisionAuth(s *state.State, a *jwtauth.Config) error {
 	}
 	a = auth
 
-	// // fetch authentication pages
-	// s.Log.Info("[api] initializing authentication assets")
-	// // get working directory
-	// cwd, err := os.Getwd()
-	// if err != nil {
-	// 	return err
-	// }
-	// absPathAuth := filepath.Join(cwd, "assets/auth.html")
-	// page := template.Must(compileTemplates(absPathAuth))
-	// a.AuthPage = page
 	return nil
 }
 
-// // compileTemplates accepts a list of file names. It will return a list of
-// // parsed minified templates or an error.
-// func compileTemplates(fileNames ...string) (*template.Template, error) {
-// 	// initalize new minifier
-// 	m := minify.New()
-// 	m.AddFunc("text/html", html.Minify)
+func DefaultUserSetup(s *state.State, a *jwtauth.Config) {
 
-// 	var tmpl *template.Template
+	// Create default random password
+	password, err := randomPass(32)
+	if err != nil {
+		s.Log.Error("[Default user setup] Failed to generate random password")
+		return
+	} else {
+		s.Log.Info("[Default user setup] Default password: %s", password)
 
-// 	// iterate over all file names
-// 	for _, filename := range fileNames {
-// 		// new or append to templates
-// 		name := filepath.Base(filename)
-// 		if tmpl == nil {
-// 			tmpl = template.New(name)
-// 		} else {
-// 			tmpl = tmpl.New(name)
-// 		}
-// 		// read the file
-// 		b, err := ioutil.ReadFile(filename)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		// minify HTML
-// 		mb, err := m.Bytes("text/html", b)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		// add minifed HTML to templates
-// 		tmpl.Parse(string(mb))
-// 	}
-// 	return tmpl, nil
-// }
+	}
+
+	// Hash and salt random password
+	hashedPass, err := jwtauth.HashPassword(password)
+	if err != nil {
+		s.Log.Error("[Default user setup] Failed to hash password")
+		return
+	}
+
+	user := elasticsearch.DocumentAuth{
+		Name:      "Admin",
+		UUID:      "admin@system.test",
+		Class:     jwtauth.UserAdmin,
+		Password:  hashedPass,
+		Activated: true,
+	}
+
+	err = elasticsearch.CreateIndex(s, "auth")
+	if err != nil {
+		// return setup page with general error
+		s.Log.Error("[Default user setup] cannot create 'auth' index ", err)
+		return
+	}
+
+	_, err = user.Index(s)
+	if err != nil {
+		s.Log.Error("[Default user setup] cannot index user", err)
+		return
+	}
+
+	s.AuthReady = true
+
+	s.Log.Info("[Default user setup] created new default admin user. Scroll up to find password. Email is admin@system.test")
+}
+
+func randomPass(n int) (string, error) {
+	bytes := make([]byte, n)
+	_, err := rand.Read(bytes)
+
+	if err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.EncodeToString(bytes), err
+}

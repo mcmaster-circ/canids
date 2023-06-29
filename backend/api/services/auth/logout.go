@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
@@ -8,6 +9,7 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
+// Handles logout requests
 func logoutHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 
 	l := ctxlog.Log(r.Context())
@@ -15,8 +17,13 @@ func logoutHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *
 
 	if !s.AuthReady {
 		l.Info("[login] authentication not ready")
+		w.WriteHeader(http.StatusInternalServerError)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Authentication not ready",
+		}
+		json.NewEncoder(w).Encode(out)
 
-		// Create default user etc etc
 		return
 	}
 
@@ -49,5 +56,10 @@ func logoutHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *
 	http.SetCookie(w, &cookie)
 
 	l.Info("[logout] token revoked, X-State and X-Class cookies cleared")
-
+	w.WriteHeader(http.StatusOK)
+	out := GeneralResponse{
+		Success: true,
+		Message: "token revoked, X-State and X-Class cookies cleared",
+	}
+	json.NewEncoder(w).Encode(out)
 }
