@@ -23,7 +23,7 @@ canids-*.tar.gz
 # vendor/
 
 ### Go Patch ###
-/vendor/
+**/vendor
 /Godeps/
 
 ### macOS ###

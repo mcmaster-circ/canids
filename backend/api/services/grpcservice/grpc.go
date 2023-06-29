@@ -10,7 +10,6 @@ import (
 	"log"
 	"net"
 	"time"
-	"os"
 
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	"github.com/mcmaster-circ/canids-v2/protocol"
