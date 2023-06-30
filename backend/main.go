@@ -45,8 +45,10 @@ func main() {
 	//Create default user
 	auth.DefaultUserSetup(s, a)
 
+	p := auth.ProvisionAuthPage(s)
+
 	// start API server
-	err = api.Start(s, a)
+	err = api.Start(s, a, p)
 	if err != nil {
 		s.Log.Fatal(err)
 	}
