@@ -87,7 +87,7 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 		return
 	}
 
-	// ensure request name and UUID is unique
+	// ensure request name, url and UUID is unique
 	for _, blacklist := range blacklists {
 		if request.Name == blacklist.Name || blacklistUUID == blacklist.UUID {
 			l.Warn("blacklist name in use")
@@ -95,6 +95,17 @@ func addHandler(ctx context.Context, s *state.State, a *auth.State, w http.Respo
 			out := GeneralResponse{
 				Success: false,
 				Message: "Blacklist name already in use.",
+			}
+			json.NewEncoder(w).Encode(out)
+			return
+		}
+
+		if request.URL == blacklist.URL {
+			l.Warn("blacklist url in use")
+			w.WriteHeader(http.StatusBadRequest)
+			out := GeneralResponse{
+				Success: false,
+				Message: "Blacklist url already in use.",
 			}
 			json.NewEncoder(w).Encode(out)
 			return

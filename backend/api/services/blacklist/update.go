@@ -67,6 +67,40 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 		return
 	}
 
+	// retreive all blacklists
+	blacklists, err := elasticsearch.AllBlacklists(s)
+	if err != nil {
+		l.Error("error fetching all blacklists ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(InternalServerError)
+		return
+	}
+
+	// ensure request name and url is unique
+	for _, blacklist := range blacklists {
+		if request.Name == blacklist.Name {
+			l.Warn("blacklist name in use")
+			w.WriteHeader(http.StatusBadRequest)
+			out := GeneralResponse{
+				Success: false,
+				Message: "Blacklist name already in use.",
+			}
+			json.NewEncoder(w).Encode(out)
+			return
+		}
+
+		if request.URL == blacklist.URL {
+			l.Warn("blacklist url in use")
+			w.WriteHeader(http.StatusBadRequest)
+			out := GeneralResponse{
+				Success: false,
+				Message: "Blacklist url already in use.",
+			}
+			json.NewEncoder(w).Encode(out)
+			return
+		}
+	}
+
 	// query elasticsearch for document ID
 	_, esDocID, err := elasticsearch.QueryBlacklistByUUID(s, request.UUID)
 	if err != nil {
