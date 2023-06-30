@@ -1,0 +1,12 @@
+html {
+  font-family: 'Raleway', 'Roboto', 'Arial', '-apple-system', 'sans-serif';
+  background-color: white;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  cursor: pointer;
+}

@@ -205,3 +205,36 @@ ingestion/logs/*
 *.pem
 *.srl
 canids-*
+
+# Frontend dependencies
+frontend/node_modules
+frontend/.pnp
+frontend/.pnp.js
+
+# testing
+frontend/coverage
+
+# next.js
+frontend/.next/
+frontend/out/
+frontend/build
+
+# production
+frontend/build
+
+# misc
+frontend/.DS_Store
+frontend/*.pem
+
+# debug
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+
+# local env files
+frontend/.env*.local
+
+# typescript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts

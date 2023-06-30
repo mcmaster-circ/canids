@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "baseUrl": "./",
+    "paths": {
+      "@api/*": ["src/api/*"],
+      "@images/*": ["public/images/*"],
+      "@styles/*": ["src/styles/*"],
+      "@context/*": ["src/context/*"],
+      "@constants/*": ["src/constants/*"],
+      "@utils/*": ["src/utils/*"],
+      "@atoms": ["src/components/atoms/index.ts"],
+      "@forms": ["src/components/forms/index.ts"],
+      "@layouts": ["src/components/layouts/index.ts"],
+      "@modals": ["src/components/modals/index.ts"],
+      "@molecules": ["src/components/molecules/index.ts"],
+      "@organisms": ["src/components/organisms/index.ts"],
+      "@hooks": ["src/hooks/index.ts"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.module.scss"],
+  "exclude": ["node_modules"]
+}

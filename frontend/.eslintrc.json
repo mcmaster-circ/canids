@@ -1,0 +1,25 @@
+{
+  "root": true,
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:react-hooks/recommended",
+    "eslint:recommended",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": ["react-hooks", "unused-imports", "prettier"],
+  "overrides": [
+    {
+      "files": ["**/*.tsx"],
+      "rules": {
+        "react/display-name": "off",
+        "import/no-anonymous-default-export": "off",
+        "unused-imports/no-unused-imports": "error",
+        "no-unused-vars": "off",
+        "prettier/prettier": "error"
+      }
+    }
+  ],
+  "globals": {
+    "JSX": "readonly"
+  }
+}
