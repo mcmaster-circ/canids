@@ -282,6 +282,151 @@ paths:
                 "time": "2020-02-21T20:56:29Z",
                 "uptime": "1h5m31.570680928s"
               }
+  
+  /auth/login:
+    post:
+      summary: Login endpoint
+      description: |
+        This takes in user credentials for validation and sets the X-State and X-Class cookies.
+      tags:
+      - Primary
+      requestBody:
+        required: true
+        content:
+          type: json object
+          properties:
+            UUID:
+              type: string
+              description: |
+                email of the user loging in
+            Password:
+              type: string
+              description: |
+                password of the user loging in
+      responses:
+        '200':
+          description: |
+            Successfully set X-State and X-Class cookies.
+        '400':
+          description: |
+            Bad request format or improper username/password combination
+        '500':
+          description: |
+            Authentication is not ready
+
+  /auth/logout:
+    get:
+      summary: Logout endpoint
+      description: |
+        This will clear the X-Class and X-State cookies from the browser.
+      tags:
+      - Primary
+      responses:
+        '200':
+          description: Succesfully removed the X-Class and X-State cookies
+        '500':
+          description: Authentication is not ready
+
+  /auth/requestReset:
+    post:
+      summary: Request password reset
+      description: |
+        Will send email to provided address with url to password reset page. Error will only be returned if email cannot be sent, success will be returned regardless of whether the email was sent to a valid user or not (for security purposes).
+      tags:
+      - Primary
+      requestBody:
+        required: true
+        content:
+          type: json object
+          properties:
+            UUID:
+              type: string
+              description: |
+                Email of user to send password reset url to
+      responses:
+        '200':
+          description: |
+            Successfully sent email to provided address
+        '400':
+          description: |
+            Email not present or json decoding failed
+        '500':
+          description: |
+            Auth not ready, failed to generate token, failed to send email
+        
+  /auth/resetPassword:
+    post:
+      summary: Reset user password
+      description: |
+        This will set a new password for a user.
+      tags:
+      - Primary
+      requestBody:
+        required: true
+        content:
+          type: json object
+          properties:
+            Token:
+              type: string
+              description: |
+                Token associated to password reset sent to user in email
+            Password:
+              type: string
+              description: |
+                Desired password set by user
+            PasswordConfirm:
+              type: string
+              description: |
+                Confirm desired password set by user
+      responses:
+        '200':
+          description: |
+            Successfully reset password
+        '400':
+          description: |
+            Cannot decode json, fields not present, passwords don't match, token is expired
+        '500':
+          description: |
+            Authentication not ready, error hashing password, error querying user, error updating passowrd
+
+  /auth/registerUser:
+    post:
+      summary: User self registration endpoint
+      description: |
+        Takes email, password, and name to create new user
+      tags:
+      - Primary
+      requestBody:
+        required: true
+        content:
+          type: json object
+          properties:
+            Name:
+              type: string
+              description: |
+                The name of the prospective user
+            UUID:
+              type: string
+              description: |
+                The email address of the prospective user
+            Password:
+              type: string
+              description: |
+                The desired password of the prospective user
+            PasswordConfirm:
+              type: string
+              description: |
+                The re-entered password of the prospective user
+      responses:
+        '200':
+          description: |
+            Successfully created user
+        '400':
+          description: |
+            Unable to decode json, not all fields provided, email already exists in db, passwords are not equal
+        '500':
+          description: |
+            Error hashing password or inserting user into database
 
   /api/user/info:
     get:
