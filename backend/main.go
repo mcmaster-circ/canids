@@ -4,12 +4,12 @@
 package main
 
 import (
-	//"time"
+	"time"
 
 	"github.com/mcmaster-circ/canids-v2/backend/api"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 
-	// "github.com/mcmaster-circ/canids-v2/backend/libraries/scheduler"
+	"github.com/mcmaster-circ/canids-v2/backend/libraries/scheduler"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	log "github.com/sirupsen/logrus"
 )
@@ -31,10 +31,10 @@ func main() {
 	}
 
 	// begin scheduled refreshing of alarm ip sets
-	// err = scheduler.Provision(s, 18*time.Hour, s.AlarmManager)
-	// if err != nil {
-	// 	s.Log.Fatal(err)
-	// }
+	err = scheduler.Provision(s, 18*time.Hour, s.AlarmManager)
+	if err != nil {
+		s.Log.Fatal(err)
+	}
 
 	// provision API state
 	a, err := auth.Provision(s)
