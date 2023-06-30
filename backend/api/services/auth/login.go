@@ -28,11 +28,12 @@ func loginHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *h
 
 	var request loginInfo
 	l := ctxlog.Log(r.Context())
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Type", "application/json")
 
 	// Decode request to json
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
+		l.Error("Failed to decode json", err)
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
@@ -96,55 +97,23 @@ func loginHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *h
 			http.SetCookie(w, &cookie)
 
 			l.Info("[login] token issued, X-State and X-Class cookies set")
-
+			w.WriteHeader(http.StatusOK)
+			out := GeneralResponse{
+				Success: true,
+				Message: "Successfully logged in",
+			}
+			json.NewEncoder(w).Encode(out)
 			return
 		}
 
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Incorrect username and password combination",
+		}
+		json.NewEncoder(w).Encode(out)
 		l.Info("[login] incorrect username password combination")
 	}
-
-	// // Get user from elasticsearch
-	// docID, _, err := elasticsearch.QueryAuthByUUID(s, request.UUID)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	out := GeneralResponse{
-	// 		Success: false,
-	// 		Message: "Invalid email/password",
-	// 	}
-	// 	json.NewEncoder(w).Encode(out)
-	// 	return
-	// }
-
-	// // Check correct password
-	// if !jwtauth.HashCompare(docID.Password, request.Password) {
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	out := GeneralResponse{
-	// 		Success: false,
-	// 		Message: "Invalid email/password",
-	// 	}
-	// 	json.NewEncoder(w).Encode(out)
-	// 	return
-	// }
-
-	// payload := jwtauth.Payload{
-	// 	docID.UUID,
-	// 	docID.Class,
-	// 	docID.Name,
-	// 	docID.Activated,
-	// 	jwt.StandardClaims{},
-	// }
-
-	// // Generate JWT Token
-	// token, err := a.CreateToken(&payload, auth.ExpireAge)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	out := GeneralResponse{
-	// 		Success: false,
-	// 		Message: "Failed to generate token",
-	// 	}
-	// 	json.NewEncoder(w).Encode(out)
-	// 	return
-	// }
 
 }
 
@@ -174,5 +143,6 @@ func validateLogin(s *state.State, l *logrus.Entry, uuid string, pass string) (b
 		return true, payload
 	}
 	// login not successful
+	l.Info("Username and password do not match")
 	return false, payload
 }

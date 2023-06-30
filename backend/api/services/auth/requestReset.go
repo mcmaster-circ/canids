@@ -18,7 +18,7 @@ type resetRequest struct {
 
 func requestResetHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	l := ctxlog.Log(r.Context())
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Type", "application/json")
 
 	var request resetRequest
 

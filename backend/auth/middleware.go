@@ -68,7 +68,7 @@ func Middleware(s *state.State, a *jwtauth.Config, next http.Handler) http.Handl
 		user, err := a.ParseToken(cookie.Value)
 		if err != nil {
 			// token is not valid, return 401
-			l.Warn("[middleware] invalid X-State cookie")
+			l.Warn("[middleware] invalid X-State cookie: ", err)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(unauthorizedError)

@@ -24,7 +24,7 @@ import (
 // access. Routes registered with the secure router will require authentication.
 func registerRoutes(s *state.State, a *jwtauth.Config, unsecure *mux.Router, secure *mux.Router) {
 	// register index assets
-	registerIndexAssets(s, a, unsecure)
+	// registerIndexAssets(s, a, unsecure)
 
 	// register static assets: /static
 	registerStaticAssets(s, unsecure)
@@ -53,5 +53,5 @@ func registerRoutes(s *state.State, a *jwtauth.Config, unsecure *mux.Router, sec
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())
 
-	auth.RegisterRoutes(s, a, secure.PathPrefix("/auth/").Subrouter())
+	auth.RegisterRoutes(s, a, unsecure.PathPrefix("/auth/").Subrouter())
 }

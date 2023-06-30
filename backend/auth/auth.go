@@ -32,39 +32,58 @@ func Provision(s *state.State) (*jwtauth.Config, error) {
 	s.Log.Info("[api] provisioning api state")
 
 	// empty API state
-	var a jwtauth.Config
+	var err error
+	var a *jwtauth.Config
 
 	// generate JWTState and AuthPage in State
-	if err := provisionAuth(s, &a); err != nil {
-		s.Log.Error("[api] failed to provision Auth in api state")
+	// if err = provisionAuth(s, a); err != nil {
+	// 	s.Log.Error("[api] failed to provision Auth in api state")
+	// 	return nil, err
+	// }
+
+	s.Log.Info("[api] initializing authentication secret")
+	secret, err := jwtauth.GenerateSeed(SecretLength)
+	if err != nil {
 		return nil, err
 	}
 
-	return &a, nil
+	// Generate JWTState
+	s.Log.Info("[api] initializing JWT authentication state")
+	a, err = jwtauth.Init(secret)
+	if err != nil {
+		return nil, err
+	}
+
+	return a, nil
 }
 
 // provisionAuth accepts the main program state and the API state. It generates
 // the JWTState and AuthPage entries in the API State or returns an error.
-func provisionAuth(s *state.State, a *jwtauth.Config) error {
-	// generate seed
-	s.Log.Info("[api] initializing authentication secret")
-	secret, err := jwtauth.GenerateSeed(SecretLength)
-	if err != nil {
-		return err
-	}
+// func provisionAuth(s *state.State, a *jwtauth.Config) (*jwtauth.Config, error) {
+// 	// generate seed
+// 	s.Log.Info("[api] initializing authentication secret")
+// 	secret, err := jwtauth.GenerateSeed(SecretLength)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// generate JWTState
-	s.Log.Info("[api] initializing JWT authentication state")
-	auth, err := jwtauth.Init(secret)
-	if err != nil {
-		return err
-	}
-	a = auth
-
-	return nil
-}
+// 	// generate JWTState
+// 	s.Log.Info("[api] initializing JWT authentication state")
+// 	a, err = jwtauth.Init(secret)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func DefaultUserSetup(s *state.State, a *jwtauth.Config) {
+
+	err := elasticsearch.CreateIndex(s, "auth")
+	if err != nil {
+		// return setup page with general error
+		s.Log.Error("[Default user setup] cannot create 'auth' index ", err)
+		return
+	}
 
 	// Create default random password
 	password, err := randomPass(32)
@@ -72,7 +91,7 @@ func DefaultUserSetup(s *state.State, a *jwtauth.Config) {
 		s.Log.Error("[Default user setup] Failed to generate random password")
 		return
 	} else {
-		s.Log.Info("[Default user setup] Default password: %s", password)
+		s.Log.Info("[Default user setup] Default password: ", password)
 
 	}
 
@@ -89,13 +108,6 @@ func DefaultUserSetup(s *state.State, a *jwtauth.Config) {
 		Class:     jwtauth.UserAdmin,
 		Password:  hashedPass,
 		Activated: true,
-	}
-
-	err = elasticsearch.CreateIndex(s, "auth")
-	if err != nil {
-		// return setup page with general error
-		s.Log.Error("[Default user setup] cannot create 'auth' index ", err)
-		return
 	}
 
 	_, err = user.Index(s)

@@ -22,7 +22,7 @@ func resetHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *h
 	var request resetFields
 
 	l := ctxlog.Log(r.Context())
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Type", "application/json")
 
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
