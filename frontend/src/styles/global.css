@@ -1,5 +1,11 @@
+html,
+body,
+#__next {
+  height: 100%;
+}
+
 html {
-  font-family: 'Raleway', 'Roboto', 'Arial', '-apple-system', 'sans-serif';
+  font-family: 'Open Sans', 'Roboto', 'Arial', '-apple-system', 'sans-serif';
   background-color: white;
 }
 

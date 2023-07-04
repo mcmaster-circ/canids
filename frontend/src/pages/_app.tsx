@@ -10,7 +10,7 @@ export default ({ Component, pageProps }: AppProps) => {
   return (
     <>
       <Head>
-        <title>CANIDS</title>
+        <title>McMaster CanIDS</title>
       </Head>
       <ThemeProvider theme={theme}>
         <NotificationProvider>

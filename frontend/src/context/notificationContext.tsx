@@ -7,7 +7,7 @@ import {
   ReactNode,
   useContext,
 } from 'react'
-import { useTheme } from '@mui/material/styles'
+import { Snackbar, Alert } from '@mui/material'
 
 interface NotificationContextType {
   notification: any
@@ -23,7 +23,6 @@ const NotificationContext = createContext<NotificationContextType>(
 
 // Export the provider as we need to wrap the entire app with it
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
-  const theme: any = useTheme()
   const [notification, setNotification] = useState<any>()
   const [notificationType, setNotificationType] = useState<any>()
 
@@ -60,21 +59,20 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     <NotificationContext.Provider value={memoedValue}>
       {children}
       {notification && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '50px',
-            right: '0',
-            backgroundColor: theme.palette[notificationType].main,
-            color: theme.palette[notificationType].contrastText,
-            padding: '16px',
-            borderTopLeftRadius: '8px',
-            borderBottomLeftRadius: '8px',
-            zIndex: 100,
-          }}
+        <Snackbar
+          open={!!notification}
+          onClose={removeNotification}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          {notification}
-        </div>
+          <Alert
+            onClose={removeNotification}
+            severity={notificationType}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {notification}
+          </Alert>
+        </Snackbar>
       )}
     </NotificationContext.Provider>
   )

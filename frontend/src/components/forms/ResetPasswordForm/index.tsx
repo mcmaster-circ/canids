@@ -2,22 +2,21 @@ import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button, Divider, Link, Typography } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
-import useAuth from '@context/authContext'
-import { defaultValues, loginFormConfig, resolver } from './constants'
+import { defaultValues, registerFormConfig, resolver } from './constants'
 import { FormRender } from '@molecules'
 import packageJson from 'package.json'
 import { authRoutes } from '@constants/routes'
-import { LoginProps } from '@constants/types'
+import { useRouter } from 'next/router'
+import { ResetProps } from '@constants/types'
 
 export default () => {
-  const { login } = useAuth()
-
+  const { push } = useRouter()
   const onSubmit = useCallback(
-    (data: LoginProps) => {
+    (data: ResetProps) => {
       console.log(data)
-      login({ user: 'example@mail.com', pass: 'securePassword' })
+      push(authRoutes.LOGIN)
     },
-    [login]
+    [push]
   )
 
   const {
@@ -33,12 +32,12 @@ export default () => {
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={3} justifyContent="center">
-          {loginFormConfig.map((c) => (
+          {registerFormConfig.map((c) => (
             <FormRender key={c.name} {...c} errors={errors} control={control} />
           ))}
           <Grid xs={12}>
             <Button variant="contained" color="primary" type="submit" fullWidth>
-              SIGN IN
+              RESET PASSWORD
             </Button>
           </Grid>
           <Grid
@@ -53,20 +52,9 @@ export default () => {
                 variant="body1"
                 underline="none"
                 alignSelf="center"
-                href={authRoutes.REGISTER}
+                href={authRoutes.LOGIN}
               >
-                Register
-              </Link>
-            </Grid>
-            <Divider orientation="vertical" flexItem />
-            <Grid>
-              <Link
-                variant="body1"
-                underline="none"
-                alignSelf="center"
-                href={authRoutes.FORGOT_PASSWORD}
-              >
-                Forgot password
+                Back to login
               </Link>
             </Grid>
             <Divider orientation="vertical" flexItem />

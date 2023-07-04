@@ -1,1 +1,7 @@
 export * from './fetchTypes'
+export * from './authPropsTypes'
+export * from './userPropsTypes'
+export * from './dashboardPropsTypes'
+export * from './alarmsPropsTypes'
+export * from './blacklistPropsTypes'
+export * from './viewPropsTypes'

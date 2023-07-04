@@ -9,20 +9,16 @@ import {
 } from 'react'
 import { addDays } from 'date-fns'
 import { useCookies } from 'react-cookie'
-import { login as loginApiCall } from '@api/exampleApi'
+import { login as loginApiCall } from '@api/auth'
 import { useRequest } from '@hooks'
 import { userProfileCookies, allCookies } from '@constants/cookies'
 import useNotification, { NotificationType } from '@context/notificationContext'
+import { LoginProps } from '@forms'
 
 interface User {
   jwt?: string | null
   name?: string | null
   email?: string | null
-}
-
-interface LoginProps {
-  email: string
-  password: string
 }
 
 interface AuthContextType {
@@ -78,6 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           )
           setUserFields(res)
           setLogedIn(true)
+          addNotification('Successfull Login', 'success')
         }
       } catch (e) {
         addNotification(e)
@@ -90,8 +87,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = useCallback(() => {
     setUser(undefined)
     Object.values(allCookies).forEach((f) => removeCookie(f, { path: '/' }))
+    addNotification('Successfully logged out', 'success')
     setLogedIn(false)
-  }, [removeCookie])
+  }, [addNotification, removeCookie])
 
   // Check if there is a currently active session
   // when the provider is mounted for the first time.

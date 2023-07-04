@@ -8,4 +8,5 @@ export interface PostProps {
   url: string
   body?: any
   token?: string
+  params?: any
 }

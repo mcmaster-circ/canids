@@ -16,7 +16,10 @@ export const get = async ({ url, params, token }: GetProps) => {
   throw data
 }
 
-export const post = async ({ url, body, token }: PostProps) => {
+export const post = async ({ url, body, token, params }: PostProps) => {
+  if (params) {
+    url += '?' + new URLSearchParams(params).toString()
+  }
   const res = await fetch(url, {
     headers: postHeaders(token),
     method: 'POST',

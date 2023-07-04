@@ -3,7 +3,12 @@ import { useRouter } from 'next/router'
 import { useCookies } from 'react-cookie'
 import useAuth from '@context/authContext'
 import { Auth } from '@layouts'
-import { LoginForm } from '@forms'
+import {
+  ForgotPasswordForm,
+  LoginForm,
+  RegisterForm,
+  ResetPasswordForm,
+} from '@forms'
 import { authRouteParams, dashboardRoutes } from '@constants/routes'
 
 export default () => {
@@ -32,10 +37,28 @@ export default () => {
   }
 
   switch (query.authRoute) {
+    case authRouteParams.REGISTER:
+      return (
+        <Auth title="Please register a new account">
+          <RegisterForm />
+        </Auth>
+      )
+    case authRouteParams.FORGOT_PASSWORD:
+      return (
+        <Auth title="Please enter your email to reset the password">
+          <ForgotPasswordForm />
+        </Auth>
+      )
+    case authRouteParams.RESET_PASSWORD:
+      return (
+        <Auth title="Please enter your new password">
+          <ResetPasswordForm />
+        </Auth>
+      )
     case authRouteParams.LOGIN:
     default: {
       return (
-        <Auth>
+        <Auth title="Authenticate to access CanIDS">
           <LoginForm />
         </Auth>
       )
