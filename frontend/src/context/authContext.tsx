@@ -7,22 +7,16 @@ import {
   ReactNode,
   useContext,
 } from 'react'
-import { addDays } from 'date-fns'
 import { useCookies } from 'react-cookie'
 import { login as loginApiCall } from '@api/auth'
+import { userInfo } from '@api/user'
 import { useRequest } from '@hooks'
-import { userProfileCookies, allCookies } from '@constants/cookies'
 import useNotification, { NotificationType } from '@context/notificationContext'
-import { LoginProps } from '@forms'
-
-interface User {
-  jwt?: string | null
-  name?: string | null
-  email?: string | null
-}
+import { userProfileCookies, allCookies as ac } from '@constants/cookies'
+import { LoginProps, UserProps } from '@constants/types'
 
 interface AuthContextType {
-  user?: User
+  user?: UserProps
   loading: boolean
   logedIn?: boolean
   login: (d: LoginProps) => void
@@ -42,17 +36,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     requestByDefault: false,
     request: loginApiCall,
   })
+  const { makeRequest: userInfoRequest } = useRequest({
+    requestByDefault: false,
+    request: userInfo,
+  })
   const [cookies, setCookie, removeCookie] = useCookies(
-    Object.values(allCookies) as string[]
+    Object.values(ac) as string[]
   )
 
-  const [user, setUser] = useState<User>()
+  const [user, setUser] = useState<UserProps>()
   const [logedIn, setLogedIn] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
   const [loadingInitial, setLoadingInitial] = useState<boolean>(true)
 
-  const setUserFields = useCallback((fields: User | any) => {
-    const cachedUser: User | any = {}
+  const setUserFields = useCallback((fields: UserProps | any) => {
+    const cachedUser: UserProps | any = {}
     userProfileCookies.forEach((f) => (cachedUser[f] = fields[f]))
     setUser(cachedUser)
   }, [])
@@ -62,16 +60,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true)
       try {
         // const res = await loginRequest({ user: { ...d } })
-        // TODO: Remove when auth is Setted Up
-        const res: any = {
-          email: 'example@mail.com',
-          name: 'Some User',
-          jwt: 'some_jwt',
-        }
+        const res = await userInfoRequest()
+        console.log(res)
         if (res) {
-          userProfileCookies.forEach((f) =>
-            setCookie(f, res[f], { path: '/', expires: addDays(new Date(), 7) })
-          )
+          userProfileCookies.forEach((f) => setCookie(f, res[f], { path: '/' }))
           setUserFields(res)
           setLogedIn(true)
           addNotification('Successfull Login', 'success')
@@ -81,12 +73,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setLoading(false)
     },
-    [addNotification, setCookie, setUserFields]
+    [addNotification, setCookie, setUserFields, userInfoRequest]
   )
 
   const logout = useCallback(() => {
     setUser(undefined)
-    Object.values(allCookies).forEach((f) => removeCookie(f, { path: '/' }))
+    Object.values(ac).forEach((f) => removeCookie(f, { path: '/' }))
     addNotification('Successfully logged out', 'success')
     setLogedIn(false)
   }, [addNotification, removeCookie])
@@ -94,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Check if there is a currently active session
   // when the provider is mounted for the first time.
   useEffect(() => {
-    if (!!cookies[allCookies.JWT] && loadingInitial) {
+    if (!!cookies[ac.STATE] && loadingInitial) {
       setUserFields(cookies)
       setLogedIn(true)
       setLoadingInitial(false)

@@ -1,3 +1,12 @@
+export interface ViewListItemProps {
+  uuid: string
+  name: string
+  class: 'line' | 'bar' | 'pie' | 'table'
+  index: string
+  fields: string[]
+  fieldNames: string[]
+}
+
 export interface AddViewProps {
   name: string
   class: 'line' | 'bar' | 'pie' | 'table'
@@ -11,13 +20,4 @@ export interface UpdateViewProps extends AddViewProps {
 
 export interface DeleteViewProps {
   uuid: string
-}
-
-export interface DataViewParams {
-  view: string
-  start: string
-  end: string
-  interval: number
-  maxSize: number
-  from: number
 }

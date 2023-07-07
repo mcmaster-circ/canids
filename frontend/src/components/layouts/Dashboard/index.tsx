@@ -1,31 +1,33 @@
-import { useEffect, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import useAuth from '@context/authContext'
-import { Button } from '@mui/material'
-import { ModalExample } from '@modals'
+// import { Button } from '@mui/material'
+// import { ModalExample } from '@modals'
+import { Header } from '@organisms'
 import styles from './styles.module.scss'
+import { authRoutes } from '@constants/routes'
 
-export default () => {
+interface Props {
+  children: ReactNode
+}
+
+export default ({ children }: Props) => {
   const router = useRouter()
-  const { user, logout } = useAuth()
+  const { logedIn } = useAuth()
   const [openModal, setOpenModal] = useState(false)
 
   useEffect(() => {
-    if (!user?.name) {
-      router.push('/auth/login')
+    if (!logedIn) {
+      router.push(authRoutes.LOGIN)
     }
-  }, [router, user?.name])
+  }, [logedIn, router])
 
   return (
-    <>
-      <div className={styles.container}>
-        <Button onClick={logout}>Log Out</Button>
-        <Button onClick={() => setOpenModal(true)}>Open Modal</Button>
-        <ModalExample
-          open={openModal}
-          handleClose={() => setOpenModal(false)}
-        />
-      </div>
-    </>
+    <div className={styles.container}>
+      <Header />
+      {/* <Button onClick={() => setOpenModal(true)}>Open Modal</Button> */}
+      {/* <ModalExample open={openModal} handleClose={() => setOpenModal(false)} /> */}
+      {children}
+    </div>
   )
 }

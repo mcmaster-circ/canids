@@ -7,6 +7,7 @@ export const get = async ({ url, params, token }: GetProps) => {
   }
   const res = await fetch(url, {
     headers: getHeaders(token),
+    credentials: 'include',
     method: 'GET',
   })
   const data = await res.json()

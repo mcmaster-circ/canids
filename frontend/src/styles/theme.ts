@@ -10,4 +10,12 @@ export default createTheme({
       'sans-serif',
     ].join(','),
   },
+  palette: {
+    primary: {
+      main: '#be3e24',
+    },
+    secondary: {
+      main: '#1976d2',
+    },
+  },
 })

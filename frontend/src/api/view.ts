@@ -3,19 +3,13 @@ import {
   AddViewProps,
   UpdateViewProps,
   DeleteViewProps,
-  DataViewParams,
 } from '@constants/types'
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
-export const getDataView = async ({ params }: { params: DataViewParams }) => {
-  const data = await get({ url: baseUrl + '/data', params })
-  return data
-}
-
 export const getViewList = async () => {
   const data = await get({ url: baseUrl + '/view/list' })
-  return data
+  return data?.views
 }
 
 export const addView = async ({ params }: { params: AddViewProps }) => {

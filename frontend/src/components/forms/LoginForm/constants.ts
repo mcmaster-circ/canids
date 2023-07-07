@@ -14,6 +14,7 @@ export const loginFormConfig = [
     size: 'small',
     column: 12,
     autoComplete: 'false',
+    color: 'secondary',
   },
   {
     component: 'input',
@@ -23,6 +24,7 @@ export const loginFormConfig = [
     size: 'small',
     column: 12,
     autoComplete: 'false',
+    color: 'secondary',
   },
 ]
 

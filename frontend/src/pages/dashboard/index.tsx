@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import useAuth from '@context/authContext'
 import { authRoutes } from '@constants/routes'
 import { Dashboard } from '@layouts'
+import { MainDashboard } from '@organisms'
 
 export default () => {
   const router = useRouter()
@@ -18,5 +19,9 @@ export default () => {
     return null
   }
 
-  return <Dashboard />
+  return (
+    <Dashboard>
+      <MainDashboard />
+    </Dashboard>
+  )
 }

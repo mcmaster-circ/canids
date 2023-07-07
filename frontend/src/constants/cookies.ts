@@ -1,11 +1,19 @@
 export const allCookies = {
-  JWT: 'jwt',
   NAME: 'name',
-  EMAIL: 'email',
+  EMAIL: 'uuid',
+  EXP: 'exp',
+  IAT: 'iat',
+  ROLE: 'class',
+  ACTIVATED: 'activated',
+  STATE: 'X-State',
+  CLASS: 'X-Class',
 }
 
 export const userProfileCookies = [
-  allCookies.JWT,
   allCookies.NAME,
   allCookies.EMAIL,
+  allCookies.IAT,
+  allCookies.EXP,
+  allCookies.ROLE,
+  allCookies.ACTIVATED,
 ]

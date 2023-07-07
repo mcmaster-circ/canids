@@ -36,7 +36,12 @@ export default () => {
             <FormRender key={c.name} {...c} errors={errors} control={control} />
           ))}
           <Grid xs={12}>
-            <Button variant="contained" color="primary" type="submit" fullWidth>
+            <Button
+              variant="contained"
+              color="secondary"
+              type="submit"
+              fullWidth
+            >
               REGISTER
             </Button>
           </Grid>
@@ -53,6 +58,7 @@ export default () => {
                 underline="none"
                 alignSelf="center"
                 href={authRoutes.LOGIN}
+                color="secondary"
               >
                 Back to login
               </Link>

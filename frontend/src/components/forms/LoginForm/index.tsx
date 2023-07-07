@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
+import { useCookies } from 'react-cookie'
 import { Button, Divider, Link, Typography } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
 import useAuth from '@context/authContext'
@@ -8,16 +9,20 @@ import { FormRender } from '@molecules'
 import packageJson from 'package.json'
 import { authRoutes } from '@constants/routes'
 import { LoginProps } from '@constants/types'
+import { allCookies as ac } from '@constants/cookies'
 
 export default () => {
   const { login } = useAuth()
+  const [_, setCookie] = useCookies([ac.STATE, ac.CLASS])
 
   const onSubmit = useCallback(
     (data: LoginProps) => {
+      setCookie('X-State', 'state', { path: '/' })
+      setCookie('X-Class', 'admin', { path: '/' })
       console.log(data)
       login({ user: 'example@mail.com', pass: 'securePassword' })
     },
-    [login]
+    [login, setCookie]
   )
 
   const {
@@ -37,7 +42,12 @@ export default () => {
             <FormRender key={c.name} {...c} errors={errors} control={control} />
           ))}
           <Grid xs={12}>
-            <Button variant="contained" color="primary" type="submit" fullWidth>
+            <Button
+              variant="contained"
+              color="secondary"
+              type="submit"
+              fullWidth
+            >
               SIGN IN
             </Button>
           </Grid>
@@ -54,6 +64,7 @@ export default () => {
                 underline="none"
                 alignSelf="center"
                 href={authRoutes.REGISTER}
+                color="secondary"
               >
                 Register
               </Link>
@@ -65,6 +76,7 @@ export default () => {
                 underline="none"
                 alignSelf="center"
                 href={authRoutes.FORGOT_PASSWORD}
+                color="secondary"
               >
                 Forgot password
               </Link>
