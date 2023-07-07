@@ -7,6 +7,11 @@ export const GRAPH_TYPES = {
   TABLE: 'table',
 }
 
+export const GRAPH_WIDTH_TYPES = {
+  FULL: 'full',
+  HALF: 'half',
+}
+
 export const GRAPH_TYPES_ICONS = {
   [GRAPH_TYPES.LINE]: <ShowChart fontSize="large" />,
   [GRAPH_TYPES.BAR]: <BarChart fontSize="large" />,

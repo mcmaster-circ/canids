@@ -1,7 +1,7 @@
 const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
 interface DataViewParams {
-  views: string[]
+  views: { uuid: string; name: string }[]
   params: {
     start: string
     end: string
@@ -13,10 +13,10 @@ interface DataViewParams {
 
 export const getChartsData = async ({ params }: { params: DataViewParams }) => {
   const envUrls = params.views.map(
-    (id) =>
+    ({ uuid }) =>
       baseUrl +
       '/data/?view=' +
-      id +
+      uuid +
       '&' +
       new URLSearchParams(params.params as any).toString()
   )
@@ -29,5 +29,9 @@ export const getChartsData = async ({ params }: { params: DataViewParams }) => {
     )
   )
   const data = await Promise.all(res.map((r) => r.json()))
-  return data
+  return data.map((c, i) => ({
+    ...c,
+    uuid: params.views[i].uuid,
+    name: params.views[i].name,
+  }))
 }

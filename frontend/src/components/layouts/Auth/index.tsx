@@ -16,7 +16,7 @@ export default ({ children, title }: Props) => {
       container
       justifyContent="center"
       alignItems="center"
-      sx={{ height: '100%' }}
+      sx={{ minHeight: '100vh' }}
     >
       <Grid width="100%" maxWidth={420} m={2} spacing={2}>
         <div className={styles.logo}>

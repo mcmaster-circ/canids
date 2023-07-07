@@ -1,9 +1,3 @@
-html,
-body,
-#__next {
-  height: 100%;
-}
-
 html {
   font-family: 'Open Sans', 'Roboto', 'Arial', '-apple-system', 'sans-serif';
   background-color: white;
