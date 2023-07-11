@@ -7,9 +7,14 @@ import {
   dashboardRoutes,
   dashboardRoutesParams,
 } from '@constants/routes'
+import { Alarms } from '@organisms'
 
 export default () => {
-  const { query, replace } = useRouter()
+  const {
+    query: { dashboardRoute },
+    replace,
+    isReady,
+  } = useRouter()
   const { logedIn } = useAuth()
 
   useEffect(() => {
@@ -18,18 +23,22 @@ export default () => {
     }
   }, [replace, logedIn])
 
-  if (!logedIn) {
-    return null
+  if (!logedIn || !isReady) {
+    return
   }
 
-  switch (query.dashboardRoute) {
+  switch (dashboardRoute) {
     case dashboardRoutesParams.ALARMS:
-      return <Dashboard>ALARMS</Dashboard>
+      return (
+        <Dashboard>
+          <Alarms />
+        </Dashboard>
+      )
     case dashboardRoutesParams.ADMIN:
       return <Dashboard>ADMIN</Dashboard>
     default: {
       replace(dashboardRoutes.DASHBOARD)
-      return null
+      return
     }
   }
 }

@@ -7,7 +7,7 @@ interface CustomActionBarProps {
   end: Date
   setStart: (d: Date) => void
   setEnd: (d: Date) => void
-  handleRequest: (a?: Date, b?: Date) => void
+  handleRequest: ({ st, en }: { st?: Date; en?: Date }) => void
 }
 
 export default ({
@@ -36,10 +36,10 @@ export default ({
           if (opt === 'start') {
             setStart(new Date())
             setEnd(new Date())
-            handleRequest(new Date(), new Date())
+            handleRequest({ st: new Date(), en: new Date() })
           } else {
             setEnd(new Date())
-            handleRequest(undefined, new Date())
+            handleRequest({ en: new Date() })
           }
           onCancel()
         }}
@@ -51,8 +51,8 @@ export default ({
         variant="outlined"
         onClick={() => {
           opt === 'start'
-            ? handleRequest(value, undefined)
-            : handleRequest(undefined, value)
+            ? handleRequest({ st: value })
+            : handleRequest({ en: value })
           onAccept()
         }}
         endIcon={<Check />}
@@ -75,6 +75,14 @@ export default ({
         slots={{
           actionBar: (props) => renderCustomBar(props, 'start'),
         }}
+        sx={{
+          '.MuiInputBase-root': {
+            pointerEvents: 'none',
+          },
+          '& .MuiInputBase-root button': {
+            pointerEvents: 'all',
+          },
+        }}
       />
       <DateTimePicker
         label="End Time"
@@ -86,6 +94,14 @@ export default ({
         onChange={(date) => setEnd(date as Date)}
         slots={{
           actionBar: (props) => renderCustomBar(props, 'end'),
+        }}
+        sx={{
+          '.MuiInputBase-root': {
+            pointerEvents: 'none',
+          },
+          '& .MuiInputBase-root button': {
+            pointerEvents: 'all',
+          },
         }}
       />
     </>

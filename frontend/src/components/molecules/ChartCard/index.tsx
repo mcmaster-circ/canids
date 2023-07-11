@@ -2,10 +2,17 @@ import Grid from '@mui/material/Unstable_Grid2'
 import { Paper, Typography } from '@mui/material'
 import { GRAPH_TYPES, GRAPH_WIDTH_TYPES } from '@constants/graphTypes'
 import { useCallback, useMemo } from 'react'
-import { BarChart, PieChart } from '@atoms'
+import { BarChart, PieChart, TableChart } from '@atoms'
 import { colors } from './constanst'
 
-export default ({ name, width, data, class: type }: any) => {
+export default ({
+  name,
+  size,
+  data,
+  class: type,
+  availableRows,
+  ...props
+}: any) => {
   const chartData = useMemo(() => {
     switch (type) {
       case GRAPH_TYPES.BAR:
@@ -17,12 +24,19 @@ export default ({ name, width, data, class: type }: any) => {
               fill: colors[i],
             }))
           : [{ name: '', Connections: 0, fill: '#ffffff' }]
+      case GRAPH_TYPES.TABLE: {
+        return data[0].map((_: string, i: number) => {
+          let o = {} as any
+          data.forEach(
+            (arr: string[], index: number) => (o['c' + index] = arr[i])
+          )
+          return o
+        })
+      }
       default:
         return
     }
   }, [data, type])
-
-  console.log(chartData)
 
   const renderData = useCallback(() => {
     switch (type) {
@@ -30,13 +44,15 @@ export default ({ name, width, data, class: type }: any) => {
         return <BarChart chartData={chartData} />
       case GRAPH_TYPES.PIE:
         return <PieChart chartData={chartData} />
+      case GRAPH_TYPES.TABLE:
+        return <TableChart rows={chartData} count={availableRows} {...props} />
       default:
         return null
     }
-  }, [chartData, type])
+  }, [availableRows, chartData, props, type])
 
   return (
-    <Grid xs={12} xl={width === GRAPH_WIDTH_TYPES.FULL ? 12 : 6}>
+    <Grid xs={12} xl={size === GRAPH_WIDTH_TYPES.FULL ? 12 : 6}>
       <Paper sx={{ p: 2, borderRadius: 2, height: '35vh', minHeight: '400px' }}>
         <Typography
           variant="h5"

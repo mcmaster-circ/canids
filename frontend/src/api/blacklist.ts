@@ -9,7 +9,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
 export const getBlacklist = async () => {
   const data = await get({ url: baseUrl + '/blacklist/list' })
-  return data
+  return data?.blacklists?.map((l: any) => l.name)
 }
 
 export const addBlacklist = async ({
