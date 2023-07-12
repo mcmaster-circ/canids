@@ -7,7 +7,7 @@ import {
 } from '@mui/material'
 
 export default ({ list, value, handleChange, title }: any) => (
-  <FormControl sx={{ ml: 2, width: 250 }}>
+  <FormControl sx={{ width: 250 }}>
     <InputLabel id="multiple-logs">{title}</InputLabel>
     <Select
       labelId="multiple-logs"

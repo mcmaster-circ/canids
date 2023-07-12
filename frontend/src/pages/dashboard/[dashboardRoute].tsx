@@ -7,7 +7,7 @@ import {
   dashboardRoutes,
   dashboardRoutesParams,
 } from '@constants/routes'
-import { Alarms } from '@organisms'
+import { Admin, Alarms } from '@organisms'
 
 export default () => {
   const {
@@ -35,7 +35,11 @@ export default () => {
         </Dashboard>
       )
     case dashboardRoutesParams.ADMIN:
-      return <Dashboard>ADMIN</Dashboard>
+      return (
+        <Dashboard>
+          <Admin />
+        </Dashboard>
+      )
     default: {
       replace(dashboardRoutes.DASHBOARD)
       return

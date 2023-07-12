@@ -7,9 +7,15 @@ import {
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
-export const getBlacklist = async () => {
+export const getBlacklist = async ({
+  params,
+}: {
+  params: { getNames?: boolean }
+}) => {
   const data = await get({ url: baseUrl + '/blacklist/list' })
-  return data?.blacklists?.map((l: any) => l.name)
+  return params?.getNames
+    ? data?.blacklists?.map((l: any) => l.name)
+    : data?.blacklists
 }
 
 export const addBlacklist = async ({

@@ -23,6 +23,7 @@ export const post = async ({ url, body, token, params }: PostProps) => {
   }
   const res = await fetch(url, {
     headers: postHeaders(token),
+    credentials: 'include',
     method: 'POST',
     body: JSON.stringify(body),
   })

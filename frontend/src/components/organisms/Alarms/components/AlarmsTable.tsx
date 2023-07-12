@@ -9,14 +9,16 @@ import {
   TablePagination,
   TableRow,
 } from '@mui/material'
-import { columnsConfig } from './constants'
+import { columnsConfig } from '../constants'
+import { AlarmTableRow } from './'
+import { AlarmProps } from '@constants/types'
 
 interface TableChartProps {
   setPage: (a: number) => void
   page: number
   setRowsPerPage: (a: number) => void
   rowsPerPage: number
-  rows: any[]
+  rows: AlarmProps[]
   count: number
   handleRequest: ({ p, rpp }: { p?: number; rpp?: number }) => void
 }
@@ -43,13 +45,14 @@ export default ({
 
   return (
     <>
-      <TableContainer sx={{ maxHeight: 440 }}>
+      <TableContainer sx={{ maxHeight: 'calc(100vh - 320px)' }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
+              <TableCell />
               {columnsConfig?.map((column) => (
                 <TableCell
-                  key={column.id}
+                  key={column.label}
                   align={column.align as TableCellProps['align']}
                   style={{ fontWeight: 700, fontSize: '16px' }}
                 >
@@ -59,27 +62,14 @@ export default ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row, i) => {
-              return (
-                <TableRow hover role="checkbox" tabIndex={-1} key={i}>
-                  {columnsConfig?.map((column) => {
-                    const value = row[column.id]
-                    return (
-                      <TableCell key={column.id} align={column.align}>
-                        {column.format && typeof value === 'string'
-                          ? column.format(value)
-                          : value}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              )
-            })}
+            {rows?.map((row, i) => (
+              <AlarmTableRow key={'alarmRow' + i} row={row} />
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
+        rowsPerPageOptions={[5, 10, 20]}
         component="div"
         count={count}
         rowsPerPage={rowsPerPage}

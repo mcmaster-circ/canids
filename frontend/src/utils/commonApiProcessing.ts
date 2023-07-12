@@ -21,7 +21,9 @@ export const getHeaders = (token?: string): {} =>
 export const postHeaders = (token?: string): {} =>
   token
     ? {
-        'Content-Type': 'application/json',
+        // 'Content-Type': 'application/json',
         Authorization: `Bearer ${token}}`,
       }
-    : { 'Content-Type': 'application/json' }
+    : {
+        // 'Content-Type': 'application/json',
+      }

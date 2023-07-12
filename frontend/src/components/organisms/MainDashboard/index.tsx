@@ -21,7 +21,8 @@ import { getDashboard } from '@api/dashboard'
 import { useRequest } from '@hooks'
 import { GRAPH_TYPES_ICONS } from '@constants/graphTypes'
 import { ViewListItemProps } from '@constants/types'
-import { TimeRangePicker, ChartCard } from '@molecules'
+import { TimeRangePicker } from '@molecules'
+import ChartCard from './ChartCard'
 import { Loader } from '@atoms'
 
 interface ChartRequestProps {

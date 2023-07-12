@@ -1,12 +1,9 @@
 import { TableCellProps } from '@mui/material'
-import { format } from 'date-fns'
 
 export const columnsConfig: {
   id: string
   label: string
   align: TableCellProps['align']
-  // eslint-disable-next-line no-unused-vars
-  format?: (v: string) => string
 }[] = [
   {
     id: 'uid',
@@ -16,12 +13,21 @@ export const columnsConfig: {
   {
     id: 'host',
     label: 'Host',
-    align: 'center',
+    align: 'left',
+  },
+  {
+    id: 'id_orig_h',
+    label: 'Source IP',
+    align: 'left',
+  },
+  {
+    id: 'id_dest_h',
+    label: 'Dest IP',
+    align: 'left',
   },
   {
     id: 'timestamp',
     label: 'Time',
     align: 'right',
-    format: (v: string) => format(new Date(v), 'MM/dd/Y HH:mm'),
   },
 ]

@@ -3,7 +3,7 @@ import { Paper, Typography } from '@mui/material'
 import { GRAPH_TYPES, GRAPH_WIDTH_TYPES } from '@constants/graphTypes'
 import { useCallback, useMemo } from 'react'
 import { BarChart, PieChart, TableChart } from '@atoms'
-import { colors } from './constanst'
+import { colors } from './constants'
 
 export default ({
   name,

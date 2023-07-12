@@ -10,7 +10,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
 export const userList = async () => {
   const data = await get({ url: baseUrl + '/user/list' })
-  return data
+  return data?.users
 }
 
 export const userInfo = async () => {

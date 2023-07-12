@@ -3,12 +3,12 @@ import { Divider, Typography, Paper, Box } from '@mui/material'
 import { subMinutes } from 'date-fns'
 import Grid from '@mui/material/Unstable_Grid2'
 import { useRequest } from '@hooks'
-import { TimeRangePicker, FilterSelect } from '@molecules'
+import { TimeRangePicker } from '@molecules'
 import { Loader } from '@atoms'
 import { getBlacklist } from '@api/blacklist'
 import { getAlarms } from '@api/alarms'
 import { getFields } from '@api/fields'
-import AlarmsTable from 'src/components/molecules/AlarmsTable'
+import { FilterSelect, AlarmsTable } from './components'
 
 interface ChartRequestProps {
   st?: Date
@@ -18,64 +18,6 @@ interface ChartRequestProps {
   l?: string[]
   b?: string[]
 }
-
-const alarms = [
-  {
-    uid: 'CQNEhi1Wy50SyemtOb',
-    host: '',
-    timestamp: '2021-03-15T16:59:59Z',
-    id_orig_h: '192.168.2.81',
-    id_orig_p: 57404,
-    id_orig_h_pos: ['firehol_level1'],
-    id_resp_h: '192.168.2.88',
-    id_resp_p: 53,
-    id_resp_h_pos: ['firehol_level1'],
-  },
-  {
-    uid: 'C3C7i1D7MkoA0agcj',
-    host: '',
-    timestamp: '2021-03-15T16:59:59Z',
-    id_orig_h: '192.168.2.81',
-    id_orig_p: 11112,
-    id_orig_h_pos: ['firehol_level1'],
-    id_resp_h: '192.168.2.88',
-    id_resp_p: 53,
-    id_resp_h_pos: ['firehol_level1'],
-  },
-  {
-    uid: 'CsXR5PDwDTmgqR5Ok',
-    host: '',
-    timestamp: '2021-03-15T16:59:59Z',
-    id_orig_h: '192.168.2.81',
-    id_orig_p: 58973,
-    id_orig_h_pos: ['firehol_level1'],
-    id_resp_h: '192.168.2.88',
-    id_resp_p: 53,
-    id_resp_h_pos: ['firehol_level1'],
-  },
-  {
-    uid: 'CgMkQs1eegT2HZYUkg',
-    host: '',
-    timestamp: '2021-03-15T16:59:59Z',
-    id_orig_h: '192.168.2.81',
-    id_orig_p: 58667,
-    id_orig_h_pos: ['firehol_level1'],
-    id_resp_h: '192.168.2.88',
-    id_resp_p: 53,
-    id_resp_h_pos: ['firehol_level1'],
-  },
-  {
-    uid: 'CgMkQs1eegT2HZYUk1',
-    host: '',
-    timestamp: '2021-03-15T16:59:59Z',
-    id_orig_h: '192.168.2.81',
-    id_orig_p: 58667,
-    id_orig_h_pos: ['firehol_level1'],
-    id_resp_h: '192.168.2.88',
-    id_resp_p: 53,
-    id_resp_h_pos: ['firehol_level1'],
-  },
-]
 
 export default () => {
   const [start, setStart] = useState(subMinutes(new Date(), 30))
@@ -87,12 +29,13 @@ export default () => {
 
   const { data: blacklist, loading: loadingBlacklist } = useRequest({
     request: getBlacklist,
+    params: { getNames: true },
   })
   const { data: logsList, loading: loadingLogsList } = useRequest({
     request: getFields,
   })
   const {
-    // data: alarms,
+    data: alarms,
     loading: loadingAlarms,
     makeRequest: requestAlarms,
   } = useRequest({
@@ -121,10 +64,12 @@ export default () => {
     (v: string[], type?: 'logs') => {
       if (type === 'logs') {
         setLogs(v)
-        handleRequest({ l: v })
+        setPage(0)
+        handleRequest({ l: v, p: 0 })
       } else {
         setBlack(v)
-        handleRequest({ b: v })
+        setPage(0)
+        handleRequest({ b: v, p: 0 })
       }
     },
     [handleRequest]
@@ -146,8 +91,6 @@ export default () => {
     logsList?.length,
   ])
 
-  console.log(logs)
-
   return (
     <Grid container spacing={2} p={3} m={0}>
       <Grid xs={12} p={0}>
@@ -163,9 +106,10 @@ export default () => {
           <Box
             sx={{
               display: 'flex',
-              gap: 4,
+              flexWrap: 'wrap',
+              gap: 2,
               flexGrow: 1,
-              justifyContent: 'flex-end',
+              justifyContent: { xs: 'space-between', lg: 'flex-end' },
               alignItems: 'center',
             }}
           >
@@ -209,8 +153,8 @@ export default () => {
             setRowsPerPage={setRowsPerPage}
             page={page}
             rowsPerPage={rowsPerPage}
-            rows={alarms}
-            count={5}
+            rows={alarms?.alarms}
+            count={alarms?.availableRows}
             handleRequest={handleRequest}
           />
         </Paper>
