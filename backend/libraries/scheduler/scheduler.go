@@ -2,7 +2,7 @@ package scheduler
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -87,8 +87,12 @@ func ProvisionOnce(
 			return err
 		}
 		println(url)
+		print("Content Length: ")
+		println(resp.ContentLength)
 		startBadTime := time.Now()
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		bodyBytes, err := io.ReadAll(resp.Body)
+		print("Length of bytes: ")
+		println(len(bodyBytes))
 		fmt.Printf("Elapsed time for above url: %d ms \n\n", time.Now().Sub(startBadTime).Milliseconds())
 		if err != nil {
 			return err
@@ -154,10 +158,10 @@ func createAndLoadDefaultBlacklists(s *state.State) map[string]string {
 	blacklistMap := map[string]string{
 		"firehol_abusers_1d":  "https://iplists.firehol.org/files/firehol_abusers_1d.netset",
 		"firehol_abusers_30d": "https://iplists.firehol.org/files/firehol_abusers_30d.netset",
-		"firehol_anonymous":   "https://iplists.firehol.org/files/firehol_anonymous.netset",
-		"firehol_level1":      "https://iplists.firehol.org/files/firehol_level1.netset",
-		"firehol_level2":      "https://iplists.firehol.org/files/firehol_level2.netset",
-		"firehol_level3":      "https://iplists.firehol.org/files/firehol_level3.netset",
+		// "firehol_anonymous":   "https://iplists.firehol.org/files/firehol_anonymous.netset",
+		"firehol_level1": "https://iplists.firehol.org/files/firehol_level1.netset",
+		"firehol_level2": "https://iplists.firehol.org/files/firehol_level2.netset",
+		"firehol_level3": "https://iplists.firehol.org/files/firehol_level3.netset",
 	}
 
 	s.Elastic.CreateIndex("blacklist").Do(s.ElasticCtx)

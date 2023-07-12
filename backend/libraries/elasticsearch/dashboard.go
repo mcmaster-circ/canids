@@ -40,6 +40,8 @@ type DocumentDashboard struct {
 	Name  string      `json:"name"`  // Name is dashboard name
 	Views []string    `json:"views"` // Views is a list of views on the dashboard
 	Sizes []SizeClass `json:"sizes"` // Sizes is a list of sizes corresponding to each view
+	Start uint64      `json:"start"` // Start is the start time of the dahsboard data visualization
+	End   uint64      `json:"end"`   // End is the end time of the dashboard data visualization
 }
 
 // Index will attempt to index the document to the "dashboard" index. It will
@@ -61,6 +63,8 @@ func (d *DocumentDashboard) Update(s *state.State, esDocID string) error {
 			"name":  d.Name,
 			"views": d.Views,
 			"sizes": d.Sizes,
+			"start": d.Start,
+			"end":   d.End,
 		}).DetectNoop(true).Do(ctx)
 	return err
 }

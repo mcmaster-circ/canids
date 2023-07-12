@@ -1075,11 +1075,21 @@ paths:
                       type: string
                       description: |
                         Size corresponding to UUID in dashboard
+                  start:
+                    type: uint64
+                    description: |
+                      Int representing start time selected on dashboard (unix time)
+                  end:
+                    type: uint64
+                    description: |
+                      Int representing end time selected on dashboard (unix time)
                 required:
                 - uuid
                 - name
                 - views
                 - sizes
+                - start
+                - end
               example: {
                 "uuid": "7290169e-9bdf-437b-8dd6-456b17341f05",
                 "name": "McMaster University Dashboard",
@@ -1089,8 +1099,10 @@ paths:
                 ],
                 "sizes": [
                   "half",
-                  "half"
-                ]
+                  "full"
+                ],
+                "start": 1689191333653,
+                "end": 1089691200000
               }
         '401':
           description: |
@@ -1140,11 +1152,21 @@ paths:
                     type: string
                     description: |
                       Size corresponding to UUID in dashboard
+                start:
+                  type: uint64
+                  description: |
+                    Int representing start time selected on dashboard (unix time)
+                end:
+                  type: uint64
+                  description: |
+                    Int representing end time selected on dashboard (unix time)
               required:
               - uuid
               - name
               - views
               - sizes
+              - start
+              - end
             example: {
               "uuid": "7290169e-9bdf-437b-8dd6-456b17341f05",
               "name": "McMaster University Dashboard",
@@ -1153,9 +1175,11 @@ paths:
                 "b93b03f2-64ce-45cd-8737-9f99ed885253"
               ],
               "sizes": [
-                "full",
+                "half",
                 "full"
-              ]
+              ],
+              "start": 1689191333653,
+              "end": 1089691200000
             }
       responses:
         '200':
