@@ -95,6 +95,8 @@ func updateHandler(ctx context.Context, s *state.State, a *auth.State, w http.Re
 	dashboard.Name = request.Name
 	dashboard.Views = request.Views
 	dashboard.Sizes = request.Sizes
+	dashboard.Start = request.Start
+	dashboard.End = request.End
 
 	// index changes
 	err = dashboard.Update(s, esDocID)
