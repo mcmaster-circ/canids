@@ -13,7 +13,7 @@ interface UseRequestProps {
   request: (p: RequestProps | any) => Promise<any>
   requestByDefault?: boolean
   params?: any
-  needSuccess?: boolean
+  needSuccess?: string | boolean
 }
 
 const useRequest = ({
@@ -41,7 +41,13 @@ const useRequest = ({
           ? await request({ params: p, token: cookies[ac.STATE] })
           : await request({ token: cookies[ac.STATE] })
         setData(r)
-        needSuccess && addNotification('Successful request', 'success')
+        needSuccess &&
+          addNotification(
+            typeof needSuccess === 'string'
+              ? needSuccess
+              : 'Successful request',
+            'success'
+          )
       } catch (e: any) {
         setData(undefined)
         addNotification(getApiErrorMessage(e))

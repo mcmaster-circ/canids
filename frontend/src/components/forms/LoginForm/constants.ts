@@ -39,7 +39,7 @@ export const resolver = yupResolver(
       pass: yup
         .string()
         .required('Password is  a required field')
-        .min(3, 'Enter at least 3 symbols'),
+        .min(2, 'Enter at least 2 symbols'),
     })
     .required()
 )

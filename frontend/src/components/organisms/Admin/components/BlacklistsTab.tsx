@@ -1,14 +1,61 @@
-import { getBlacklist } from '@api/blacklist'
-import { Loader } from '@atoms'
-import { useRequest } from '@hooks'
+import { useMemo, useState } from 'react'
 import { Box, Button, Typography } from '@mui/material'
-import { DataGrid } from '@mui/x-data-grid'
-import { blacklistColumns } from '../constants'
+import { DataGrid, GridRenderCellParams } from '@mui/x-data-grid'
+import { deleteBlacklist, getBlacklist } from '@api/blacklist'
+import { useRequest } from '@hooks'
+import { AddBlacklistForm } from '@forms'
+import { Loader, RowActionsMenu } from '@atoms'
+import { AddEditModal, DeleteModal } from '@modals'
+import { Delete, Edit } from '@mui/icons-material'
+import {
+  blacklistColumns,
+  defaultAddModalState,
+  defaultDeleteModalState,
+} from '../constants'
 
 export default () => {
-  const { data, loading } = useRequest({
+  const [addModal, setAddModal] = useState(defaultAddModalState)
+  const [deleteModal, setDeleteModal] = useState(defaultDeleteModalState)
+  const { data, loading, makeRequest } = useRequest({
     request: getBlacklist,
   })
+  const { makeRequest: deleteRequest } = useRequest({
+    request: deleteBlacklist,
+    requestByDefault: false,
+    needSuccess: 'Blacklist deleted',
+  })
+
+  const columns = useMemo(
+    () =>
+      blacklistColumns(({ row, id }: GridRenderCellParams) => {
+        return [
+          <RowActionsMenu
+            key={id}
+            actions={[
+              {
+                label: 'Edit',
+                icon: <Edit />,
+                action: () =>
+                  setAddModal({ open: true, isUpdate: true, values: row }),
+                key: 'edit',
+              },
+              {
+                label: 'Delete',
+                icon: <Delete />,
+                action: () =>
+                  setDeleteModal({
+                    open: true,
+                    label: row.name,
+                    params: { uuid: id },
+                  }),
+                key: 'delete',
+              },
+            ]}
+          />,
+        ]
+      }),
+    []
+  )
 
   return (
     <>
@@ -25,7 +72,12 @@ export default () => {
         <Typography variant="h6" fontWeight={700}>
           Blacklists
         </Typography>
-        <Button variant="contained">Create Visualization</Button>
+        <Button
+          variant="contained"
+          onClick={() => setAddModal((s) => ({ ...s, open: true }))}
+        >
+          Add Blacklist
+        </Button>
       </Box>
       <Box
         sx={{
@@ -53,7 +105,7 @@ export default () => {
             }}
             getRowId={(row) => row.uuid}
             rows={data}
-            columns={blacklistColumns}
+            columns={columns}
             initialState={{
               pagination: {
                 paginationModel: {
@@ -67,6 +119,25 @@ export default () => {
         )}
       </Box>
       {loading && <Loader />}
+      <AddEditModal>
+        <AddBlacklistForm
+          isUpdate={addModal.isUpdate}
+          values={addModal.values}
+          handleClose={() => {
+            makeRequest()
+            setAddModal(defaultAddModalState)
+          }}
+        />
+      </AddEditModal>
+      <DeleteModal
+        open={deleteModal}
+        title="Blacklist"
+        request={deleteRequest}
+        handleClose={() => {
+          makeRequest()
+          setDeleteModal(defaultDeleteModalState)
+        }}
+      />
     </>
   )
 }

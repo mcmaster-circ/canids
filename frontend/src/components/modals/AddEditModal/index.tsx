@@ -1,3 +1,4 @@
+import { ReactNode } from 'react'
 import {
   IconButton,
   Divider,
@@ -7,14 +8,16 @@ import {
 } from '@mui/material'
 import { Close } from '@mui/icons-material'
 
-interface ModalTypes {
-  open: boolean
+interface Props {
+  open: { open: boolean; isUpdate: boolean; values?: any }
   handleClose: () => void
+  title: string
+  children: ReactNode
 }
 
-export default ({ open, handleClose }: ModalTypes) => {
+export default ({ open, handleClose, title, children }: Props) => {
   return (
-    <Dialog open={open} onClose={handleClose}>
+    <Dialog open={open.open} onClose={handleClose}>
       <DialogTitle
         sx={{
           display: 'flex',
@@ -22,13 +25,13 @@ export default ({ open, handleClose }: ModalTypes) => {
           alignItems: 'center',
         }}
       >
-        Dialog Title
+        Add{' ' + title}
         <IconButton aria-label="close" onClick={handleClose}>
           <Close />
         </IconButton>
       </DialogTitle>
       <Divider variant="fullWidth" />
-      <DialogContent>Dialog Content</DialogContent>
+      <DialogContent>{children}</DialogContent>
     </Dialog>
   )
 }

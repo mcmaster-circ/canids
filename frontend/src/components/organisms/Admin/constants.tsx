@@ -45,14 +45,34 @@ export const tabsPanels = [
   },
 ]
 
-export const blacklistColumns = [
-  { field: 'name', headerName: 'Name', flex: 0.33 },
+export const blacklistColumns = (actions: (props: any) => JSX.Element[]) => [
+  { field: 'name', headerName: 'Name', flex: 0.475 },
   {
     field: 'url',
     headerName: 'Url',
-    flex: 0.33,
+    flex: 0.475,
+  },
+  {
+    field: 'actions',
+    type: 'actions',
+    flex: 0.05,
+    getActions: actions,
   },
 ]
+export const defaultAddModalState = {
+  open: false,
+  values: undefined,
+  isUpdate: false,
+}
+export const defaultDeleteModalState: {
+  open: boolean
+  label?: string
+  params?: any
+} = {
+  open: false,
+  label: undefined,
+  params: undefined,
+}
 
 export const visualizationColumns = [
   { field: 'name', headerName: 'Name', flex: 0.33 },

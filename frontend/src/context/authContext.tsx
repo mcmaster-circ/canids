@@ -32,11 +32,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }: {
     addNotification: (e: any, type?: NotificationType | undefined) => void
   } = useNotification()
-  const { makeRequest: loginRequest } = useRequest({
+  const { makeRequest: loginRequest, loading: loginLoading } = useRequest({
     requestByDefault: false,
     request: loginApiCall,
+    needSuccess: 'Successfull Login',
   })
-  const { makeRequest: userInfoRequest } = useRequest({
+  const { makeRequest: userInfoRequest, loading: userLoading } = useRequest({
     requestByDefault: false,
     request: userInfo,
   })
@@ -46,7 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [user, setUser] = useState<UserProps>()
   const [logedIn, setLogedIn] = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(false)
   const [loadingInitial, setLoadingInitial] = useState<boolean>(true)
 
   const setUserFields = useCallback((fields: UserProps | any) => {
@@ -57,23 +57,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback(
     async (d: LoginProps) => {
-      setLoading(true)
-      try {
-        // const res = await loginRequest({ user: { ...d } })
-        const res = await userInfoRequest()
-        console.log(res)
-        if (res) {
-          userProfileCookies.forEach((f) => setCookie(f, res[f], { path: '/' }))
-          setUserFields(res)
-          setLogedIn(true)
-          addNotification('Successfull Login', 'success')
-        }
-      } catch (e) {
-        addNotification(e)
+      // const res = await loginRequest({ user: { ...d } })
+      const res = await userInfoRequest()
+      console.log(res)
+      if (res) {
+        userProfileCookies.forEach((f) => setCookie(f, res[f], { path: '/' }))
+        setUserFields(res)
+        setLogedIn(true)
       }
-      setLoading(false)
     },
-    [addNotification, setCookie, setUserFields, userInfoRequest]
+    [setCookie, setUserFields, userInfoRequest]
   )
 
   const logout = useCallback(() => {
@@ -99,12 +92,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const memoedValue = useMemo(
     () => ({
       user,
-      loading,
+      loading: loginLoading || userLoading,
       logedIn,
       login,
       logout,
     }),
-    [user, loading, logedIn, login, logout]
+    [user, loginLoading, userLoading, logedIn, login, logout]
   )
 
   return (
