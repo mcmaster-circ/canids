@@ -1,14 +1,83 @@
-import { Loader } from '@atoms'
+import { useCallback, useMemo, useState } from 'react'
+import { Loader, RowActionsMenu } from '@atoms'
 import { useRequest } from '@hooks'
 import { Box, Button, Typography } from '@mui/material'
-import { DataGrid } from '@mui/x-data-grid'
-import { getViewList } from '@api/view'
-import { visualizationColumns } from '../constants'
+import { DataGrid, GridRenderCellParams } from '@mui/x-data-grid'
+import { deleteView, getViewList } from '@api/view'
+import {
+  defaultAddModalState,
+  defaultDeleteModalState,
+  visualizationColumns,
+} from '../constants'
+import { AddEditModal, DeleteModal } from '@modals'
+import { AddVisualizationForm } from '@forms'
+import { Delete, Edit } from '@mui/icons-material'
+import { getChartData } from '@api/charts'
 
 export default () => {
-  const { data, loading } = useRequest({
+  const [addModal, setAddModal] = useState(defaultAddModalState)
+  const { data, loading, makeRequest } = useRequest({
     request: getViewList,
   })
+  const { loading: chartLoading, makeRequest: chartRequest } = useRequest({
+    request: getChartData,
+    requestByDefault: false,
+  })
+  const [deleteModal, setDeleteModal] = useState(defaultDeleteModalState)
+  const { makeRequest: deleteRequest } = useRequest({
+    request: deleteView,
+    requestByDefault: false,
+    needSuccess: 'Successfully deleted view',
+  })
+
+  const handleCloseAdd = useCallback(() => {
+    setAddModal(defaultAddModalState)
+    setTimeout(() => makeRequest(), 1000)
+  }, [makeRequest])
+
+  const handleCloseDelete = useCallback(() => {
+    setDeleteModal(defaultDeleteModalState)
+    setTimeout(() => makeRequest(), 1000)
+  }, [makeRequest])
+
+  const handleRequestEdit = useCallback(
+    async (row: GridRenderCellParams['row']) => {
+      const res = await chartRequest({ uuid: row.uuid })
+      setAddModal({ open: true, isUpdate: true, values: { ...row, ...res } })
+    },
+    [chartRequest]
+  )
+
+  const columns = useMemo(
+    () =>
+      visualizationColumns(({ row, id }: GridRenderCellParams) => {
+        return [
+          <RowActionsMenu
+            key={id}
+            actions={[
+              {
+                label: 'Edit',
+                icon: <Edit />,
+                action: () => handleRequestEdit(row),
+                key: 'edit',
+              },
+              {
+                label: 'Delete',
+                icon: <Delete />,
+                action: () =>
+                  setDeleteModal({
+                    open: true,
+                    label: row.name,
+                    params: { uuid: id },
+                  }),
+                key: 'delete',
+              },
+            ]}
+          />,
+        ]
+      }),
+    [handleRequestEdit]
+  )
 
   return (
     <>
@@ -25,7 +94,12 @@ export default () => {
         <Typography variant="h6" fontWeight={700}>
           Visualizations
         </Typography>
-        <Button variant="contained">Add Blacklist</Button>
+        <Button
+          variant="contained"
+          onClick={() => setAddModal((s) => ({ ...s, open: true }))}
+        >
+          Create Visualization
+        </Button>
       </Box>
       <Box
         sx={{
@@ -53,7 +127,7 @@ export default () => {
             }}
             getRowId={(row) => row.uuid}
             rows={data}
-            columns={visualizationColumns}
+            columns={columns}
             initialState={{
               pagination: {
                 paginationModel: {
@@ -66,7 +140,24 @@ export default () => {
           />
         )}
       </Box>
-      {loading && <Loader />}
+      {(loading || chartLoading) && <Loader />}
+      <AddEditModal
+        open={addModal.open}
+        title="Visualization"
+        handleClose={handleCloseAdd}
+      >
+        <AddVisualizationForm
+          isUpdate={addModal.isUpdate}
+          values={addModal.values}
+          handleClose={handleCloseAdd}
+        />
+      </AddEditModal>
+      <DeleteModal
+        open={deleteModal}
+        title="Visualization"
+        request={deleteRequest}
+        handleClose={handleCloseDelete}
+      />
     </>
   )
 }

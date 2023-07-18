@@ -59,36 +59,30 @@ export const blacklistColumns = (actions: (props: any) => JSX.Element[]) => [
     getActions: actions,
   },
 ]
-export const defaultAddModalState = {
-  open: false,
-  values: undefined,
-  isUpdate: false,
-}
-export const defaultDeleteModalState: {
-  open: boolean
-  label?: string
-  params?: any
-} = {
-  open: false,
-  label: undefined,
-  params: undefined,
-}
 
-export const visualizationColumns = [
-  { field: 'name', headerName: 'Name', flex: 0.33 },
+export const visualizationColumns = (
+  actions: (props: any) => JSX.Element[]
+) => [
+  { field: 'name', headerName: 'Name', flex: 0.49 },
   {
     field: 'class',
     headerName: 'Class',
-    flex: 0.33,
+    flex: 0.49,
+  },
+  {
+    field: 'actions',
+    type: 'actions',
+    flex: 0.02,
+    getActions: actions,
   },
 ]
 
-export const userColumns = [
-  { field: 'name', headerName: 'Name', flex: 0.2 },
+export const userColumns = (actions: (props: any) => JSX.Element[]) => [
+  { field: 'name', headerName: 'Name', flex: 0.27 },
   {
     field: 'uuid',
     headerName: 'Email',
-    flex: 0.2,
+    flex: 0.27,
   },
   {
     field: 'class',
@@ -103,4 +97,29 @@ export const userColumns = [
     renderCell: ({ value }: GridRenderCellParams) =>
       value ? <Check color="success" /> : <Clear color="error" />,
   },
+  {
+    field: 'actions',
+    type: 'actions',
+    flex: 0.02,
+    getActions: actions,
+  },
 ]
+
+export const defaultAddModalState: {
+  isUpdate: boolean
+  open: boolean
+  values: any
+} = {
+  open: false,
+  values: undefined,
+  isUpdate: false,
+}
+export const defaultDeleteModalState: {
+  open: boolean
+  label?: string
+  params?: any
+} = {
+  open: false,
+  label: undefined,
+  params: undefined,
+}

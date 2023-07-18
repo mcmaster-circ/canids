@@ -9,11 +9,9 @@ import {
   ListItemIcon,
   ListItemText,
   IconButton,
-  Menu,
-  MenuItem,
 } from '@mui/material'
 import { subMinutes, differenceInDays } from 'date-fns'
-import { MoreVert, SsidChart } from '@mui/icons-material'
+import { SsidChart, Visibility, VisibilityOff } from '@mui/icons-material'
 import Grid from '@mui/material/Unstable_Grid2'
 import { getViewList } from '@api/view'
 import { getChartsData } from '@api/charts'
@@ -37,7 +35,7 @@ export default () => {
   const [end, setEnd] = useState(new Date())
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [open, setOpen] = useState(null)
+  const [display, setDisplay] = useState<any>([])
 
   const { data: dashboard, loading: loadingDashboard } = useRequest({
     request: getDashboard,
@@ -45,23 +43,25 @@ export default () => {
   const { data: views, loading: loadingList } = useRequest({
     request: getViewList,
   })
-  const {
-    data: chartData,
-    loading: loadingChartData,
-    makeRequest: requestChartData,
-  } = useRequest({
+  const { data: chartData, makeRequest: requestChartData } = useRequest({
     request: getChartsData,
     requestByDefault: false,
   })
 
   const viewsList = useMemo(() => {
     if (dashboard?.views?.length && views?.length) {
+      setDisplay(views.map((v: any) => v.uuid))
       return dashboard.views.map((v: string, i: number) => ({
         size: dashboard.sizes[i],
         ...views.find((view: any) => view.uuid === v),
       }))
     }
   }, [dashboard?.sizes, dashboard?.views, views])
+
+  const chartDisplay = useMemo(
+    () => chartData?.filter((c: any) => display.includes(c.uuid)),
+    [chartData, display]
+  )
 
   const handleRequest = useCallback(
     async ({ st, en, p, rpp }: ChartRequestProps = {}) => {
@@ -82,8 +82,6 @@ export default () => {
     },
     [end, page, requestChartData, rowsPerPage, start, viewsList]
   )
-
-  const handleClose = useCallback(() => setOpen(null), [])
 
   useEffect(() => {
     const interval =
@@ -157,22 +155,20 @@ export default () => {
                     secondary={'Type: ' + v.class}
                   />
                   <IconButton
-                    aria-label="More"
-                    aria-haspopup="true"
-                    onClick={(e: any) => setOpen(e.target)}
+                    onClick={() =>
+                      setDisplay(
+                        display.includes(v.uuid)
+                          ? display.filter((d: string) => d !== v.uuid)
+                          : [...display, v.uuid]
+                      )
+                    }
                   >
-                    <MoreVert />
+                    {display.includes(v.uuid) ? (
+                      <Visibility />
+                    ) : (
+                      <VisibilityOff />
+                    )}
                   </IconButton>
-                  <Menu
-                    id="basic-menu"
-                    elevation={1}
-                    anchorEl={open}
-                    open={!!open}
-                    onClose={handleClose}
-                  >
-                    <MenuItem onClick={handleClose}>Edit</MenuItem>
-                    <MenuItem onClick={handleClose}>Delete</MenuItem>
-                  </Menu>
                 </ListItem>
                 <Divider component="li" sx={{ mx: 2 }} />
               </div>
@@ -182,7 +178,7 @@ export default () => {
       </Grid>
       <Grid xs={12} lg={8} xl={9} p={0}>
         <Grid container spacing={2} p={0} pt={3} pl={{ xs: 0, lg: 3 }}>
-          {chartData?.map((c: any) => (
+          {chartDisplay?.map((c: any) => (
             <ChartCard
               key={c.uuid}
               {...c}
@@ -195,7 +191,7 @@ export default () => {
           ))}
         </Grid>
       </Grid>
-      {(loadingList || loadingChartData || loadingDashboard) && <Loader />}
+      {(loadingList || loadingDashboard) && <Loader />}
     </Grid>
   )
 }

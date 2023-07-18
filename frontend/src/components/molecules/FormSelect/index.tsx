@@ -14,6 +14,7 @@ export interface SelectPropsTypes extends SelectProps {
   name: string
   defaultValue?: string
   error?: boolean
+  size?: 'small' | 'medium'
 }
 
 const FormTextInput = ({
@@ -23,6 +24,7 @@ const FormTextInput = ({
   defaultValue,
   error,
   children,
+  size,
   ...rest
 }: SelectPropsTypes) => {
   const { field } = useController({
@@ -31,7 +33,7 @@ const FormTextInput = ({
     defaultValue: defaultValue,
   })
   return (
-    <FormControl fullWidth error={error}>
+    <FormControl fullWidth error={error} size={size}>
       <InputLabel id={`select-input-label-${field.name}`}>
         {rest.label}
       </InputLabel>

@@ -9,15 +9,15 @@ import {
 import { Close } from '@mui/icons-material'
 
 interface Props {
-  open: { open: boolean; isUpdate: boolean; values?: any }
+  open: boolean
   handleClose: () => void
   title: string
   children: ReactNode
 }
 
-export default ({ open, handleClose, title, children }: Props) => {
+export default ({ children, open, handleClose, title }: Props) => {
   return (
-    <Dialog open={open.open} onClose={handleClose}>
+    <Dialog open={open} onClose={handleClose}>
       <DialogTitle
         sx={{
           display: 'flex',

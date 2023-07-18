@@ -1,14 +1,82 @@
-import { Loader } from '@atoms'
+import { useCallback, useMemo, useState } from 'react'
+import { Loader, RowActionsMenu } from '@atoms'
 import { useRequest } from '@hooks'
+import { Delete, Edit, LockReset } from '@mui/icons-material'
 import { Box, Button, Typography } from '@mui/material'
-import { DataGrid } from '@mui/x-data-grid'
-import { userList } from '@api/user'
-import { userColumns } from '../constants'
+import { DataGrid, GridRenderCellParams } from '@mui/x-data-grid'
+import { deleteUser, resetUserPass, userList } from '@api/user'
+import {
+  defaultAddModalState,
+  defaultDeleteModalState,
+  userColumns,
+} from '../constants'
+import { AddEditModal, DeleteModal } from '@modals'
+import { AddUserForm } from '@forms'
 
 export default () => {
-  const { data, loading } = useRequest({
+  const [addModal, setAddModal] = useState(defaultAddModalState)
+  const [deleteModal, setDeleteModal] = useState(defaultDeleteModalState)
+  const { data, loading, makeRequest } = useRequest({
     request: userList,
   })
+  const { makeRequest: resetRequest } = useRequest({
+    request: resetUserPass,
+    requestByDefault: false,
+    needSuccess: 'A password reset has been successfully issued for the user',
+  })
+  const { makeRequest: deleteRequest } = useRequest({
+    request: deleteUser,
+    requestByDefault: false,
+    needSuccess: 'The user account has been successfully deleted',
+  })
+
+  const handleCloseAdd = useCallback(() => {
+    setAddModal(defaultAddModalState)
+    setTimeout(() => makeRequest(), 3000)
+  }, [makeRequest])
+
+  const handleCloseDelete = useCallback(() => {
+    setDeleteModal(defaultDeleteModalState)
+    setTimeout(() => makeRequest(), 3000)
+  }, [makeRequest])
+
+  const columns = useMemo(
+    () =>
+      userColumns(({ row, id }: GridRenderCellParams) => {
+        return [
+          <RowActionsMenu
+            key={id}
+            actions={[
+              {
+                label: 'Edit',
+                icon: <Edit />,
+                action: () =>
+                  setAddModal({ open: true, isUpdate: true, values: row }),
+                key: 'edit',
+              },
+              {
+                label: 'Reset Password',
+                icon: <LockReset />,
+                action: () => resetRequest({ uuid: row.uuid }),
+                key: 'reset',
+              },
+              {
+                label: 'Delete',
+                icon: <Delete />,
+                action: () =>
+                  setDeleteModal({
+                    open: true,
+                    label: row.name,
+                    params: { uuid: id },
+                  }),
+                key: 'delete',
+              },
+            ]}
+          />,
+        ]
+      }),
+    [resetRequest]
+  )
 
   return (
     <>
@@ -25,7 +93,12 @@ export default () => {
         <Typography variant="h6" fontWeight={700}>
           Users
         </Typography>
-        <Button variant="contained">Create User</Button>
+        <Button
+          variant="contained"
+          onClick={() => setAddModal((s) => ({ ...s, open: true }))}
+        >
+          Create User
+        </Button>
       </Box>
       <Box
         sx={{
@@ -53,7 +126,7 @@ export default () => {
             }}
             getRowId={(row) => row.uuid}
             rows={data}
-            columns={userColumns}
+            columns={columns}
             initialState={{
               pagination: {
                 paginationModel: {
@@ -67,6 +140,23 @@ export default () => {
         )}
       </Box>
       {loading && <Loader />}
+      <AddEditModal
+        open={addModal.open}
+        title="User"
+        handleClose={handleCloseAdd}
+      >
+        <AddUserForm
+          isUpdate={addModal.isUpdate}
+          values={addModal.values}
+          handleClose={handleCloseAdd}
+        />
+      </AddEditModal>
+      <DeleteModal
+        open={deleteModal}
+        title="User"
+        request={deleteRequest}
+        handleClose={handleCloseDelete}
+      />
     </>
   )
 }

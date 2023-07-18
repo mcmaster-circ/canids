@@ -7,9 +7,9 @@ import {
   Typography,
   Button,
 } from '@mui/material'
+import Grid from '@mui/material/Unstable_Grid2'
 import { Close, Error } from '@mui/icons-material'
 import { useCallback } from 'react'
-import Grid from '@mui/material/Unstable_Grid2/Grid2'
 
 interface ModalTypes {
   open: { open: boolean; label?: string; params?: any }

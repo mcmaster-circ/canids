@@ -33,6 +33,7 @@ export default () => {
   })
   const { data: logsList, loading: loadingLogsList } = useRequest({
     request: getFields,
+    params: { filter: true },
   })
   const {
     data: alarms,
@@ -154,7 +155,7 @@ export default () => {
             page={page}
             rowsPerPage={rowsPerPage}
             rows={alarms?.alarms}
-            count={alarms?.availableRows}
+            count={alarms?.availableRows || 0}
             handleRequest={handleRequest}
           />
         </Paper>

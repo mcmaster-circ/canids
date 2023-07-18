@@ -2,10 +2,10 @@ import { ReactNode, SyntheticEvent, useState } from 'react'
 import { Divider, Tab, Tabs, Typography, Paper } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
 import { tabs, tabsPanels } from './constants'
-import TabPanel from './components/TabPanel'
+import { TabPanel } from './components'
 
 export default () => {
-  const [value, setValue] = useState(0)
+  const [value, setValue] = useState(1)
 
   const handleChange = (_: SyntheticEvent, newValue: number) => {
     setValue(newValue)

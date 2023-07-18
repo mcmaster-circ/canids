@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Box, Button, Typography } from '@mui/material'
 import { DataGrid, GridRenderCellParams } from '@mui/x-data-grid'
 import { deleteBlacklist, getBlacklist } from '@api/blacklist'
@@ -22,8 +22,18 @@ export default () => {
   const { makeRequest: deleteRequest } = useRequest({
     request: deleteBlacklist,
     requestByDefault: false,
-    needSuccess: 'Blacklist deleted',
+    needSuccess: 'Successfully deleted blacklist',
   })
+
+  const handleCloseAdd = useCallback(() => {
+    setAddModal(defaultAddModalState)
+    setTimeout(() => makeRequest(), 1500)
+  }, [makeRequest])
+
+  const handleCloseDelete = useCallback(() => {
+    setDeleteModal(defaultDeleteModalState)
+    setTimeout(() => makeRequest(), 1500)
+  }, [makeRequest])
 
   const columns = useMemo(
     () =>
@@ -119,24 +129,22 @@ export default () => {
         )}
       </Box>
       {loading && <Loader />}
-      <AddEditModal>
+      <AddEditModal
+        open={addModal.open}
+        title="Blacklist"
+        handleClose={handleCloseAdd}
+      >
         <AddBlacklistForm
           isUpdate={addModal.isUpdate}
           values={addModal.values}
-          handleClose={() => {
-            makeRequest()
-            setAddModal(defaultAddModalState)
-          }}
+          handleClose={handleCloseAdd}
         />
       </AddEditModal>
       <DeleteModal
         open={deleteModal}
         title="Blacklist"
         request={deleteRequest}
-        handleClose={() => {
-          makeRequest()
-          setDeleteModal(defaultDeleteModalState)
-        }}
+        handleClose={handleCloseDelete}
       />
     </>
   )

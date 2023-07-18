@@ -1,3 +1,6 @@
+import { subMinutes } from 'date-fns'
+import { get } from './fetchRequests'
+
 const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
 interface DataViewParams {
@@ -34,4 +37,23 @@ export const getChartsData = async ({ params }: { params: DataViewParams }) => {
     uuid: params.views[i].uuid,
     name: params.views[i].name,
   }))
+}
+
+export const getChartData = async ({
+  params: { uuid },
+}: {
+  params: { uuid: string }
+}) => {
+  const data = await get({
+    url: baseUrl + '/data/',
+    params: {
+      view: uuid,
+      start: subMinutes(new Date(), 30).toISOString(),
+      end: new Date().toISOString(),
+      interval: 0,
+      maxSize: 10,
+      from: 0,
+    },
+  })
+  return data
 }

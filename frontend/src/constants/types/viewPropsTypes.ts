@@ -1,5 +1,4 @@
-export interface ViewListItemProps {
-  uuid: string
+interface BaseViewProps {
   name: string
   class: 'line' | 'bar' | 'pie' | 'table'
   index: string
@@ -7,12 +6,11 @@ export interface ViewListItemProps {
   fieldNames: string[]
 }
 
-export interface AddViewProps {
-  name: string
-  class: 'line' | 'bar' | 'pie' | 'table'
-  field: string
-  fieldName: string
+export interface ViewListItemProps extends BaseViewProps {
+  uuid: string
 }
+
+export interface AddViewProps extends BaseViewProps {}
 
 export interface UpdateViewProps extends AddViewProps {
   uuid: string

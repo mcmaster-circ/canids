@@ -1,25 +1,22 @@
 export interface UserProps {
   name: string
   uuid: string
-  exp: number
-  iat: number
+  exp?: number
+  iat?: number
   class: 'admin' | 'standard'
   activated: boolean
 }
 
 export interface AddUserProps {
   name: string
-  class: 'admin' | 'standard'
+  class: 'admin' | 'standard' | string
   uuid: string
-  activated?: boolean
+  activated: string
 }
 
-export interface UpdateUserProps {
-  name: string
-  uuid: string
+export interface UpdateUserProps extends AddUserProps {
   userId: string
-  class?: 'admin' | 'standard'
-  activated?: boolean
+  updatePermission: true
 }
 
 export interface ResetUserPassProps {

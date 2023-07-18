@@ -27,7 +27,7 @@ export const updateUser = async ({ params }: { params: UpdateUserProps }) => {
   const data = await post({
     url: baseUrl + '/user/update',
     body: params,
-    params: { uuid: params.userId },
+    params: { uuid: params.uuid },
   })
   return data
 }

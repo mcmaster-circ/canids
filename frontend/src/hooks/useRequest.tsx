@@ -31,9 +31,11 @@ const useRequest = ({
 
   const [data, setData] = useState<undefined | any>()
   const [completed, setCompleted] = useState(false)
-  const [loading, setloading] = useState(true)
+  const [loading, setloading] = useState(
+    typeof requestByDefault === 'boolean' ? requestByDefault : true
+  )
 
-  const makeRequest = useCallback(
+  const apiCall = useCallback(
     async (p?: any) => {
       let r = undefined
       try {
@@ -56,6 +58,14 @@ const useRequest = ({
       return r
     },
     [addNotification, cookies, needSuccess, request]
+  )
+
+  const makeRequest = useCallback(
+    (p?: any) => {
+      setloading(true)
+      return apiCall(p)
+    },
+    [apiCall]
   )
 
   useEffect(() => {

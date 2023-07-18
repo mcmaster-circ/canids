@@ -24,9 +24,6 @@ export const forgotPassword = async ({ params }: { params: ForgotProps }) => {
 }
 
 export const resetPassword = async ({ params }: { params: ResetProps }) => {
-  const data = await post({
-    url: baseUrl + '/reset',
-    body: params,
-  })
+  const data = await post({ url: baseUrl + '/reset', body: params })
   return data
 }
