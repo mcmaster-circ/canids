@@ -198,7 +198,7 @@ func ListDataAssets(s *state.State) ([]string, error) {
 }
 
 // get alarms for a given asset in a given time range from a
-func GetAlarms(s *state.State, indices []string, sources []string, start time.Time, end time.Time, size int, from int) ([]Alarm, int, error) {
+func GetAlarms(s *state.State, indices []string, sources []string, destinations []string, start time.Time, end time.Time, size int, from int) ([]Alarm, int, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// return empty array if no sources or indices
@@ -211,6 +211,11 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 		alarmSources[i] = source
 	}
 
+	alarmDestinations := make([]interface{}, len(destinations))
+	for i, destination := range destinations {
+		alarmDestinations[i] = destination
+	}
+
 	for i, index := range indices {
 		indices[i] = fmt.Sprintf("data-%s-*", index)
 	}
@@ -218,9 +223,9 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 	r := elastic.NewRangeQuery("timestamp").
 		From(start.Format(time.RFC3339)).
 		To(end.Format(time.RFC3339))
-	// query for all alarms in range and filter for either origSource or respSource being in alarmSources
+	// query for all alarms in range and filter for either origSource being in alarmSources or respSource beoing in alarmDestinations
 	origSources := elastic.NewTermsQuery("id_orig_h_pos", alarmSources...)
-	respSources := elastic.NewTermsQuery("id_resp_h_pos", alarmSources...)
+	respSources := elastic.NewTermsQuery("id_resp_h_pos", alarmDestinations...)
 	hasSource := elastic.NewBoolQuery().Should(origSources, respSources)
 	query := elastic.NewBoolQuery().Must(r).Must(hasSource)
 	queryResult, err := client.Search().Index(indices...).

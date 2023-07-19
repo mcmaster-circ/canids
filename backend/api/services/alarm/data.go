@@ -21,6 +21,7 @@ import (
 type dataRequest struct {
 	Index   []string `json:"index"`   // Index is the list of indices to search
 	Source  []string `json:"source"`  // Source is the list of sources to search
+	Dest    []string `json:"dest"`    // Dest is the list of destination alarms to search
 	Start   string   `json:"start"`   // Start is the start time of the search
 	End     string   `json:"end"`     // End is the end time of the search
 	MaxSize int      `json:"maxSize"` // MaxSize is the maximum number of documents to return
@@ -97,7 +98,7 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 	}
 
 	// get data for the specified fields in the specified time range, sorted by timestamp
-	data, availableRows, err := elasticsearch.GetAlarms(s, request.Index, request.Source, start, end, request.MaxSize, request.From)
+	data, availableRows, err := elasticsearch.GetAlarms(s, request.Index, request.Source, request.Dest, start, end, request.MaxSize, request.From)
 	if err != nil {
 		l.Error("error querying data conn: ", err)
 		w.WriteHeader(http.StatusInternalServerError)

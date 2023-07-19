@@ -1215,7 +1215,13 @@ paths:
                 source:
                   type: array
                   description: |
-                    List of blacklists to pull alarms from
+                    List of source blacklists to pull alarms from
+                  items:
+                    type: string  
+                dest:
+                  type: array
+                  description: |
+                    List of destination blacklists to pull alarms from
                   items:
                     type: string  
                 start:
