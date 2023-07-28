@@ -28,7 +28,7 @@ type resetPassRequest struct {
 // permissions and the provided user email is valid, the user will be emailed a
 // password reset link. If the requesting user does not have permissions or if
 // the user email is not valid, an error will be returned.
-func resetPassHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func resetPassHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	current, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")
@@ -82,7 +82,7 @@ func resetPassHandler(ctx context.Context, s *state.State, a *auth.State, w http
 	}
 	// generate reset token with provided expiry
 	payload := &jwtauth.Payload{UUID: request.UUID}
-	token, err := a.JWTState.CreateToken(payload, auth.ResetDuration)
+	token, err := a.CreateToken(payload, auth.ResetDuration)
 	if err != nil {
 		l.Error("failed to generate password reset token ", err)
 		w.WriteHeader(http.StatusInternalServerError)

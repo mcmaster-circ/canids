@@ -1,7 +1,9 @@
 // Copyright (c) 2020 Computing Infrastructure Research Centre (CIRC), McMaster
 // University. All rights reserved.
 
-// Package api provides the API service for the backend.
+// Package api provides the API service for the backend.\
+
+// SHOULD JUST BE BACK FOR EASE OF DEVELOPMENT
 package api
 
 import (
@@ -46,81 +48,35 @@ type page struct {
 }
 
 // registerIndexAssets registers the index handlers.
-//  - /: redirect to /setup, /login, /dashboard
-//  - /login: login page
-//  - /logout: logout page
-//  - /setup: system setup page
-//  - /requestReset: request password reset page
-//  - /reset: password reset page (sent in email)
-//  - /registration: user registration page (only if enabled)
-func registerIndexAssets(s *state.State, a *auth.State, r *mux.Router) {
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		indexHandler(s, a, w, r)
-	})
+//   - /: redirect to /setup, /login, /dashboard
+//   - /login: login page
+//   - /logout: logout page
+//   - /setup: system setup page
+//   - /requestReset: request password reset page
+//   - /reset: password reset page (sent in email)
+//   - /registration: user registration page (only if enabled)
+func registerIndexAssets(s *state.State, a *jwtauth.Config, p *auth.State, r *mux.Router) {
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		loginHandler(s, a, w, r)
+		loginHandler(s, a, p, w, r)
 	})
 	r.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
-		logoutHandler(s, a, w, r)
+		logoutHandler(s, a, p, w, r)
 	})
 	r.HandleFunc("/setup", func(w http.ResponseWriter, r *http.Request) {
-		setupHandler(s, a, w, r)
+		setupHandler(s, a, p, w, r)
 	})
 	r.HandleFunc("/requestReset", func(w http.ResponseWriter, r *http.Request) {
-		requestResetHandler(s, a, w, r)
+		requestResetHandler(s, a, p, w, r)
 	})
 	r.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
-		resetHandler(s, a, w, r)
+		resetHandler(s, a, p, w, r)
 	})
 	// only register "/register" route if user registration is enabled
 	if s.Config.UserRegistration {
 		r.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
-			registerHandler(s, a, w, r)
+			registerHandler(s, a, p, w, r)
 		})
 	}
-}
-
-// indexHandler receives "/" HTTP requests. If the system has not been
-// initialized, the page will be redirected to "/setup" to initalize an
-// authentication secret and create an admin account. If middleware is
-// disabled, the page will redirect "/dashboard". Else, the function will
-// validate if the browser is authenticated. If a valid "X-State" cookie is
-// present, the page will redirect to "/dashboard". If the cookie is not present
-// or is invalid, the page will redirect to "/login".
-func indexHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
-	// get logger from request
-	l := ctxlog.Log(r.Context())
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// if authentication indexes are not provisioned, redirect to setup page
-	if !s.AuthReady {
-		l.Info("[index] authentication index not ready, redirecting to /setup")
-		http.Redirect(w, r, "/setup", http.StatusTemporaryRedirect)
-		return
-	}
-	// if middleware disabled, redirect to dashboard
-	if s.Config.MiddlewareDisable {
-		l.Info("[index] middleware disabled, redirecting to /dashboard")
-		http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
-		return
-	}
-	// get the state token in cookie
-	cookie, err := r.Cookie("X-State")
-	if err != nil || cookie.Value == "" {
-		l.Info("[index] X-State cookie not present, redirecting to /login")
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
-	// validate the state token
-	_, err = a.JWTState.ParseToken(cookie.Value)
-	if err != nil {
-		l.Info("[index] X-State cookie present but token not valid, redirecting to /login")
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
-	// must be authenticated, redirect to dashboard
-	l.Info("[index] X-State cookie present and token valid, redirecting to /dashboard")
-	http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
 }
 
 // loginHandler receives "/login" HTTP requests. It will redirect to the setup
@@ -130,7 +86,7 @@ func indexHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 // is successful, the "X-State" and "X-Class" cookies will be set and the page
 // will display a login successful, redirecting to the dashboard. If the login
 // is not successful, an error is returned.
-func loginHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func loginHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -149,11 +105,11 @@ func loginHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		if success {
 			// generate + send cookie
 			user.IssuedAt = time.Now().Unix()
-			token, err := a.JWTState.CreateToken(user, auth.ExpireAge)
+			token, err := a.CreateToken(user, auth.ExpireAge)
 			if err != nil {
 				// can't issue new token, return login page with error
 				l.Error("[login] failed to create authentication token ", err)
-				a.AuthPage.Execute(w, page{
+				p.AuthPage.Execute(w, page{
 					Page:             loginPage,
 					SuccessMsg:       "",
 					ErrorMsg:         "Please contact the system administrator.",
@@ -193,7 +149,7 @@ func loginHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 			l.Info("[login] token issued, X-State and X-Class cookies set")
 
 			// login page with success message
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:             loginPage,
 				SuccessMsg:       "Successful login. Now redirecting to dashboard.",
 				ErrorMsg:         "",
@@ -204,7 +160,7 @@ func loginHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		}
 		// login page with failure message
 		l.Info("[login] incorrect username password combination")
-		a.AuthPage.Execute(w, page{
+		p.AuthPage.Execute(w, page{
 			Page:             loginPage,
 			SuccessMsg:       "",
 			ErrorMsg:         "Incorrect login or inactive account. Please try again.",
@@ -214,7 +170,7 @@ func loginHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		return
 	}
 	// no POST request, display login page
-	a.AuthPage.Execute(w, page{
+	p.AuthPage.Execute(w, page{
 		Page:             loginPage,
 		SuccessMsg:       "",
 		ErrorMsg:         "",
@@ -226,7 +182,7 @@ func loginHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 // logoutHandler receives "/logout" HTTP requests. It will redirect to the setup
 // page if the system has not been initialized. It will delete the "X-State" and
 // "X-Class" cookies and return a logout success page.
-func logoutHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func logoutHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -266,7 +222,7 @@ func logoutHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http
 	l.Info("[logout] token revoked, X-State and X-Class cookies cleared")
 
 	// logout page with success message
-	a.AuthPage.Execute(w, page{
+	p.AuthPage.Execute(w, page{
 		Page:       logoutPage,
 		SuccessMsg: "You have been successfully signed out.",
 		ErrorMsg:   "",
@@ -281,7 +237,7 @@ func logoutHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http
 // the creation is successful, the page will display a setup successful message,
 // redirecting to the login. If the creation is not successful, an error is
 // returned.
-func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func setupHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -301,7 +257,7 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		if formName == "" || formEmail == "" || formPass == "" || formPassConfirm == "" {
 			// return setup page with fields error
 			l.Info("[setup] not all fields specified")
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       setupPage,
 				SuccessMsg: "",
 				ErrorMsg:   "All fields must be specified.",
@@ -313,7 +269,7 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		if formPass != formPassConfirm {
 			// return setup page with password error
 			l.Info("[setup] password and confirmation password are not equal")
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       setupPage,
 				SuccessMsg: "",
 				ErrorMsg:   "The passwords must be the same.",
@@ -326,7 +282,7 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		if err != nil {
 			// return setup page with password error
 			l.Error("[setup] cannot hash password ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       setupPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
@@ -339,7 +295,7 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		if err != nil {
 			// return setup page with general error
 			l.Error("[setup] cannot create 'auth' index ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       setupPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
@@ -360,7 +316,7 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		if err != nil {
 			// return setup page with general error
 			l.Error("[setup] cannot index user ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       setupPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
@@ -372,7 +328,7 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		s.AuthReady = true
 		// return setup page with success message
 		l.Info("[setup] created new user auth/", docID)
-		a.AuthPage.Execute(w, page{
+		p.AuthPage.Execute(w, page{
 			Page:       setupPage,
 			SuccessMsg: "Successful setup. Now redirecting to login page.",
 			ErrorMsg:   "",
@@ -381,7 +337,7 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		return
 	}
 	// setup page with no success or error message
-	a.AuthPage.Execute(w, page{
+	p.AuthPage.Execute(w, page{
 		Page:       setupPage,
 		SuccessMsg: "",
 		ErrorMsg:   "",
@@ -395,7 +351,7 @@ func setupHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 // performed, it will capture the email address and will display message that
 // the email has been sent. For security purposes, it will not tell the user if
 // the email was found in the system.
-func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func requestResetHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -409,7 +365,7 @@ func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r
 		formEmail := r.FormValue("user")
 		if formEmail == "" {
 			l.Info("[request reset] password reset email not specified")
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       requestPasswordPage,
 				SuccessMsg: "",
 				ErrorMsg:   "An email must be specified.",
@@ -421,7 +377,7 @@ func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r
 		user, _, err := elasticsearch.QueryAuthByUUID(s, formEmail)
 		if err != nil {
 			l.Error("[request reset] cannot retreive user for password reset ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       requestPasswordPage,
 				SuccessMsg: "If this email address is registered, you will receive an email within the next few minutes.",
 				ErrorMsg:   "",
@@ -431,10 +387,10 @@ func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r
 		}
 		// generate reset token with provided expiry
 		payload := &jwtauth.Payload{UUID: user.UUID}
-		token, err := a.JWTState.CreateToken(payload, auth.ResetDuration)
+		token, err := a.CreateToken(payload, auth.ResetDuration)
 		if err != nil {
 			l.Error("[request reset] failed to generate password reset token ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       requestPasswordPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
@@ -448,7 +404,7 @@ func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r
 		err = email.SendPasswordReset(s, user.Name, user.UUID, resetRequest)
 		if err != nil {
 			l.Error("[request reset] failed to send password reset ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       requestPasswordPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
@@ -457,7 +413,7 @@ func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r
 			return
 		}
 		l.Info("[request reset] successfully issued password reset link for ", user.UUID)
-		a.AuthPage.Execute(w, page{
+		p.AuthPage.Execute(w, page{
 			Page:       requestPasswordPage,
 			SuccessMsg: "If this email address is registered, you will receive an email within the next few minutes.",
 			ErrorMsg:   "",
@@ -466,7 +422,7 @@ func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r
 		return
 	}
 	// password reset page with no success or error message
-	a.AuthPage.Execute(w, page{
+	p.AuthPage.Execute(w, page{
 		Page:       requestPasswordPage,
 		SuccessMsg: "",
 		ErrorMsg:   "",
@@ -478,7 +434,7 @@ func requestResetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r
 // page if the system has not been initialized. If a GET request is performed,
 // it will return the page to set a password. If a POST request is performed, it
 // will attempt to update the hashed password in Elasticsearch.
-func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func resetHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -492,7 +448,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		token := r.URL.Query().Get("token")
 		if token == "" {
 			l.Info("[reset] new password token not present")
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       resetPasswordPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Request not valid. Please try again.",
@@ -501,10 +457,10 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 			return
 		}
 		// parse + validate token
-		payload, err := a.JWTState.ParseToken(token)
+		payload, err := a.ParseToken(token)
 		if err != nil {
 			l.Error("[reset] new password token cannot be parsed ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       resetPasswordPage,
 				SuccessMsg: "",
 				ErrorMsg:   "The link has expired. Please request a new email.",
@@ -520,7 +476,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		if formPass == "" || formPassConfirm == "" {
 			// return setup page with password error
 			l.Info("[reset] not all fields specified")
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       resetPasswordPage,
 				SuccessMsg: "",
 				ErrorMsg:   "All fields must be specified.",
@@ -532,7 +488,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		if formPass != formPassConfirm {
 			// return setup page with password error
 			l.Info("[reset] password and confirmation password are not equal")
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       resetPasswordPage,
 				SuccessMsg: "",
 				ErrorMsg:   "The passwords must be the same.",
@@ -545,7 +501,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		if err != nil {
 			// return setup page with password error
 			l.Error("[reset] cannot hash password ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       resetPasswordPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
@@ -557,7 +513,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		_, id, err := elasticsearch.QueryAuthByUUID(s, payload.UUID)
 		if err != nil {
 			l.Error("[reset] cannot find user from email token ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       resetPasswordPage,
 				SuccessMsg: "",
 				ErrorMsg:   "The link has expired. Please request a new email.",
@@ -569,7 +525,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		err = elasticsearch.UpdatePassword(s, id, hashedPass)
 		if err != nil {
 			l.Error("[reset] error updating password in auth document ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       resetPasswordPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
@@ -578,7 +534,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 			return
 		}
 		// new password page with success message
-		a.AuthPage.Execute(w, page{
+		p.AuthPage.Execute(w, page{
 			Page:       resetPasswordPage,
 			SuccessMsg: "The password has been successfully updated.",
 			ErrorMsg:   "",
@@ -587,7 +543,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 		return
 	}
 	// new password page with no success or error message
-	a.AuthPage.Execute(w, page{
+	p.AuthPage.Execute(w, page{
 		Page:       resetPasswordPage,
 		SuccessMsg: "",
 		ErrorMsg:   "",
@@ -604,7 +560,7 @@ func resetHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.
 // the creation is successful, the page will display a successful message,
 // redirecting to a login. If the creation is is not successful, an error
 // message is returned.
-func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func registerHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get logger from request
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -624,7 +580,7 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 		if formName == "" || formEmail == "" || formPass == "" || formPassConfirm == "" {
 			// return register page with fields error
 			l.Info("[register] not all fields specified")
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       registerPage,
 				SuccessMsg: "",
 				ErrorMsg:   "All fields must be specified.",
@@ -636,7 +592,7 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 		if formPass != formPassConfirm {
 			// return register page with password error
 			l.Info("[register] password and confirmation password are not equal")
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       registerPage,
 				SuccessMsg: "",
 				ErrorMsg:   "The passwords must be the same.",
@@ -649,7 +605,7 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 		if err == nil {
 			// return register page with user already exists error
 			l.Error("[register] email already exists ", formEmail)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       registerPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Email address already registered.",
@@ -662,7 +618,7 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 		if err != nil {
 			// return register page with password error
 			l.Error("[register] cannot hash password ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       registerPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
@@ -683,7 +639,7 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 		if err != nil {
 			// return register page with general error
 			l.Error("[register] cannot index user ", err)
-			a.AuthPage.Execute(w, page{
+			p.AuthPage.Execute(w, page{
 				Page:       registerPage,
 				SuccessMsg: "",
 				ErrorMsg:   "Please contact the system administrator.",
@@ -698,7 +654,7 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 		if !s.Config.UserActivated {
 			successMsg = "Successful registration. An administrator must activate your account before you can sign in. Now redirecting to login page."
 		}
-		a.AuthPage.Execute(w, page{
+		p.AuthPage.Execute(w, page{
 			Page:       registerPage,
 			SuccessMsg: successMsg,
 			ErrorMsg:   "",
@@ -707,7 +663,7 @@ func registerHandler(s *state.State, a *auth.State, w http.ResponseWriter, r *ht
 		return
 	}
 	// register page with no success or error message
-	a.AuthPage.Execute(w, page{
+	p.AuthPage.Execute(w, page{
 		Page:       registerPage,
 		SuccessMsg: "",
 		ErrorMsg:   "",

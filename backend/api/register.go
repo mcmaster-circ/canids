@@ -8,22 +8,24 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/alarm"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/assets"
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/blacklist"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/dashboard"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/data"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/fields"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/user"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/view"
-	"github.com/mcmaster-circ/canids-v2/backend/auth"
+	authUtils "github.com/mcmaster-circ/canids-v2/backend/auth"
+	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
 // registerRoutes registers all routes required for the HTTP service. Routes
 // registered with the unsecure router will not require authentication for
 // access. Routes registered with the secure router will require authentication.
-func registerRoutes(s *state.State, a *auth.State, unsecure *mux.Router, secure *mux.Router) {
+func registerRoutes(s *state.State, a *jwtauth.Config, p *authUtils.State, unsecure *mux.Router, secure *mux.Router) {
 	// register index assets
-	registerIndexAssets(s, a, unsecure)
+	registerIndexAssets(s, a, p, unsecure)
 
 	// register static assets: /static
 	registerStaticAssets(s, unsecure)
@@ -51,4 +53,6 @@ func registerRoutes(s *state.State, a *auth.State, unsecure *mux.Router, secure 
 
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())
+
+	auth.RegisterRoutes(s, a, unsecure.PathPrefix("/auth/").Subrouter())
 }

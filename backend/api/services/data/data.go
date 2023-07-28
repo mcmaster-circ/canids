@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
@@ -30,7 +29,7 @@ type dataResponse struct {
 const maxTableRows = 100
 
 // dataHandler is "/api/data. It is responsible for populating a view with the data related to that view.
-func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
+func dataHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	_, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
 	w.Header().Set("Content-Type", "application/json")

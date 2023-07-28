@@ -15,6 +15,7 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/grpcservice"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
+	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/uuid"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	log "github.com/sirupsen/logrus"
@@ -23,7 +24,7 @@ import (
 // Start accepts the global state and the authentication state. It will register
 // all routes and start the HTTP server. If the server fails to start an error
 // will be returned.
-func Start(s *state.State, a *auth.State) error {
+func Start(s *state.State, a *jwtauth.Config, p *auth.State) error {
 	// create main request router
 	router := mux.NewRouter()
 	router.StrictSlash(true)
@@ -72,7 +73,7 @@ func Start(s *state.State, a *auth.State) error {
 	})
 
 	// register all routes
-	registerRoutes(s, a, router, secureRouter)
+	registerRoutes(s, a, p, router, secureRouter)
 
 	// provision gRPC server
 	go func() {

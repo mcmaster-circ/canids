@@ -5,12 +5,15 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
 	"time"
 
+	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	"github.com/tdewolff/minify"
@@ -28,59 +31,107 @@ const (
 	ResetDuration = 24 * time.Hour
 )
 
-// State contains the API authentication state.
-type State struct {
-	JWTState *jwtauth.Config    // JWTState is the authentication state
-	AuthPage *template.Template // AuthPage is the parsed authentication templates
-}
-
 // Provision initializes a State for the API microservice. It accepts the main
 // program state. It will initialize the authentication state and authentication
 // pages. It will return an initialized API  state or an error.
-func Provision(s *state.State) (*State, error) {
+func Provision(s *state.State) (*jwtauth.Config, error) {
 	s.Log.Info("[api] provisioning api state")
 
 	// empty API state
-	var a State
+	var err error
+	var a *jwtauth.Config
 
-	// generate JWTState and AuthPage in State
-	if err := provisionAuth(s, &a); err != nil {
-		s.Log.Error("[api] failed to provision Auth in api state")
-		return nil, err
-	}
-
-	return &a, nil
-}
-
-// provisionAuth accepts the main program state and the API state. It generates
-// the JWTState and AuthPage entries in the API State or returns an error.
-func provisionAuth(s *state.State, a *State) error {
-	// generate seed
 	s.Log.Info("[api] initializing authentication secret")
 	secret, err := jwtauth.GenerateSeed(SecretLength)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// generate JWTState
+	// Generate JWTState
 	s.Log.Info("[api] initializing JWT authentication state")
-	auth, err := jwtauth.Init(secret)
+	a, err = jwtauth.Init(secret)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	a.JWTState = auth
 
-	// fetch authentication pages
-	s.Log.Info("[api] initializing authentication assets")
-	// get working directory
+	return a, nil
+}
+
+func DefaultUserSetup(s *state.State, a *jwtauth.Config) {
+
+	err := elasticsearch.CreateIndex(s, "auth")
+	if err != nil {
+		// return setup page with general error
+		s.Log.Error("[Default user setup] cannot create 'auth' index ", err)
+		return
+	}
+
+	// Create default random password
+	password, err := randomPass(32)
+	if err != nil {
+		s.Log.Error("[Default user setup] Failed to generate random password")
+		return
+	} else {
+		s.Log.Info("[Default user setup] Default password: ", password)
+
+	}
+
+	// Hash and salt random password
+	hashedPass, err := jwtauth.HashPassword(password)
+	if err != nil {
+		s.Log.Error("[Default user setup] Failed to hash password")
+		return
+	}
+
+	user := elasticsearch.DocumentAuth{
+		Name:      "Admin",
+		UUID:      "admin@system.test",
+		Class:     jwtauth.UserAdmin,
+		Password:  hashedPass,
+		Activated: true,
+	}
+
+	_, err = user.Index(s)
+	if err != nil {
+		s.Log.Error("[Default user setup] cannot index user", err)
+		return
+	}
+
+	s.AuthReady = true
+
+	s.Log.Info("[Default user setup] created new default admin user. Scroll up to find password. Email is admin@system.test")
+}
+
+func randomPass(n int) (string, error) {
+	bytes := make([]byte, n)
+	_, err := rand.Read(bytes)
+
+	if err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.EncodeToString(bytes), err
+}
+
+//  EXTRA STUFF TO FACILITATE BACKEND HOSTED LOGIN WHILE TRANSITIONING TO ENDPOINTS
+
+type State struct {
+	AuthPage *template.Template
+}
+
+func ProvisionAuthPage(s *state.State) *State {
+
+	var authState State
+
 	cwd, err := os.Getwd()
 	if err != nil {
-		return err
+		s.Log.Error("Failed to get cwd")
 	}
+
 	absPathAuth := filepath.Join(cwd, "assets/auth.html")
 	page := template.Must(compileTemplates(absPathAuth))
-	a.AuthPage = page
-	return nil
+	authState.AuthPage = page
+	return &authState
 }
 
 // compileTemplates accepts a list of file names. It will return a list of

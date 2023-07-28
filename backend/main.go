@@ -8,6 +8,7 @@ import (
 
 	"github.com/mcmaster-circ/canids-v2/backend/api"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
+
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/scheduler"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	log "github.com/sirupsen/logrus"
@@ -41,8 +42,13 @@ func main() {
 		s.Log.Fatal(err)
 	}
 
+	//Create default user
+	auth.DefaultUserSetup(s, a)
+
+	p := auth.ProvisionAuthPage(s)
+
 	// start API server
-	err = api.Start(s, a)
+	err = api.Start(s, a, p)
 	if err != nil {
 		s.Log.Fatal(err)
 	}
