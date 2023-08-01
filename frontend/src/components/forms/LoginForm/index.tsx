@@ -20,7 +20,7 @@ export default () => {
       setCookie('X-State', 'state', { path: '/' })
       setCookie('X-Class', 'admin', { path: '/' })
       console.log(data)
-      login({ user: 'example@mail.com', pass: 'securePassword' })
+      login({ user: data.user, pass: data.pass })
     },
     [login, setCookie]
   )

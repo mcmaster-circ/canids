@@ -54,5 +54,5 @@ func registerRoutes(s *state.State, a *jwtauth.Config, p *authUtils.State, unsec
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())
 
-	auth.RegisterRoutes(s, a, unsecure.PathPrefix("/auth/").Subrouter())
+	auth.RegisterRoutes(s, a, unsecure.PathPrefix("/api/auth/").Subrouter())
 }
