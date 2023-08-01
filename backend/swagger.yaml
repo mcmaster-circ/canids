@@ -1240,6 +1240,14 @@ paths:
                   type: integer
                   description: |
                     Search offset of alarms query
+                sourceIp:
+                  type: string
+                  description: |
+                    Prefix string of source IP (returned alarms will have source IP starting with string passed here. "" will not filter by sourceIP)
+                destIp:
+                  type: string
+                  description: |
+                    Prefix string of desitnation IP (returned alarms will have source IP starting with string passed here. "" will not filter by destIP)
               required:
                 - index
                 - source
@@ -1250,10 +1258,13 @@ paths:
             example: {
               "index": ["http.log.alarm", "dns.log.alarm"],
               "source": ["firehol_abusers_1d", "firehol_abusers_30d", "firehol_anonymous", "firehol_level2"],
+              "dest":  ["firehol_abusers_1d", "firehol_abusers_30d", "firehol_anonymous", "firehol_level2"],
               "start": "2019-05-01T12:41:55.000Z",
               "end": "2023-05-15T13:11:55.495Zd",
               "maxSize": 4,
               "from": 0
+              "sourceIp": "192.16"
+              "destIp": ""
             }
       responses:
         '200':

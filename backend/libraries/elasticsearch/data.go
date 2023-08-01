@@ -198,7 +198,7 @@ func ListDataAssets(s *state.State) ([]string, error) {
 }
 
 // get alarms for a given asset in a given time range from a
-func GetAlarms(s *state.State, indices []string, sources []string, destinations []string, start time.Time, end time.Time, size int, from int) ([]Alarm, int, error) {
+func GetAlarms(s *state.State, indices []string, sources []string, destinations []string, start time.Time, end time.Time, size int, from int, sourceIP string, destIP string) ([]Alarm, int, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// return empty array if no sources or indices
@@ -223,11 +223,36 @@ func GetAlarms(s *state.State, indices []string, sources []string, destinations 
 	r := elastic.NewRangeQuery("timestamp").
 		From(start.Format(time.RFC3339)).
 		To(end.Format(time.RFC3339))
-	// query for all alarms in range and filter for either origSource being in alarmSources or respSource beoing in alarmDestinations
+
+	slSource := strings.Split(sourceIP, ":")
+	slDest := strings.Split(destIP, ":")
+
+	// Create query for matching passed source IP with beginning of source IP field, if empty match all
+	var sourceIPQuery elastic.Query
+	if slSource[0] == "" {
+		print("Source match all\n")
+		sourceIPQuery = elastic.NewMatchAllQuery()
+	} else {
+		print("Source IP: ")
+		println(slSource[0])
+		sourceIPQuery = elastic.NewMatchPhrasePrefixQuery("id_orig_h", slSource[0])
+	}
+
+	// Create query for matching passed destination IP with beginning of destination IP field, if empty match all
+	var destIPQuery elastic.Query
+	if slDest[0] == "" {
+		print("Dest match all\n")
+		destIPQuery = elastic.NewMatchAllQuery()
+	} else {
+		print("Dest IP: ")
+		println(slDest[0])
+		destIPQuery = elastic.NewMatchPhrasePrefixQuery("id_resp_h", slDest[0])
+	}
+
+	// query for all alarms in range and filter for either origSource being in alarmSources or respSource being in alarmDestinations
 	origSources := elastic.NewTermsQuery("id_orig_h_pos", alarmSources...)
 	respSources := elastic.NewTermsQuery("id_resp_h_pos", alarmDestinations...)
-	hasSource := elastic.NewBoolQuery().Should(origSources, respSources)
-	query := elastic.NewBoolQuery().Must(r).Must(hasSource)
+	query := elastic.NewBoolQuery().Must(r).Must(origSources).Must(respSources).Must(sourceIPQuery).Must(destIPQuery)
 	queryResult, err := client.Search().Index(indices...).
 		Query(query).Sort("timestamp", false).Size(size).From(from).Do(ctx)
 	if err != nil {

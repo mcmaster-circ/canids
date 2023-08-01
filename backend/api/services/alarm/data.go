@@ -19,13 +19,15 @@ import (
 )
 
 type dataRequest struct {
-	Index   []string `json:"index"`   // Index is the list of indices to search
-	Source  []string `json:"source"`  // Source is the list of sources to search
-	Dest    []string `json:"dest"`    // Dest is the list of destination alarms to search
-	Start   string   `json:"start"`   // Start is the start time of the search
-	End     string   `json:"end"`     // End is the end time of the search
-	MaxSize int      `json:"maxSize"` // MaxSize is the maximum number of documents to return
-	From    int      `json:"from"`    // From is the starting index of the search
+	Index    []string `json:"index"`    // Index is the list of indices to search
+	Source   []string `json:"source"`   // Source is the list of sources to search
+	Dest     []string `json:"dest"`     // Dest is the list of destination alarms to search
+	Start    string   `json:"start"`    // Start is the start time of the search
+	End      string   `json:"end"`      // End is the end time of the search
+	MaxSize  int      `json:"maxSize"`  // MaxSize is the maximum number of documents to return
+	From     int      `json:"from"`     // From is the starting index of the search
+	SourceIp string   `json:"sourceIp"` // SourceIp contains the beginning of a searched alarm source IP (alarms will be filtered by containing this string at the beginning of id_orig_h, leave empty to not filter by IP)
+	DestIp   string   `json:"destIp"`   // destIp contains the beginning of a searched alarm source IP (alarms will be filtered by containing this string at the beginning of id_resp_h, leave empty to not filter by IP)
 }
 
 type dataResponse struct {
@@ -35,7 +37,7 @@ type dataResponse struct {
 
 const maxCards = 20
 
-// dataHandler is "/api/data. It is responsible for populating a view with the data related to that view.
+// dataHandler is "/api/alarm/data. It is responsible for populating a view with the data related to that view.
 func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	_, l := jwtauth.FromContext(ctx), ctxlog.Log(ctx)
@@ -98,7 +100,7 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 	}
 
 	// get data for the specified fields in the specified time range, sorted by timestamp
-	data, availableRows, err := elasticsearch.GetAlarms(s, request.Index, request.Source, request.Dest, start, end, request.MaxSize, request.From)
+	data, availableRows, err := elasticsearch.GetAlarms(s, request.Index, request.Source, request.Dest, start, end, request.MaxSize, request.From, request.SourceIp, request.DestIp)
 	if err != nil {
 		l.Error("error querying data conn: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
