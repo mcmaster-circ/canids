@@ -37,6 +37,8 @@ func syncScanner(s *state) (*database, error) {
 		db.clean()
 	}
 
+	log.Println("[CanIDS] info: s.FilePath %s, s.FileMode %s", s.FilePath, s.FileMode)
+
 	switch s.FileMode {
 	case fileRegular:
 		// load single file in database (if not already)
