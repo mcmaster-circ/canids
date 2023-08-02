@@ -14,8 +14,8 @@ import (
 )
 
 type loginInfo struct {
-	User string `json:"user"`
-	Pass string `json:"pass"`
+	UUID     string `json:"uuid"`
+	Password string `json:"password"`
 }
 
 type GeneralResponse struct {
@@ -55,8 +55,8 @@ func loginHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *h
 	}
 
 	if r.Method == "POST" {
-		uuid := request.User
-		password := request.Pass
+		uuid := request.UUID
+		password := request.Password
 
 		success, user := validateLogin(s, l, uuid, password)
 		if success {

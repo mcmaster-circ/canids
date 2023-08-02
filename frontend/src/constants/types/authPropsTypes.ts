@@ -1,20 +1,20 @@
 export interface LoginProps {
-  user: string
-  pass: string
+  uuid: string
+  password: string
 }
 
 export interface RegisterProps {
   name: string
-  email: string
-  pass: string
-  passConfirm: string
+  uuid: string
+  password: string
+  passwordConfirm: string
 }
 
 export interface ForgotProps {
-  email: string
+  uuid: string
 }
 
 export interface ResetProps {
-  pass: string
-  passConfirm: string
+  password: string
+  passwordConfirm: string
 }

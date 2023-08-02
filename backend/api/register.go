@@ -30,6 +30,9 @@ func registerRoutes(s *state.State, a *jwtauth.Config, p *authUtils.State, unsec
 	// register static assets: /static
 	registerStaticAssets(s, unsecure)
 
+	// register auth service, do not require authentication: /api/auth
+	auth.RegisterRoutes(s, a, unsecure.PathPrefix("/api/auth/").Subrouter())
+
 	// register user service, require authentication: /api/user
 	user.RegisterRoutes(s, a, secure.PathPrefix("/user/").Subrouter())
 
@@ -53,6 +56,4 @@ func registerRoutes(s *state.State, a *jwtauth.Config, p *authUtils.State, unsec
 
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())
-
-	auth.RegisterRoutes(s, a, unsecure.PathPrefix("/api/auth/").Subrouter())
 }

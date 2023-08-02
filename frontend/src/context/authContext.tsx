@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback(
     async (d: LoginProps) => {
-      await loginRequest({ ...d  })
+      await loginRequest({ ...d })
       const res: any = await userInfoRequest()
       if (res) {
         userProfileCookies.forEach((f) => setCookie(f, res[f], { path: '/' }))

@@ -17,7 +17,7 @@ import { NavLink } from '@molecules'
 import logo from '@images/logo.png'
 
 function ResponsiveAppBar() {
-  const [cookies] = useCookies([ac.CLASS, ac.NAME])
+  const [cookies] = useCookies([ac.NAME, ac.ROLE])
   const [mOpen, setMOpen] = useState<null | HTMLElement>(null)
 
   const handleClose = useCallback(() => setMOpen(null), [])
@@ -42,7 +42,7 @@ function ResponsiveAppBar() {
         >
           {dashboardLinks.map((l) =>
             l.adminRequired &&
-            !cookies[ac.CLASS].includes(ROLES.ADMIN) ? null : (
+            !cookies[ac.ROLE].includes(ROLES.ADMIN) ? null : (
               <NavLink key={l.link} name={l.name} link={l.link} />
             )
           )}
@@ -94,7 +94,7 @@ function ResponsiveAppBar() {
           >
             {dashboardLinks.map((l) =>
               l.adminRequired &&
-              !cookies[ac.CLASS].includes(ROLES.ADMIN) ? null : (
+              !cookies[ac.ROLE].includes(ROLES.ADMIN) ? null : (
                 <NavLink
                   key={l.link}
                   name={l.name}
