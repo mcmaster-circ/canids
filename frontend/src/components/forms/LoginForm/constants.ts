@@ -2,14 +2,14 @@ import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 
 export const defaultValues = {
-  user: '',
-  pass: '',
+  uuid: '',
+  password: '',
 }
 
 export const loginFormConfig = [
   {
     component: 'input',
-    name: 'user',
+    name: 'uuid',
     label: 'Email',
     size: 'small',
     column: 12,
@@ -18,7 +18,7 @@ export const loginFormConfig = [
   },
   {
     component: 'input',
-    name: 'pass',
+    name: 'password',
     label: 'Password',
     type: 'password',
     size: 'small',
@@ -32,11 +32,11 @@ export const resolver = yupResolver(
   yup
     .object()
     .shape({
-      user: yup
+      uuid: yup
         .string()
         .required('Email is  a required field')
         .email('Please enter a valid email'),
-      pass: yup
+      password: yup
         .string()
         .required('Password is  a required field')
         .min(2, 'Enter at least 2 symbols'),

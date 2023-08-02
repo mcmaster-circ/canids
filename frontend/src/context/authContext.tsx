@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLogedIn(true)
       }
     },
-    [setCookie, setUserFields, userInfoRequest]
+    [loginRequest, setCookie, setUserFields, userInfoRequest]
   )
 
   const logout = useCallback(() => {

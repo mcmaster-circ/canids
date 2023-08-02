@@ -32,6 +32,7 @@ const useRequest = ({
   const [data, setData] = useState<undefined | any>()
   const [completed, setCompleted] = useState(false)
   const [loading, setloading] = useState(
+    // for correct loading state behaviour
     typeof requestByDefault === 'boolean' ? requestByDefault : true
   )
 
@@ -39,9 +40,10 @@ const useRequest = ({
     async (p?: any) => {
       let r = undefined
       try {
-        r = p
-          ? await request({ params: p, token: cookies[ac.STATE] })
-          : await request({ token: cookies[ac.STATE] })
+        r = await request({
+          ...(p ? { params: p } : {}),
+          token: cookies[ac.STATE],
+        })
         setData(r)
         needSuccess &&
           addNotification(

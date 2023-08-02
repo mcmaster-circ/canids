@@ -13,14 +13,14 @@ import { allCookies as ac } from '@constants/cookies'
 
 export default () => {
   const { login } = useAuth()
-  const [_, setCookie] = useCookies([ac.STATE, ac.CLASS])
+  const [_, setCookie] = useCookies([ac.STATE, ac.ROLE])
 
   const onSubmit = useCallback(
     (data: LoginProps) => {
-      setCookie('X-State', 'state', { path: '/' })
-      setCookie('X-Class', 'admin', { path: '/' })
-      console.log(data)
-      login({ user: data.user, pass: data.pass })
+      // TODO: Remove Cookies set after login setup
+      setCookie(ac.STATE, 'state', { path: '/' })
+      setCookie(ac.ROLE, 'admin', { path: '/' })
+      login(data)
     },
     [login, setCookie]
   )
