@@ -31,7 +31,7 @@ func processRegularFile(s *state, filePath string, fileName string, db *database
 		Lines: 0,
 		Size:  0,
 	}
-	if !strings.Contains(abs, ".log") || strings.Contains(abs, "stderr.log") || strings.Contains(abs, "stdout.log") || strings.Contains(abs, "conn-summary.log") {
+	if !strings.Contains(abs, ".log") || strings.Contains(abs, "stderr.log") || strings.Contains(abs, "stdout.log") || strings.Contains(abs, "conn-summary.log") || strings.Contains(abs, "ntp.log") || strings.Contains(abs, "kerberos.log") {
 		if s.Debug {
 			log.Println("[CanIDS DEBUG]", "ignoring non-log file", abs)
 		}
