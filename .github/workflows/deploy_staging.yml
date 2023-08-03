@@ -8,6 +8,7 @@ on:
       - "backend/**"
       - "frontend/**"
       - "ingestion/**"
+      - "config/**"
       - ".github/workflows/deploy_staging.yml"
       - "deploy-staging.yml"
 
