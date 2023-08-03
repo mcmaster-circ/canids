@@ -17,9 +17,6 @@ export default () => {
 
   const onSubmit = useCallback(
     (data: LoginProps) => {
-      // TODO: Remove Cookies set after login setup
-      setCookie(ac.STATE, 'state', { path: '/' })
-      setCookie(ac.ROLE, 'admin', { path: '/' })
       login(data)
     },
     [login, setCookie]

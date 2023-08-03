@@ -1,4 +1,5 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
+import { register as registerApiCall } from '@api/auth'
 import { useForm } from 'react-hook-form'
 import { Button, Divider, Link, Typography } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
@@ -8,16 +9,29 @@ import packageJson from 'package.json'
 import { authRoutes } from '@constants/routes'
 import { useRouter } from 'next/router'
 import { RegisterProps } from '@constants/types'
+import { useRequest } from '@hooks'
 
 export default () => {
   const { push } = useRouter()
+
+  const { makeRequest: registerRequest, data: response } = useRequest({
+    requestByDefault: false,
+    request: registerApiCall,
+    needSuccess: 'User registered successfully',
+  })
+
   const onSubmit = useCallback(
-    (data: RegisterProps) => {
-      console.log(data)
-      push(authRoutes.LOGIN)
+    async (data: RegisterProps) => {
+      await registerRequest(data)
     },
-    [push]
+    [registerRequest, push]
   )
+
+  useEffect(() => {
+    if (response) {
+      push(authRoutes.LOGIN)
+    }
+  }, [response, push])
 
   const {
     control,

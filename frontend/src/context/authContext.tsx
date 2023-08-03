@@ -8,7 +8,7 @@ import {
   useContext,
 } from 'react'
 import { useCookies } from 'react-cookie'
-import { login as loginApiCall } from '@api/auth'
+import { login as loginApiCall, logout as logoutApiCall } from '@api/auth'
 import { userInfo } from '@api/user'
 import { useRequest } from '@hooks'
 import useNotification, { NotificationType } from '@context/notificationContext'
@@ -41,6 +41,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     requestByDefault: false,
     request: userInfo,
   })
+  const { makeRequest: logoutRequest } = useRequest({
+    requestByDefault: false,
+    request: logoutApiCall,
+    needSuccess: 'Successfull Logout',
+  })
   const [cookies, setCookie, removeCookie] = useCookies(
     Object.values(ac) as string[]
   )
@@ -68,12 +73,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [loginRequest, setCookie, setUserFields, userInfoRequest]
   )
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     setUser(undefined)
+    await logoutRequest()
     Object.values(ac).forEach((f) => removeCookie(f, { path: '/' }))
-    addNotification('Successfully logged out', 'success')
     setLogedIn(false)
-  }, [addNotification, removeCookie])
+  }, [logoutRequest, addNotification, removeCookie])
 
   // Check if there is a currently active session
   // when the provider is mounted for the first time.

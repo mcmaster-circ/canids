@@ -3,9 +3,9 @@ import { yupResolver } from '@hookform/resolvers/yup'
 
 export const defaultValues = {
   name: '',
-  email: '',
-  pass: '',
-  passConfirm: '',
+  uuid: '',
+  password: '',
+  passwordConfirm: '',
 }
 
 export const registerFormConfig = [
@@ -20,7 +20,7 @@ export const registerFormConfig = [
   },
   {
     component: 'input',
-    name: 'email',
+    name: 'uuid',
     label: 'Email',
     size: 'small',
     column: 12,
@@ -29,7 +29,7 @@ export const registerFormConfig = [
   },
   {
     component: 'input',
-    name: 'pass',
+    name: 'password',
     label: 'Password',
     type: 'password',
     size: 'small',
@@ -38,7 +38,7 @@ export const registerFormConfig = [
   },
   {
     component: 'input',
-    name: 'passConfirm',
+    name: 'passwordConfirm',
     label: 'Confirm Password',
     type: 'password',
     size: 'small',
@@ -55,18 +55,18 @@ export const resolver = yupResolver(
         .string()
         .required('Name is  a required field')
         .min(2, 'Enter at least 2 symbols'),
-      email: yup
+      uuid: yup
         .string()
         .required('Email is  a required field')
         .email('Please enter a valid email'),
-      pass: yup
+      password: yup
         .string()
         .required('Password is a required field')
         .min(2, 'Enter at least 2 symbols'),
-      passConfirm: yup
+      passwordConfirm: yup
         .string()
         .required('Please confirm your password')
-        .oneOf([yup.ref('pass')], 'Your passwords do not match.'),
+        .oneOf([yup.ref('password')], 'Your passwords do not match.'),
     })
     .required()
 )

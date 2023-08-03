@@ -13,6 +13,11 @@ export const login = async ({ params }: { params: LoginProps }) => {
   return data
 }
 
+export const logout = async () => {
+  const data = await post({ url: baseUrl + '/auth/logout' })
+  return data
+}
+
 export const register = async ({ params }: { params: RegisterProps }) => {
   const data = await post({ url: baseUrl + '/auth/registerUser', body: params })
   return data
