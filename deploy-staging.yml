@@ -21,6 +21,19 @@ services:
     deploy:
       placement:
         constraints: [node.hostname == bacchus-w]
+  
+  kibana:
+    image: docker.elastic.co/kibana/kibana-oss:7.6.0
+    depends_on:
+      - elasticsearch
+    env_file:
+      - config/config.env
+    deploy:
+      placement:
+        constraints: [node.hostname == bacchus-w]
+      labels:
+        caddy: canids-kibana.staging.fyelabs.com
+        caddy.route.1_reverse_proxy: "{{upstreams 5601}}"
 
   backend:
     image: 192.0.2.1:5000/canids-v2-staging-backend:latest

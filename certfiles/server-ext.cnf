@@ -1,1 +1,1 @@
-subjectAltName=IP:172.18.0.1,DNS:host.docker.internal
+subjectAltName=IP:172.18.0.1,DNS:backend
