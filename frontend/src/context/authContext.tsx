@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Check if there is a currently active session
   // when the provider is mounted for the first time.
   useEffect(() => {
-    if (!!cookies[ac.STATE] && loadingInitial) {
+    if (!!cookies[ac.ROLE] && loadingInitial) {
       setUserFields(cookies)
       setLogedIn(true)
       setLoadingInitial(false)

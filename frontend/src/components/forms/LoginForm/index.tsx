@@ -1,6 +1,5 @@
 import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
-import { useCookies } from 'react-cookie'
 import { Button, Divider, Link, Typography } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
 import useAuth from '@context/authContext'
@@ -9,17 +8,15 @@ import { FormRender } from '@molecules'
 import packageJson from 'package.json'
 import { authRoutes } from '@constants/routes'
 import { LoginProps } from '@constants/types'
-import { allCookies as ac } from '@constants/cookies'
 
 export default () => {
   const { login } = useAuth()
-  const [_, setCookie] = useCookies([ac.STATE, ac.ROLE])
 
   const onSubmit = useCallback(
     (data: LoginProps) => {
       login(data)
     },
-    [login, setCookie]
+    [login]
   )
 
   const {
