@@ -5,6 +5,7 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,7 +49,7 @@ type Alarm struct {
 // will return the newly created document ID or an error.
 func IndexPayload(s *state.State, indexName string, payload []byte) (string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
-	result, err := client.Index(indexName).Document(string(payload)).Do(ctx)
+	result, err := client.Index(indexName).Raw(bytes.NewReader(payload)).Do(ctx)
 	if err != nil {
 		return "", err
 	}
