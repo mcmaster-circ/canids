@@ -84,7 +84,7 @@ services:
       context: .
       dockerfile: ingestion/Dockerfile
     environment:
-      - flags=
+      - flags=--verbose
       - asset=testdata2
       - hostname=backend:50000
     secrets:
