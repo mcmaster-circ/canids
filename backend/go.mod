@@ -1,6 +1,6 @@
 module github.com/mcmaster-circ/canids-v2/backend
 
-go 1.17
+go 1.20
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
