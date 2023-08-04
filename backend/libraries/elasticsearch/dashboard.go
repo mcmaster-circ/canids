@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
-	"github.com/olivere/elastic"
 )
 
 const (
@@ -46,8 +46,11 @@ type DocumentDashboard struct {
 // return the newly created document ID or an error.
 func (d *DocumentDashboard) Index(s *state.State) (string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
-	result, err := client.Index().Index(indexDashboard).BodyJson(d).Do(ctx)
-	return result.Id, err
+	result, err := client.Index(indexDashboard).Document(d).Do(ctx)
+	if err != nil {
+		return "", err
+	}
+	return result.Id_, nil
 }
 
 // Update will attempt to update the document in the "dashboard" with the
@@ -55,7 +58,7 @@ func (d *DocumentDashboard) Index(s *state.State) (string, error) {
 // transaction can not be performed.
 func (d *DocumentDashboard) Update(s *state.State, esDocID string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	_, err := client.Update().Index(indexDashboard).Id(esDocID).
+	_, err := client.Update(indexDashboard, esDocID).
 		Doc(map[string]interface{}{
 			"uuid":  d.UUID,
 			"name":  d.Name,
@@ -73,23 +76,26 @@ func QueryDashboardByUUID(s *state.State, uuid string) (DocumentDashboard, strin
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for dashboard with provided uuid
-	termQuery := elastic.NewTermQuery("uuid.keyword", uuid)
-	result, err := client.Search().Index(indexDashboard).Query(termQuery).Do(ctx)
+	result, err := client.Search().Index(indexDashboard).Query(&types.Query{
+		Term: map[string]types.TermQuery{
+			"uuid.keyword": {Value: uuid},
+		},
+	}).Do(ctx)
 	if err != nil {
 		return d, "", err
 	}
 	// ensure dashboard was returned
-	if result.Hits.TotalHits.Value == 0 {
+	if result.Hits.Total.Value == 0 {
 		return d, "", errors.New("dashboard: no document with uuid found")
 	}
 	// select + parse dashboard into DocumentDashboard
 	dashboard := result.Hits.Hits[0]
-	err = json.Unmarshal(dashboard.Source, &d)
+	err = json.Unmarshal(dashboard.Source_, &d)
 	if err != nil {
 		return d, "", err
 	}
 	// successful query
-	return d, dashboard.Id, nil
+	return d, dashboard.Id_, nil
 }
 
 // AllDashboard will attempt to query the "dashboard" index and return all dashboards in the
@@ -99,15 +105,16 @@ func AllDashboard(s *state.State) ([]DocumentDashboard, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for all documents
-	allQuery := elastic.NewMatchAllQuery()
-	results, err := client.Search().Index(indexDashboard).Query(allQuery).Size(1000).Do(ctx)
+	results, err := client.Search().Index(indexDashboard).Query(&types.Query{
+		MatchAll: &types.MatchAllQuery{},
+	}).Size(1000).Do(ctx)
 	if err != nil {
 		return nil, err
 	}
 	// parse dashboards into DocumentDashboard, append to out
 	for _, dashboard := range results.Hits.Hits {
 		var d DocumentDashboard
-		err := json.Unmarshal(dashboard.Source, &d)
+		err := json.Unmarshal(dashboard.Source_, &d)
 		if err != nil {
 			return nil, err
 		}
@@ -122,8 +129,9 @@ func GetDashboard(s *state.State) (DocumentDashboard, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for all documents
-	allQuery := elastic.NewMatchAllQuery()
-	results, err := client.Search().Index(indexDashboard).Query(allQuery).Size(1000).Do(ctx)
+	results, err := client.Search().Index(indexDashboard).Query(&types.Query{
+		MatchAll: &types.MatchAllQuery{},
+	}).Size(1000).Do(ctx)
 	if err != nil {
 		return DocumentDashboard{}, err
 	}
@@ -133,7 +141,7 @@ func GetDashboard(s *state.State) (DocumentDashboard, error) {
 		return DocumentDashboard{}, errors.New("dashboard: no documents found")
 	}
 	var dashboard DocumentDashboard
-	err = json.Unmarshal(hits[0].Source, &dashboard)
+	err = json.Unmarshal(hits[0].Source_, &dashboard)
 	if err != nil {
 		return DocumentDashboard{}, err
 	}

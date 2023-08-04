@@ -11,6 +11,7 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ipsetmgr"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/uuid"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
 // Provision will accept: a map of ip set names to their urls, a time interval to schedule provisioning,
@@ -27,11 +28,11 @@ func Provision(
 	urls := make(map[string]string)
 
 	// check if blacklist index exists, if not create it
-	exists, err := s.Elastic.IndexExists("blacklist").Do(s.ElasticCtx)
+	exists, err := esapi.IndicesExistsRequest{Index: []string{"blacklist"}}.Do(s.ElasticCtx, s.Elastic)
 	if err != nil {
 		return err
 	}
-	if exists {
+	if exists.StatusCode == 200 {
 		// load the urls from the index
 		s.Log.Info("[scheduler] loading blacklist index")
 		urls = loadBlacklists(s)
@@ -157,7 +158,7 @@ func createAndLoadDefaultBlacklists(s *state.State) map[string]string {
 		"firehol_level3":      "https://iplists.firehol.org/files/firehol_level3.netset",
 	}
 
-	s.Elastic.CreateIndex("blacklist").Do(s.ElasticCtx)
+	esapi.IndicesCreateRequest{ Index: "blacklist" }.Do(s.ElasticCtx, s.Elastic)
 
 	for name, url := range blacklistMap {
 		blacklist := elasticsearch.DocumentBlacklist{

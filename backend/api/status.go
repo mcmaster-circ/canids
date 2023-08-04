@@ -29,8 +29,7 @@ type status struct {
 func statusHandler(s *state.State, w http.ResponseWriter, r *http.Request) {
 	// ping elasticsearch
 	elasticPing := true
-	esURI := fmt.Sprintf("http://%s:%s", s.Config.ElasticHost, s.Config.ElasticPort)
-	_, _, err := s.Elastic.Ping(esURI).Do(s.ElasticCtx)
+	_, err := s.Elastic.Ping().Do(s.ElasticCtx)
 	if err != nil {
 		// failed to ping elasticsearch
 		elasticPing = false

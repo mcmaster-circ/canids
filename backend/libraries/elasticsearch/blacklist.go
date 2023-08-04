@@ -8,8 +8,9 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/refresh"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
-	"github.com/olivere/elastic"
 )
 
 const (
@@ -27,8 +28,11 @@ type DocumentBlacklist struct {
 // the newly created document ID or an error.
 func (d *DocumentBlacklist) Index(s *state.State) (string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
-	result, err := client.Index().Index(indexBlacklist).BodyJson(d).Refresh("true").Do(ctx)
-	return result.Id, err
+	result, err := client.Index(indexBlacklist).Document(d).Refresh(refresh.True).Do(ctx)
+	if err != nil {
+		return "", err
+	}
+	return result.Id_, nil
 }
 
 // Update will attempt to update the document in the "blacklist" with the provided
@@ -36,12 +40,13 @@ func (d *DocumentBlacklist) Index(s *state.State) (string, error) {
 // be performed.
 func (d *DocumentBlacklist) Update(s *state.State, esDocID string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	_, err := client.Update().Index(indexBlacklist).Id(esDocID).
+
+	_, err := client.Update(indexBlacklist, esDocID).
 		Doc(map[string]interface{}{
 			"uuid": d.UUID,
 			"name": d.Name,
 			"url":  d.URL,
-		}).DetectNoop(true).Refresh("true").Do(ctx)
+		}).DetectNoop(true).Refresh(refresh.True).Do(ctx)
 	return err
 }
 
@@ -53,26 +58,31 @@ func QueryBlacklistByUUID(s *state.State, uuid string) (DocumentBlacklist, strin
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for blacklist with provided uuid
-	termQuery := elastic.NewTermQuery("uuid.keyword", uuid)
-	result, err := client.Search().Index(indexBlacklist).Query(termQuery).Size(1000).Do(ctx)
+	result, err := client.Search().Index(indexBlacklist).Query(&types.Query{
+		Term: map[string]types.TermQuery{
+			"uuid.keyword": {Value: uuid},
+		},
+	}).Size(1000).Do(ctx)
+
 	if err != nil {
 		return d, "", err
 	}
 
+
 	// ensure blacklist was returned
-	if result.Hits.TotalHits.Value == 0 {
+	if result.Hits.Total.Value == 0 {
 		return d, "", errors.New("blacklist: no document with uuid found")
 	}
 
 	// select + parse blacklist into DocumentBlacklist
 	blacklist := result.Hits.Hits[0]
-	err = json.Unmarshal(blacklist.Source, &d)
+	err = json.Unmarshal(blacklist.Source_, &d)
 	if err != nil {
 		return d, "", err
 	}
 
 	// successful query
-	return d, blacklist.Id, nil
+	return d, blacklist.Id_, nil
 }
 
 // AllBlacklists will attempt to query the "blacklist" index and return all blacklists in the
@@ -82,15 +92,17 @@ func AllBlacklists(s *state.State) ([]DocumentBlacklist, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for all documents
-	allQuery := elastic.NewMatchAllQuery()
-	results, err := client.Search().Index(indexBlacklist).Query(allQuery).Size(1000).Do(ctx)
+	results, err := client.Search().Index(indexBlacklist).Query(&types.Query{
+		MatchAll: &types.MatchAllQuery{},
+	}).Size(1000).Do(ctx)
+
 	if err != nil {
 		return nil, err
 	}
 	// parse blacklists into DocumentBlacklist, append to out
 	for _, blacklist := range results.Hits.Hits {
 		var d DocumentBlacklist
-		err := json.Unmarshal(blacklist.Source, &d)
+		err := json.Unmarshal(blacklist.Source_, &d)
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +116,12 @@ func AllBlacklists(s *state.State) ([]DocumentBlacklist, error) {
 // completed.
 func DeleteBlacklistByUUID(s *state.State, uuid string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	termQuery := elastic.NewTermQuery("uuid.keyword", uuid)
-	_, err := client.DeleteByQuery(indexBlacklist).Query(termQuery).Refresh("true").Size(1000).Do(ctx)
+
+	_, err := client.DeleteByQuery(indexBlacklist).Query(&types.Query{
+		Term: map[string]types.TermQuery{
+			"uuid.keyword": {Value: uuid},
+		},
+	}).Refresh(true).Do(ctx)
+
 	return err
 }

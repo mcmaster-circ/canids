@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.6.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
     container_name: elasticsearch
     env_file:
       - config/config.env
@@ -28,7 +28,7 @@ services:
       - elasticsearch:/usr/share/elasticsearch/data
 
   kibana:
-    image: docker.elastic.co/kibana/kibana-oss:7.6.0
+    image: docker.elastic.co/kibana/kibana:8.9.0
     container_name: kibana
     depends_on:
       - elasticsearch
@@ -65,7 +65,6 @@ services:
     env_file:
       - config/config.env
       - config/secret.env
-      - config/cert-dev.env
     expose:
       - 6060 # internal HTTP port
       - 50000 # grpc

@@ -4,11 +4,10 @@ go 1.17
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/elastic/go-elasticsearch/v8 v8.9.0
 	github.com/gorilla/mux v1.7.4
 	github.com/joho/godotenv v1.3.0
 	github.com/mcmaster-circ/canids-v2/protocol v0.0.0-00010101000000-000000000000
-	github.com/olivere/elastic v6.2.27+incompatible
-	github.com/olivere/elastic/v7 v7.0.11
 	github.com/oschwald/geoip2-golang v1.4.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sendgrid/sendgrid-go v3.5.0+incompatible
@@ -21,6 +20,7 @@ require (
 )
 
 require (
+	github.com/elastic/elastic-transport-go/v8 v8.0.0-20230329154755-1a3c63de0db6 // indirect
 	github.com/golang/protobuf v1.5.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.0 // indirect

@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
-	"github.com/olivere/elastic"
 )
 
 const (
@@ -56,8 +56,11 @@ type DocumentView struct {
 // the newly created document ID or an error.
 func (d *DocumentView) Index(s *state.State) (string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
-	result, err := client.Index().Index(indexView).BodyJson(d).Do(ctx)
-	return result.Id, err
+	result, err := client.Index(indexView).Document(d).Do(ctx)
+	if err != nil {
+		return "", err
+	}
+	return result.Id_, nil
 }
 
 // Update will attempt to update the document in the "view" with the provided
@@ -65,7 +68,7 @@ func (d *DocumentView) Index(s *state.State) (string, error) {
 // be performed.
 func (d *DocumentView) Update(s *state.State, esDocID string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	_, err := client.Update().Index(indexView).Id(esDocID).
+	_, err := client.Update(indexView, esDocID).
 		Doc(map[string]interface{}{
 			"uuid":       d.UUID,
 			"name":       d.Name,
@@ -85,23 +88,26 @@ func QueryViewByUUID(s *state.State, uuid string) (DocumentView, string, error) 
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for view with provided uuid
-	termQuery := elastic.NewTermQuery("uuid.keyword", uuid)
-	result, err := client.Search().Index(indexView).Query(termQuery).Size(1000).Do(ctx)
+	result, err := client.Search().Index(indexView).Query(&types.Query{
+		Term: map[string]types.TermQuery{
+			"uuid.keyword": {Value: uuid},
+		},
+	}).Size(1000).Do(ctx)
 	if err != nil {
 		return d, "", err
 	}
 	// ensure view was returned
-	if result.Hits.TotalHits.Value == 0 {
+	if result.Hits.Total.Value == 0 {
 		return d, "", errors.New("view: no document with uuid found")
 	}
 	// select + parse view into DocumentView
 	view := result.Hits.Hits[0]
-	err = json.Unmarshal(view.Source, &d)
+	err = json.Unmarshal(view.Source_, &d)
 	if err != nil {
 		return d, "", err
 	}
 	// successful query
-	return d, view.Id, nil
+	return d, view.Id_, nil
 }
 
 // DeleteViewByUUID will attempt to delete a document in the "view" index with
@@ -109,8 +115,11 @@ func QueryViewByUUID(s *state.State, uuid string) (DocumentView, string, error) 
 // completed.
 func DeleteViewByUUID(s *state.State, uuid string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	termQuery := elastic.NewTermQuery("uuid.keyword", uuid)
-	_, err := client.DeleteByQuery(indexView).Query(termQuery).Size(1000).Do(ctx)
+	_, err := client.DeleteByQuery(indexView).Query(&types.Query{
+		Term: map[string]types.TermQuery{
+			"uuid.keyword": {Value: uuid},
+		},
+	}).Do(ctx)
 	return err
 }
 
@@ -121,15 +130,16 @@ func AllView(s *state.State) ([]DocumentView, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for all documents
-	allQuery := elastic.NewMatchAllQuery()
-	results, err := client.Search().Index(indexView).Query(allQuery).Size(1000).Do(ctx)
+	results, err := client.Search().Index(indexView).Query(&types.Query{
+		MatchAll: &types.MatchAllQuery{},
+	}).Size(1000).Do(ctx)
 	if err != nil {
 		return nil, err
 	}
 	// parse views into DocumentView, append to out
 	for _, view := range results.Hits.Hits {
 		var d DocumentView
-		err := json.Unmarshal(view.Source, &d)
+		err := json.Unmarshal(view.Source_, &d)
 		if err != nil {
 			return nil, err
 		}
