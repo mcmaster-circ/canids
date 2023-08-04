@@ -49,7 +49,7 @@ func (s *IngestServer) ingest(frame *Frame) {
 				"file_name": frame.FileName,
 				"asset_id":  frame.AssetID,
 				"index":     dataIndex,
-			}).Errorf("failed to index payload: %s", err)
+			}).Errorf("failed to index payload `%s`: %s", string(updated), err)
 		}
 	}
 }
