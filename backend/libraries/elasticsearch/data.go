@@ -543,5 +543,6 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 		counts = append(counts, bucket.DocCount)
 	}
 
+	
 	return keys, counts, nil
 }
