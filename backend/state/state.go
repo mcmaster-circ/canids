@@ -176,6 +176,7 @@ func (s *State) elasticsearch() error {
 		Addresses: []string{esURI},
 		Transport: httpTransport,
 		Logger:    &elastictransport.TextLogger{Output: os.Stdout},
+		EnableDebugLogger: true,
 	})
 	if err != nil {
 		return err
