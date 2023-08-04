@@ -304,7 +304,7 @@ func QueryDataInRangeAggregated(s *state.State, indexPrefix string, xField strin
 	// yfield for each bucket
 
 	ts := "timestamp"
-	duration, _ := time.ParseDuration(fmt.Sprintf("%ds", interval))
+	duration := fmt.Sprintf("%ds", interval)
 	aggregation := types.DateHistogramAggregation{
 		Field:         &ts,
 		FixedInterval: duration,
