@@ -523,6 +523,8 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 	keys := []string{}
 	counts := []int64{}
 
+	s.Log.Infof("Aggregations: %#v", queryResult.Aggregations)
+
 	termsAgg, found := queryResult.Aggregations["count"].(types.RangeAggregate)
 	if !found {
 		// no count terms aggregation found, this probably mean the asset doesnt have any indices yet
@@ -542,6 +544,8 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 		keys = append(keys, key)
 		counts = append(counts, bucket.DocCount)
 	}
+
+	s.Log.Infof("Outputs %#v, %#v", keys, counts)
 
 	
 	return keys, counts, nil
