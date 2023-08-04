@@ -261,7 +261,13 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 		},
 	}
 	queryResult, err := client.Search().Index(strings.Join(indices, ",")).
-		Query(query).Sort("timestamp", false).Size(size).From(from).Do(ctx)
+		Query(query).Sort(types.SortOptions{
+			SortOptions: map[string]types.FieldSort{
+				"timestamp": {
+					Order: &sortorder.Desc,
+				},
+			},
+		}).Size(size).From(from).Do(ctx)
 	if err != nil {
 		return []Alarm{}, 0, err
 	}
@@ -296,9 +302,6 @@ func QueryDataInRangeAggregated(s *state.State, indexPrefix string, xField strin
 
 	// aggregate time buckets given by interval (in seconds), average xfield and
 	// yfield for each bucket
-	// aggregation := elastic.NewDateHistogramAggregation().Field("timestamp").Interval(fmt.Sprintf("%ds", interval)).
-	// 	SubAggregation("aggX", elastic.NewAvgAggregation().Field(xField)).
-	// 	SubAggregation("aggY", elastic.NewAvgAggregation().Field(yField))
 
 	ts := "timestamp"
 	duration, _ := time.ParseDuration(fmt.Sprintf("%ds", interval))
@@ -389,7 +392,13 @@ func QueryDataInRange(s *state.State, indexPrefix string, fields []string, start
 				},
 			},
 		}).
-		Sort("timestamp", false).Size(size).From(from).Do(ctx)
+		Sort(types.SortOptions{
+			SortOptions: map[string]types.FieldSort{
+				"timestamp": {
+					Order: &sortorder.Desc,
+				},
+			},
+		}).Size(size).From(from).Do(ctx)
 	if err != nil {
 		return [][]interface{}{}, 0, err
 	}
@@ -464,7 +473,7 @@ func CountDataInRange(s *state.State, indexPrefix, field string, start time.Time
 	keys := []string{}
 	counts := []int64{}
 
-	termsAgg, found := queryResult.Aggregations["count"].(types.StringTermsAggregate)
+	termsAgg, found := queryResult.Aggregations["count"].(*types.StringTermsAggregate)
 	if !found {
 		// no count terms aggregation found, this probably mean the asset doesnt have any indices yet
 		return []string{}, []int64{}, nil
@@ -472,7 +481,6 @@ func CountDataInRange(s *state.State, indexPrefix, field string, start time.Time
 
 	// unmarshal elasticsearch hits
 	for _, bucket := range termsAgg.Buckets.([]types.StringTermsBucket) {
-		s.Log.Infof("Bucket %+v", bucket)
 		key := fmt.Sprintf("%v", bucket.Key)
 		keys = append(keys, key)
 		counts = append(counts, bucket.DocCount)
@@ -530,8 +538,6 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 
 	keys := []string{}
 	counts := []int64{}
-
-	s.Log.Infof("Aggregations: %#v", queryResult.Aggregations)
 
 	termsAgg, found := queryResult.Aggregations["count"].(*types.RangeAggregate)
 	if !found {
