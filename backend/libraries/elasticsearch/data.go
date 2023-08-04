@@ -232,7 +232,7 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 	origSources := types.Query{
 		Terms: &types.TermsQuery{
 			TermsQuery: map[string]types.TermsQueryField{
-				"id_orig_h_pos": alarmSources,
+				"id_orig_h_pos": sources,
 			},
 		},
 	}
@@ -240,7 +240,7 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 	respSources := types.Query{
 		Terms: &types.TermsQuery{
 			TermsQuery: map[string]types.TermsQueryField{
-				"id_resp_h_pos": alarmSources,
+				"id_resp_h_pos": sources,
 			},
 		},
 	}
