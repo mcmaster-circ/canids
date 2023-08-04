@@ -274,9 +274,12 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 
 	alarms := make([]Alarm, 0, len(queryResult.Hits.Hits))
 
+	s.Log.Infof("Got %d hits", queryResult.Hits.Total.Value)
+
 	// loop through each alarm and unmarshal it into an Alarm struct
 	for _, hit := range queryResult.Hits.Hits {
 		var alarm Alarm
+		s.Log.Infof("Hit source %#v", hit.Source_)
 		err = json.Unmarshal(hit.Source_, &alarm)
 		if err != nil {
 			return alarms, 0, err
