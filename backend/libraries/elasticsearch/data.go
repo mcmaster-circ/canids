@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
@@ -67,8 +68,6 @@ func GetAllDataMapping(s *state.State) ([]IndexDataField, error) {
 		return nil, err
 	}
 
-	s.Log.Infof("Indices: %#v", indexes)
-
 	// generate list of prefixes
 	prefixes := make(map[string]bool)
 	for _, index := range indexes {
@@ -86,8 +85,6 @@ func GetAllDataMapping(s *state.State) ([]IndexDataField, error) {
 			prefixes[prefix] = true
 		}
 	}
-
-	s.Log.Infof("Prefixes %#v", prefixes)
 
 	// iterate over all prefixes
 	for index := range prefixes {
@@ -133,7 +130,13 @@ func GetDataMapping(s *state.State, indexPrefix string) ([]DataField, error) {
 		Query(&types.Query{
 			MatchAll: &types.MatchAllQuery{},
 		}).
-		Sort("timestamp", false).Size(1).Do(ctx)
+		Sort(types.SortOptions{ // sort timestamp descending
+			SortOptions: map[string]types.FieldSort{
+				"timestamp": {
+					Order: &sortorder.Desc,
+				},
+			},
+		}).Size(1).Do(ctx)
 	if err != nil {
 		return []DataField{}, err
 	}
