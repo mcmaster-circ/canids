@@ -525,7 +525,7 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 
 	s.Log.Infof("Aggregations: %#v", queryResult.Aggregations)
 
-	termsAgg, found := queryResult.Aggregations["count"].(types.RangeAggregate)
+	termsAgg, found := queryResult.Aggregations["count"].(*types.RangeAggregate)
 	if !found {
 		// no count terms aggregation found, this probably mean the asset doesnt have any indices yet
 		return []string{}, []int64{}, nil
@@ -533,7 +533,7 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 
 	timeFormat := "02 Jan 2006"
 	// unmarshal elasticsearch hits
-	for i, bucket := range termsAgg.Buckets.([]types.RangeBucket) {
+	for i, bucket := range termsAgg.Buckets.([]*types.RangeBucket) {
 		// Create a condensed key name for ease of viewing
 		startRange := start.AddDate(0, 0, i*daysPerBar)
 		endRange := start.AddDate(0, 0, (i+1)*daysPerBar)
