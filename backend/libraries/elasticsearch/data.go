@@ -126,7 +126,7 @@ func GetDataMapping(s *state.State, indexPrefix string) ([]DataField, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// Get latest doc
-	latestDoc, err := client.Search().Index(indexPrefix+"*").
+	latestDoc, err := client.Search().Index(indexPrefix + "*").
 		Query(&types.Query{
 			MatchAll: &types.MatchAllQuery{},
 		}).
@@ -159,13 +159,11 @@ func GetDataMapping(s *state.State, indexPrefix string) ([]DataField, error) {
 	// put the field names into an array
 	fields := []DataField{}
 	for propertyName, property := range properties {
-		propertyType, hasType := (property.(map[string]interface{}))["type"].(string)
-		if hasType {
-			fields = append(fields, DataField{
-				Name: propertyName,
-				Type: propertyType,
-			})
-		}
+		propertyType := property.(*types.TextProperty).Type
+		fields = append(fields, DataField{
+			Name: propertyName,
+			Type: propertyType,
+		})
 	}
 	return fields, nil
 }
