@@ -29,4 +29,8 @@ func RegisterRoutes(s *state.State, a *jwtauth.Config, r *mux.Router) {
 	r.HandleFunc("/registerUser", func(w http.ResponseWriter, r *http.Request) {
 		registerUserHandler(s, a, w, r)
 	})
+
+	r.HandleFunc("/setup", func(w http.ResponseWriter, r *http.Request) {
+		setupUserHandler(s, a, w, r)
+	})
 }
