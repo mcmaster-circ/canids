@@ -327,7 +327,7 @@ func QueryDataInRangeAggregated(s *state.State, indexPrefix string, xField strin
 	}
 
 	// get time histogram aggregation
-	aggT, foundAggT := queryResult.Aggregations["aggT"].(types.DateHistogramAggregate)
+	aggT, foundAggT := queryResult.Aggregations["aggT"].(*types.DateHistogramAggregate)
 	if !foundAggT {
 		// no aggT date histogram found, this probably mean the asset doesnt
 		// have any indices yet
@@ -341,8 +341,8 @@ func QueryDataInRangeAggregated(s *state.State, indexPrefix string, xField strin
 	// process buckets from time aggregation
 	for _, bucket := range aggT.Buckets.([]types.DateHistogramBucket) {
 		// get x & y avg aggregations
-		aggX, foundAggX := bucket.Aggregations["aggX"].(types.AvgAggregate)
-		aggY, foundAggY := bucket.Aggregations["aggY"].(types.AvgAggregate)
+		aggX, foundAggX := bucket.Aggregations["aggX"].(*types.AvgAggregate)
+		aggY, foundAggY := bucket.Aggregations["aggY"].(*types.AvgAggregate)
 
 		if foundAggX && foundAggY {
 			// either get the averaged value or the date string from the bucket
@@ -545,8 +545,5 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 		counts = append(counts, bucket.DocCount)
 	}
 
-	s.Log.Infof("Outputs %#v, %#v", keys, counts)
-
-	
 	return keys, counts, nil
 }
