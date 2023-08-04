@@ -16,7 +16,6 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/joho/godotenv"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ipsetmgr"
-	"github.com/elastic/elastic-transport-go/v8/elastictransport"
 	"github.com/oschwald/geoip2-golang"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -173,7 +172,6 @@ func (s *State) elasticsearch() error {
 	// connect to ElasticsearcH
 	esURI := fmt.Sprintf("http://%s:%s", s.Config.ElasticHost, s.Config.ElasticPort)
 	client, err := elasticsearch.NewTypedClient(elasticsearch.Config{
-		Logger: &elastictransport.ColorLogger{Output: os.Stdout, EnableRequestBody: true, EnableResponseBody: true},
 		Addresses: []string{esURI},
 		Transport: httpTransport,
 	})
