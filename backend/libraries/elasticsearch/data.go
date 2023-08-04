@@ -159,7 +159,10 @@ func GetDataMapping(s *state.State, indexPrefix string) ([]DataField, error) {
 	// put the field names into an array
 	fields := []DataField{}
 	for propertyName, property := range properties {
-		propertyType := property.(*types.TextProperty).Type
+		blob, _ := json.Marshal(property)
+		var m map[string]interface{}
+		_ = json.Unmarshal(blob, &m) // this is patently insane but they give me no better way to do it
+		propertyType := m["type"].(string)
 		fields = append(fields, DataField{
 			Name: propertyName,
 			Type: propertyType,
