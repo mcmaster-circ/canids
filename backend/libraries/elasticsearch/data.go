@@ -67,6 +67,8 @@ func GetAllDataMapping(s *state.State) ([]IndexDataField, error) {
 		return nil, err
 	}
 
+	s.Log.Infof("Indices: %#v", indexes)
+
 	// generate list of prefixes
 	prefixes := make(map[string]bool)
 	for _, index := range indexes {
@@ -84,6 +86,8 @@ func GetAllDataMapping(s *state.State) ([]IndexDataField, error) {
 			prefixes[prefix] = true
 		}
 	}
+
+	s.Log.Infof("Prefixes %#v", prefixes)
 
 	// iterate over all prefixes
 	for index := range prefixes {
