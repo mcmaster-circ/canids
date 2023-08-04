@@ -96,6 +96,8 @@ func dataHandler(ctx context.Context, s *state.State, a *auth.State, w http.Resp
 		return
 	}
 
+	s.Log.Infof("GetAlarms request %#v", request)
+
 	// get data for the specified fields in the specified time range, sorted by timestamp
 	data, availableRows, err := elasticsearch.GetAlarms(s, request.Index, request.Source, start, end, request.MaxSize, request.From)
 	if err != nil {
