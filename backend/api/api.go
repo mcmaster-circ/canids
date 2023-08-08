@@ -6,13 +6,15 @@ package api
 
 import (
 	"context"
+	"embed"
+	"fmt"
+	"mime"
 	"net/http"
 	_ "net/http/pprof" // performance profiling
-	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/mcmaster-circ/canids-v2/backend/api/services/grpcservice"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
@@ -20,6 +22,9 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	log "github.com/sirupsen/logrus"
 )
+
+//go:embed all:frontend
+var frontendContent embed.FS
 
 // Start accepts the global state and the authentication state. It will register
 // all routes and start the HTTP server. If the server fails to start an error
@@ -68,24 +73,50 @@ func Start(s *state.State, a *jwtauth.Config, p *auth.State) error {
 	router.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		statusHandler(s, w, r)
 	})
+
+	// subFilesystem, _ := fs.Sub(frontendContent, "frontend/out")
+	// router.PathPrefix("/").Handler(http.FileServer(http.FS(subFilesystem)))
+
 	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		notFoundHandler(s, w, r)
+		path := r.URL.Path
+		fileExtension := ".html"
+
+		// load index.html for paths ending in '/'
+		if path[len(path)-1] == '/' {
+			path = path + "index.html"
+		}
+
+		// add .html to paths that have no file extension
+		if !strings.Contains(path, ".") {
+			path = path + ".html"
+		}
+
+		contents, err := frontendContent.ReadFile(fmt.Sprintf("frontend/out%s", path))
+		if err != nil {
+			log.Printf("No file found at %s: %v", r.URL.Path, err)
+			notFoundHandler(s, w, r)
+			return
+		}
+
+		w.Header().Add("Content-Type", mime.TypeByExtension(fileExtension))
+		w.Header().Add("Content-Length", fmt.Sprintf("%d", len(contents)))
+		w.Write(contents)
 	})
 
 	// register all routes
 	registerRoutes(s, a, p, router, secureRouter)
 
 	// provision gRPC server
-	go func() {
-		ctx := context.Background()
-		s.Log.Info("[grpc] server now listening on :50000")
-		err := grpcservice.Provision(ctx, s)
-		if err != nil {
-			s.Log.Errorf("failed to provision gRPC service: %s", err)
-			os.Exit(1)
-			return
-		}
-	}()
+	// go func() {
+	// 	ctx := context.Background()
+	// 	s.Log.Info("[grpc] server now listening on :50000")
+	// 	err := grpcservice.Provision(ctx, s)
+	// 	if err != nil {
+	// 		s.Log.Errorf("failed to provision gRPC service: %s", err)
+	// 		os.Exit(1)
+	// 		return
+	// 	}
+	// }()
 
 	server := &http.Server{
 		Addr:         ":6060",

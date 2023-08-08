@@ -82,18 +82,20 @@ func Provision(gitHash string) (*State, error) {
 		return &s, err
 	}
 
-	// generate Elasticsearch in State
-	s.Log.Info("[state] initializing elasticsearch in state")
-	err = s.elasticsearch()
-	if err != nil {
-		return &s, err
-	}
+	/*
+		// generate Elasticsearch in State
+		s.Log.Info("[state] initializing elasticsearch in state")
+		err = s.elasticsearch()
+		if err != nil {
+			return &s, err
+		}
 
-	// generate AuthReady in State
-	if err := checkAuthReady(&s); err != nil {
-		s.Log.Error("[state] failed to check if Elasticsearch 'auth' index exists")
-		return &s, err
-	}
+		// generate AuthReady in State
+		if err := checkAuthReady(&s); err != nil {
+			s.Log.Error("[state] failed to check if Elasticsearch 'auth' index exists")
+			return &s, err
+		}
+	*/
 
 	// generate SendGrid in State
 	if s.Config.SendGridToken != "" {
