@@ -22,6 +22,7 @@ require (
 
 require (
 	github.com/golang/protobuf v1.5.1 // indirect
+	github.com/klauspost/compress v1.10.3 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.0 // indirect
 	github.com/oschwald/maxminddb-golang v1.6.0 // indirect
@@ -30,9 +31,10 @@ require (
 	github.com/tdewolff/parse v2.3.4+incompatible // indirect
 	github.com/tdewolff/test v1.0.6 // indirect
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
-	golang.org/x/sys v0.0.0-20191224085550-c709ea063b76 // indirect
+	golang.org/x/sys v0.0.0-20200116001909-b77594299b42 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
+	nhooyr.io/websocket v1.8.7 // indirect
 )
 
 replace github.com/mcmaster-circ/canids-v2/protocol => ../protocol

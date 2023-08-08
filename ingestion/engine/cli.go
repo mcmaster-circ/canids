@@ -150,7 +150,7 @@ func cmd(c *cli.Context) error {
 
 	for {
 		// initialize connection to gRPC and start
-		err = Connect(config, db, valHostname)
+		err = ConnectWebsocketServer(config, db, valHostname)
 		if config.Debug {
 			log.Println("[CanIDS DEBUG]", err)
 		}

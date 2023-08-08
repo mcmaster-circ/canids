@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/mcmaster-circ/canids-v2/backend/api/services/grpcservice"
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/websocket"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/uuid"
@@ -77,8 +77,8 @@ func Start(s *state.State, a *auth.State) error {
 	// provision gRPC server
 	go func() {
 		ctx := context.Background()
-		s.Log.Info("[grpc] server now listening on :50000")
-		err := grpcservice.Provision(ctx, s)
+		s.Log.Info("[websocket] server now listening on :50000")
+		err := websocket.Provision(ctx)
 		if err != nil {
 			s.Log.Errorf("failed to provision gRPC service: %s", err)
 			os.Exit(1)
