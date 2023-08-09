@@ -24,7 +24,7 @@ export default () => {
     async (data: RegisterProps) => {
       await registerRequest(data)
     },
-    [registerRequest, push]
+    [registerRequest]
   )
 
   useEffect(() => {

@@ -74,7 +74,7 @@ func resetHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *h
 		return
 	}
 
-	// Chack that passwords are not empty
+	// Check that passwords are not empty
 	if request.Password == "" || request.PasswordConfirm == "" {
 		l.Info("[reset] not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)

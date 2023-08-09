@@ -42,7 +42,7 @@ func main() {
 		s.Log.Fatal(err)
 	}
 
-	//Create default user
+	// create default user
 	auth.DefaultUserSetup(s, a)
 
 	p := auth.ProvisionAuthPage(s)
