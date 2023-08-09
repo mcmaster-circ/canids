@@ -54,64 +54,64 @@ services:
         soft: 65536
         hard: 65536
 
-  canids-v2-backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    image: mcmaster-circ/canids-v2-backend
-    container_name: canids-v2-backend
-    depends_on:
-      - elasticsearch
-    env_file:
-      - config/config.env
-      - config/secret.env
-    expose:
-      - 6060 # internal HTTP port
-      - 50000 # grpc
-    ports:
-      - 6060:6060
-      - 50000:50000
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "1m"
-        max-file: "5"
-    networks:
-      - vlan
-    restart: unless-stopped
-    security_opt:
-      - apparmor:unconfined
-    volumes:
-      - ./cert:/cert
+  # canids-v2-backend:
+  #   build:
+  #     context: .
+  #     dockerfile: backend/Dockerfile
+  #   image: mcmaster-circ/canids-v2-backend
+  #   container_name: canids-v2-backend
+  #   depends_on:
+  #     - elasticsearch
+  #   env_file:
+  #     - config/config.env
+  #     - config/secret.env
+  #   expose:
+  #     - 6060 # internal HTTP port
+  #     - 50000 # grpc
+  #   ports:
+  #     - 6060:6060
+  #     - 50000:50000
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "1m"
+  #       max-file: "5"
+  #   networks:
+  #     - vlan
+  #   restart: unless-stopped
+  #   security_opt:
+  #     - apparmor:unconfined
+  #   volumes:
+  #     - ./cert:/cert
 
-  canids-v2-frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    image: mcmaster-circ/canids-v2-frontend
-    container_name: canids-v2-frontend
-    depends_on:
-      - canids-v2-backend
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "1m"
-        max-file: "5"
-    networks:
-      - vlan
-    ports:
-      - 80:80 # external HTTP port
-      - 443:443 # external HTTPS port
-    restart: unless-stopped
-    security_opt:
-      - apparmor:unconfined
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
-    volumes:
-      - ./Caddyfile:/etc/Caddyfile
-      - caddy:/root/.caddy
+  # canids-v2-frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: frontend/Dockerfile
+  #   image: mcmaster-circ/canids-v2-frontend
+  #   container_name: canids-v2-frontend
+  #   depends_on:
+  #     - canids-v2-backend
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "1m"
+  #       max-file: "5"
+  #   networks:
+  #     - vlan
+  #   ports:
+  #     - 80:80 # external HTTP port
+  #     - 443:443 # external HTTPS port
+  #   restart: unless-stopped
+  #   security_opt:
+  #     - apparmor:unconfined
+  #   ulimits:
+  #     nofile:
+  #       soft: 65536
+  #       hard: 65536
+  #   volumes:
+  #     - ./Caddyfile:/etc/Caddyfile
+  #     - caddy:/root/.caddy
 
   swagger:
     image: swaggerapi/swagger-ui

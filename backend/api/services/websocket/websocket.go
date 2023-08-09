@@ -28,8 +28,26 @@ type WebSocketServer struct {
 	queue chan *Frame
 }
 
+var allowedKeys = []string{"hello", "there"}
+
 // HandleWebSocket handles incoming WebSocket connections.
 func (s *WebSocketServer) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+
+	log.Println("Recieved connection request")
+	token := r.Header.Get("Authorization")
+	allowed := false
+	for _, item := range allowedKeys {
+		if token == item {
+			allowed = true
+			log.Println("Valid auth token")
+		}
+	}
+
+	if !allowed {
+		log.Println("Invalid auth token")
+		return
+	}
+
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		log.Println("Error upgrading to WebSocket:", err)
@@ -55,9 +73,9 @@ func Provision(ctx context.Context) error {
 		queue: make(chan *Frame, bufferSize),
 	}
 
-	http.HandleFunc("/websocket", server.HandleWebSocket)
+	http.HandleFunc("/", server.HandleWebSocket)
 
-	serverAddr := fmt.Sprintf(":%d", WSPort)
+	serverAddr := fmt.Sprintf("localhost:%d", WSPort)
 	serverHandler := http.Server{
 		Addr:    serverAddr,
 		Handler: nil,

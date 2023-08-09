@@ -3,21 +3,30 @@ package engine
 import (
 	"context"
 	"log"
+	"net/http"
 	"time"
 
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 )
 
+const key = "hello"
+
 func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	// Attempt connection to server
-	url := "ws://" + endpoint + "websocket"
+	url := "http://host.docker.internal:50000/websocket"
 	log.Printf("[CanIDS] attempting connection to %s\n", url)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	conn, _, err := websocket.Dial(ctx, url, nil)
+	dialOptions := websocket.DialOptions{
+		HTTPHeader: http.Header{},
+	}
+
+	dialOptions.HTTPHeader.Set("Authorization", key)
+
+	conn, _, err := websocket.Dial(ctx, url, &dialOptions)
 	if err != nil {
 		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
 		return err
@@ -25,7 +34,7 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	// Defer closure for client exit
 	defer conn.Close(websocket.StatusInternalError, "WebSocket closed")
 
-	log.Println("[CanIDS] successful connection, performing self-registration")
+	log.Println("[CanIDS] successful connection")
 
 	// Start period poll of file system for new files and stale files
 	go fsPollingLoop(s, db)
