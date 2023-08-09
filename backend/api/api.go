@@ -13,6 +13,7 @@ import (
 	_ "net/http/pprof" // performance profiling
 	"strings"
 	"time"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
@@ -74,13 +75,9 @@ func Start(s *state.State, a *jwtauth.Config, p *auth.State) error {
 		statusHandler(s, w, r)
 	})
 
-	// subFilesystem, _ := fs.Sub(frontendContent, "frontend/out")
-	// router.PathPrefix("/").Handler(http.FileServer(http.FS(subFilesystem)))
-
 	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		fileExtension := ".html"
-
+		
 		// load index.html for paths ending in '/'
 		if path[len(path)-1] == '/' {
 			path = path + "index.html"
@@ -98,7 +95,7 @@ func Start(s *state.State, a *jwtauth.Config, p *auth.State) error {
 			return
 		}
 
-		w.Header().Add("Content-Type", mime.TypeByExtension(fileExtension))
+		w.Header().Add("Content-Type", mime.TypeByExtension(filepath.Ext(path)))
 		w.Header().Add("Content-Length", fmt.Sprintf("%d", len(contents)))
 		w.Write(contents)
 	})
@@ -107,16 +104,16 @@ func Start(s *state.State, a *jwtauth.Config, p *auth.State) error {
 	registerRoutes(s, a, p, router, secureRouter)
 
 	// provision gRPC server
-	// go func() {
-	// 	ctx := context.Background()
-	// 	s.Log.Info("[grpc] server now listening on :50000")
-	// 	err := grpcservice.Provision(ctx, s)
-	// 	if err != nil {
-	// 		s.Log.Errorf("failed to provision gRPC service: %s", err)
-	// 		os.Exit(1)
-	// 		return
-	// 	}
-	// }()
+	go func() {
+		ctx := context.Background()
+		s.Log.Info("[grpc] server now listening on :50000")
+		err := grpcservice.Provision(ctx, s)
+		if err != nil {
+			s.Log.Errorf("failed to provision gRPC service: %s", err)
+			os.Exit(1)
+			return
+		}
+	}()
 
 	server := &http.Server{
 		Addr:         ":6060",
