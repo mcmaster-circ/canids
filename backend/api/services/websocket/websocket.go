@@ -1,12 +1,14 @@
 package websocket
 
 import (
-	"context"
-	"fmt"
+	// "context"
+	// "fmt"
 	"log"
 	"net/http"
-	"time"
 
+	// "time"
+
+	"github.com/gorilla/mux"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 )
@@ -28,10 +30,14 @@ type WebSocketServer struct {
 	queue chan *Frame
 }
 
+var server = &WebSocketServer{
+	queue: make(chan *Frame, bufferSize),
+}
+
 var allowedKeys = []string{"hello", "there"}
 
 // HandleWebSocket handles incoming WebSocket connections.
-func (s *WebSocketServer) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Recieved connection request")
 	token := r.Header.Get("Authorization")
@@ -62,38 +68,39 @@ func (s *WebSocketServer) HandleWebSocket(w http.ResponseWriter, r *http.Request
 			log.Println("Error reading WebSocket message:", err)
 			break
 		}
-		s.queue <- &frame
+		server.queue <- &frame
 	}
+}
+
+func Register(r *mux.Router) {
+	r.HandleFunc("/", HandleWebSocket)
 }
 
 // Provision registers and starts the WebSocket service. Returns error if the
 // WebSocket server fails to start.
-func Provision(ctx context.Context) error {
-	server := &WebSocketServer{
-		queue: make(chan *Frame, bufferSize),
-	}
+// func Provision(ctx context.Context) error {
 
-	http.HandleFunc("/", server.HandleWebSocket)
+// 	http.HandleFunc("/", server.HandleWebSocket)
 
-	serverAddr := fmt.Sprintf("localhost:%d", WSPort)
-	serverHandler := http.Server{
-		Addr:    serverAddr,
-		Handler: nil,
-	}
+// 	serverAddr := fmt.Sprintf("localhost:%d", WSPort)
+// 	serverHandler := http.Server{
+// 		Addr:    serverAddr,
+// 		Handler: nil,
+// 	}
 
-	go func() {
-		if err := serverHandler.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start WebSocket server: %v", err)
-		}
-	}()
+// 	go func() {
+// 		if err := serverHandler.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+// 			log.Fatalf("Failed to start WebSocket server: %v", err)
+// 		}
+// 	}()
 
-	<-ctx.Done()
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+// 	<-ctx.Done()
+// 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+// 	defer cancel()
 
-	if err := serverHandler.Shutdown(shutdownCtx); err != nil {
-		log.Printf("Failed to gracefully shut down WebSocket server: %v", err)
-	}
+// 	if err := serverHandler.Shutdown(shutdownCtx); err != nil {
+// 		log.Printf("Failed to gracefully shut down WebSocket server: %v", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }

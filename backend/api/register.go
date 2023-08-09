@@ -14,6 +14,7 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/fields"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/user"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/view"
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/websocket"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
@@ -51,4 +52,6 @@ func registerRoutes(s *state.State, a *auth.State, unsecure *mux.Router, secure 
 
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())
+
+	websocket.Register(unsecure.PathPrefix("/websocket/").Subrouter())
 }

@@ -8,11 +8,12 @@ import (
 	"context"
 	"net/http"
 	_ "net/http/pprof" // performance profiling
-	"os"
+
+	// "os"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/mcmaster-circ/canids-v2/backend/api/services/websocket"
+	// "github.com/mcmaster-circ/canids-v2/backend/api/services/websocket"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/uuid"
@@ -74,17 +75,17 @@ func Start(s *state.State, a *auth.State) error {
 	// register all routes
 	registerRoutes(s, a, router, secureRouter)
 
-	// provision gRPC server
-	go func() {
-		ctx := context.Background()
-		s.Log.Info("[websocket] server now listening on :50000")
-		err := websocket.Provision(ctx)
-		if err != nil {
-			s.Log.Errorf("failed to provision gRPC service: %s", err)
-			os.Exit(1)
-			return
-		}
-	}()
+	// // provision gRPC server
+	// go func() {
+	// 	ctx := context.Background()
+	// 	s.Log.Info("[websocket] server now listening on :6060")
+	// 	err := websocket.Provision(ctx)
+	// 	if err != nil {
+	// 		s.Log.Errorf("failed to provision websocket service: %s", err)
+	// 		os.Exit(1)
+	// 		return
+	// 	}
+	// }()
 
 	server := &http.Server{
 		Addr:         ":6060",

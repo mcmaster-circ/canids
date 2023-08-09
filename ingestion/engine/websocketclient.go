@@ -14,7 +14,7 @@ const key = "hello"
 
 func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	// Attempt connection to server
-	url := "http://host.docker.internal:50000/websocket"
+	url := "http://host.docker.internal:6060/websocket/"
 	log.Printf("[CanIDS] attempting connection to %s\n", url)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
