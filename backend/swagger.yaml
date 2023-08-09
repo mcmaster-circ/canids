@@ -1671,3 +1671,59 @@ paths:
         '500':
           description: |
             Internal server error
+
+  /api/elasticsearchMax/get:
+    get:
+      summary: Get max elastic search index size.
+      description: |
+        Gets the max size that elastic search indecies can grow to before a new one is created.
+      responses:
+        '200':
+          description: |
+            Max index successfully returned.
+          content:
+            application/json:
+              example: {
+                "maxIndexSize": 1000000
+              }
+
+  /api/elasticsearchMax/set:
+    post:
+      summary: Set max elastic search index size.
+      description: |
+        Sets the max size that elastic search indecies can grow to before a new one is created.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                maxIndexSize:
+                  type: int
+                  description: |
+                    Desired max size
+              required:
+                - maxIndexSize
+            example: {
+             "maxIndexSize": 1000000
+            }
+      responses:
+        '200':
+          description: |
+            Max index successfully updated.
+          content:
+            application/json:
+              example: {
+                "success" : true,
+                "message": "Successfully updated max index size"
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
@@ -42,8 +41,16 @@ var server = &WebSocketServer{
 var allowedKeys = []string{"hello", "there"}
 var maxIndexSize = 1000000
 
+func SetMaxElasticIndexSize(newSize int) {
+	maxIndexSize = newSize
+}
+
+func GetMaxElasticIndexSize() int {
+	return maxIndexSize
+}
+
 // HandleWebSocket handles incoming WebSocket connections.
-func handleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
+func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Recieved connection request")
 	token := r.Header.Get("Authorization")
@@ -83,12 +90,6 @@ func handleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		log.Printf("[ws] Frame recieved\n")
 		server.queue <- &frame
 	}
-}
-
-func Register(s *state.State, r *mux.Router) {
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		handleWebSocket(s, w, r)
-	})
 }
 
 func handleQueue(s *state.State) {

@@ -53,5 +53,7 @@ func registerRoutes(s *state.State, a *auth.State, unsecure *mux.Router, secure 
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())
 
-	websocket.Register(s, unsecure.PathPrefix("/websocket/").Subrouter())
+	websocket.RegisterWS(s, unsecure.PathPrefix("/websocket/").Subrouter())
+
+	websocket.RegisterUpdateFunctions(s, secure.PathPrefix("/elasticsearchMax/").Subrouter())
 }
