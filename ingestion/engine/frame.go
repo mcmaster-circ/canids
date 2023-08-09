@@ -19,7 +19,7 @@ type Header struct {
 }
 
 type UploadRequest struct {
-	Header   *Header  `json:"header,omitempty"`    // Header
+	Header   Header   `json:"header,omitempty"`    // Header
 	AssetId  string   `json:"asset_id,omitempty"`  // Asset identifier
 	FileName string   `json:"file_name,omitempty"` // Name of file payload is from
 	Payload  [][]byte `json:"payload,omitempty"`   // Multiple JSON byte lines from Zeek
@@ -118,7 +118,7 @@ func generateFrame(s *state, f *file, baseName string) (*UploadRequest, error) {
 
 	// generate actual frame
 	frame := &UploadRequest{
-		Header: &Header{
+		Header: Header{
 			MsgUuid:      uuid.New().String(),
 			MsgTimestamp: time.Now(),
 			ErrorMsg:     "",

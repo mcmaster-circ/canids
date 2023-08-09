@@ -75,18 +75,6 @@ func Start(s *state.State, a *auth.State) error {
 	// register all routes
 	registerRoutes(s, a, router, secureRouter)
 
-	// // provision gRPC server
-	// go func() {
-	// 	ctx := context.Background()
-	// 	s.Log.Info("[websocket] server now listening on :6060")
-	// 	err := websocket.Provision(ctx)
-	// 	if err != nil {
-	// 		s.Log.Errorf("failed to provision websocket service: %s", err)
-	// 		os.Exit(1)
-	// 		return
-	// 	}
-	// }()
-
 	server := &http.Server{
 		Addr:         ":6060",
 		Handler:      router,

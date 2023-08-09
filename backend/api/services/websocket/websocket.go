@@ -1,14 +1,12 @@
 package websocket
 
 import (
-	// "context"
-	// "fmt"
 	"log"
 	"net/http"
-
-	// "time"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/mcmaster-circ/canids-v2/backend/state"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 )
@@ -18,11 +16,18 @@ const (
 	bufferSize = 4096
 )
 
-// Frame is a file upload with payloads (lines).
+type Header struct {
+	MsgUuid      string    `json:"msg_uuid,omitempty"`      // Unique message identifier
+	MsgTimestamp time.Time `json:"msg_timestamp,omitempty"` // Message timestamp
+	ErrorMsg     string    `json:"error_msg,omitempty"`     // Request error message(s) (use with NACK)
+	Session      string    `json:"session,omitempty"`       // Connection session UUID
+}
+
 type Frame struct {
-	AssetID  string   // AssetID is asset identifier
-	FileName string   // FileName is upload file name
-	Payload  [][]byte // Payload is a list of JSON byte payloads (lines)
+	Header   Header   `json:"header,omitempty"`    // Header
+	AssetID  string   `json:"asset_id,omitempty"`  // Asset identifier
+	FileName string   `json:"file_name,omitempty"` // Name of file payload is from
+	Payload  [][]byte `json:"payload,omitempty"`   // Multiple JSON byte lines from Zeek
 }
 
 // IngestServer handles WebSocket connections.
@@ -35,9 +40,10 @@ var server = &WebSocketServer{
 }
 
 var allowedKeys = []string{"hello", "there"}
+var maxIndexSize = 1000000
 
 // HandleWebSocket handles incoming WebSocket connections.
-func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+func handleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Recieved connection request")
 	token := r.Header.Get("Authorization")
@@ -61,6 +67,8 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close(websocket.StatusInternalError, "WebSocket closed")
 
+	go handleQueue(s)
+
 	for {
 		var frame Frame
 		err := wsjson.Read(r.Context(), conn, &frame)
@@ -68,40 +76,25 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			log.Println("Error reading WebSocket message:", err)
 			break
 		}
-		log.Printf("[ws] Frame recieved: %+v\n", frame)
+		err = Validate(&frame.Header)
+		if err != nil {
+			log.Println("Invalid header: ", err)
+		}
+		log.Printf("[ws] Frame recieved\n")
 		server.queue <- &frame
 	}
 }
 
-func Register(r *mux.Router) {
-	r.HandleFunc("/", HandleWebSocket)
+func Register(s *state.State, r *mux.Router) {
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		handleWebSocket(s, w, r)
+	})
 }
 
-// Provision registers and starts the WebSocket service. Returns error if the
-// WebSocket server fails to start.
-// func Provision(ctx context.Context) error {
+func handleQueue(s *state.State) {
+	for {
+		chunk := <-server.queue
 
-// 	http.HandleFunc("/", server.HandleWebSocket)
-
-// 	serverAddr := fmt.Sprintf("localhost:%d", WSPort)
-// 	serverHandler := http.Server{
-// 		Addr:    serverAddr,
-// 		Handler: nil,
-// 	}
-
-// 	go func() {
-// 		if err := serverHandler.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-// 			log.Fatalf("Failed to start WebSocket server: %v", err)
-// 		}
-// 	}()
-
-// 	<-ctx.Done()
-// 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-// 	defer cancel()
-
-// 	if err := serverHandler.Shutdown(shutdownCtx); err != nil {
-// 		log.Printf("Failed to gracefully shut down WebSocket server: %v", err)
-// 	}
-
-// 	return nil
-// }
+		ingest(chunk, s, maxIndexSize)
+	}
+}
