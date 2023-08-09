@@ -54,8 +54,8 @@ export async function getStaticProps() {
 export async function getStaticPaths() {
   return {
     paths: [
-      { params: { dashboardRoute: dashboardRoutesParams.ALARMS }},
-      { params: { dashboardRoute: dashboardRoutesParams.ADMIN }},
+      { params: { dashboardRoute: dashboardRoutesParams.ALARMS } },
+      { params: { dashboardRoute: dashboardRoutesParams.ADMIN } },
     ],
     fallback: false,
   }

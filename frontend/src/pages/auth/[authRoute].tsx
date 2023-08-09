@@ -61,10 +61,10 @@ export async function getStaticProps() {
 export async function getStaticPaths() {
   return {
     paths: [
-      { params: { authRoute: authRouteParams.REGISTER }},
-      { params: { authRoute: authRouteParams.FORGOT_PASSWORD }},
-      { params: { authRoute: authRouteParams.RESET_PASSWORD }},
-      { params: { authRoute: authRouteParams.LOGIN }},    
+      { params: { authRoute: authRouteParams.REGISTER } },
+      { params: { authRoute: authRouteParams.FORGOT_PASSWORD } },
+      { params: { authRoute: authRouteParams.RESET_PASSWORD } },
+      { params: { authRoute: authRouteParams.LOGIN } },
     ],
     fallback: false,
   }

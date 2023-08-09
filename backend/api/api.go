@@ -11,11 +11,13 @@ import (
 	"mime"
 	"net/http"
 	_ "net/http/pprof" // performance profiling
+	"os"
 	"strings"
 	"time"
 	"path/filepath"
 
 	"github.com/gorilla/mux"
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/grpcservice"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
