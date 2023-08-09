@@ -2,7 +2,7 @@ import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 
 export const defaultValues = {
-  email: '',
+  uuid: '',
 }
 
 export const loginFormConfig = [
@@ -21,7 +21,7 @@ export const resolver = yupResolver(
   yup
     .object()
     .shape({
-      email: yup
+      uuid: yup
         .string()
         .required('Email is  a required field')
         .email('Please enter a valid email'),
