@@ -25,7 +25,6 @@ var (
 	// state for comments)
 	valAssetID       = ""
 	valHostname      = ""
-	valInsecure      = false
 	valDebug         = false
 	valRetryDelay    = 5 * time.Second
 	valFileMode      = zero
@@ -53,11 +52,6 @@ func Run() error {
 			Name:        "hostname, host",
 			Usage:       "hostname and port of CanIDS gRPC backend",
 			Destination: &valHostname,
-		},
-		cli.BoolFlag{
-			Name:        "insecure",
-			Usage:       "do not enforce secure connection with CanIDS backend",
-			Destination: &valInsecure,
 		},
 		cli.BoolFlag{
 			Name:        "verbose",
@@ -130,7 +124,6 @@ func cmd(c *cli.Context) error {
 		NetworkMutex:  &sync.Mutex{},
 		DatabaseMutex: &sync.Mutex{},
 		Session:       "",
-		Insecure:      valInsecure,
 		PollingAbort:  make(chan struct{}),
 		ScannerAbort:  make(chan struct{}),
 		Debug:         valDebug,
@@ -160,7 +153,6 @@ func cmd(c *cli.Context) error {
 			NetworkMutex:  &sync.Mutex{},
 			DatabaseMutex: &sync.Mutex{},
 			Session:       "",
-			Insecure:      valInsecure,
 			PollingAbort:  make(chan struct{}),
 			ScannerAbort:  make(chan struct{}),
 			Debug:         valDebug,

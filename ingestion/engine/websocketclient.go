@@ -58,8 +58,30 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 			return err
 		}
 
-		if s.Debug {
-			log.Printf("[CanIDS] successful frame sent: %+v\n", frame)
+		log.Printf("[CanIDS] successful frame sent: %+v\n", frame)
+		// if s.Debug {
+		// 	log.Printf("[CanIDS] successful frame sent: %+v\n", frame)
+		// }
+	}
+}
+
+// fsPollingLoop will perodically synchronize the local database for new/removed
+// files in the specified directory.
+func fsPollingLoop(s *state, db *database) {
+	for {
+		select {
+		case <-s.PollingAbort:
+			// received exit signal from event loop, terminate self
+			return
+		default:
+			// sync the scanner to retreive latest database
+			new, err := syncScanner(s)
+			if err != nil {
+				log.Println("[CanIDS] local database error:", err)
+			}
+			db.Next = new.Next
+			db.Files = new.Files
+			time.Sleep(s.FileScan)
 		}
 	}
 }

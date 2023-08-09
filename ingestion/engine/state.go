@@ -73,7 +73,6 @@ type state struct {
 	NetworkMutex  *sync.Mutex   // NetworkMutex is for preventing concurrent writing to websocket
 	DatabaseMutex *sync.Mutex   // DatabaseMutex is for preventing concurrent operations to local database
 	Session       string        // Session is the session identifier
-	Insecure      bool          // Insecure indicates insecure gRPC connection
 	PollingAbort  chan struct{} // PollingAbort is for signalling the file system polling loop to terminate
 	ScannerAbort  chan struct{} // ScannerAbort is for signalling the recursive scanner to terminate
 	Debug         bool          // Debug indicates if debugging logging should be used

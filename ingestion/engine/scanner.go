@@ -8,8 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/mcmaster-circ/canids-v2/protocol"
 )
 
 // syncScanner prepares the scanner for consuming log entries. It will
@@ -62,7 +60,7 @@ func syncScanner(s *state) (*database, error) {
 
 // scannerGetFrame will generate the next frame to be sent over Websockets. If a
 // frame cannot be generated, the scanner will sleep until a frame is available.
-func scannerGetFrame(s *state, db *database) (*protocol.UploadRequest, error) {
+func scannerGetFrame(s *state, db *database) (*UploadRequest, error) {
 	s.DatabaseMutex.Lock()
 
 	select {

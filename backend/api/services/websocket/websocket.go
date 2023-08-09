@@ -68,6 +68,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			log.Println("Error reading WebSocket message:", err)
 			break
 		}
+		log.Printf("[ws] Frame recieved: %+v\n", frame)
 		server.queue <- &frame
 	}
 }
