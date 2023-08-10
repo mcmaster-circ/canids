@@ -17,7 +17,7 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	url := "http://host.docker.internal:6060/websocket/"
 	log.Printf("[CanIDS] attempting connection to %s\n", url)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	dialOptions := websocket.DialOptions{
@@ -48,17 +48,20 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 			continue
 		}
 
+		ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
 		// Send frame to WebSocket server
-		err = wsjson.Write(context.Background(), conn, frame)
+		err = wsjson.Write(ctx, conn, frame)
 		if err != nil {
 			log.Println("[CanIDS] failed to send frame over WebSocket", err)
 			log.Println("[CanIDS] retrying in", s.RetryDelay)
 			close(s.PollingAbort)
 			conn.Close(websocket.StatusInternalError, "WebSocket closed")
+			cancel()
 			return err
 		}
+		cancel()
 
-		log.Printf("[CanIDS] successful frame sent: %+v\n", frame)
+		log.Printf("[CanIDS] successful frame sent")
 		// if s.Debug {
 		// 	log.Printf("[CanIDS] successful frame sent: %+v\n", frame)
 		// }
