@@ -42,7 +42,7 @@ func setMaxHandler(s *state.State, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	l.Info("[grpc] set max index size: ", request.MaxIndexSize)
+	l.Info("[ws] set max index size: ", request.MaxIndexSize)
 	SetMaxElasticIndexSize(request.MaxIndexSize)
 	w.WriteHeader(http.StatusOK)
 	out := auth.GeneralResponse{
@@ -59,7 +59,7 @@ func getMaxHandler(s *state.State, w http.ResponseWriter, r *http.Request) {
 	var response maxSizeHolder
 	response.MaxIndexSize = GetMaxElasticIndexSize()
 
-	l.Info("[grpc] max index size: ", response.MaxIndexSize)
+	l.Info("[ws] max index size: ", response.MaxIndexSize)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)

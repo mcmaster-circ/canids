@@ -74,8 +74,6 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close(websocket.StatusInternalError, "WebSocket closed")
 
-	go handleQueue(s)
-
 	for {
 		var frame Frame
 		err := wsjson.Read(r.Context(), conn, &frame)
@@ -92,7 +90,7 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleQueue(s *state.State) {
+func HandleQueue(s *state.State) {
 	for {
 		chunk := <-server.queue
 

@@ -14,6 +14,7 @@ import (
 
 	"github.com/gorilla/mux"
 	// "github.com/mcmaster-circ/canids-v2/backend/api/services/websocket"
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/websocket"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/uuid"
@@ -74,6 +75,9 @@ func Start(s *state.State, a *auth.State) error {
 
 	// register all routes
 	registerRoutes(s, a, router, secureRouter)
+
+	// Start frame queue handler
+	go websocket.HandleQueue(s)
 
 	server := &http.Server{
 		Addr:         ":6060",

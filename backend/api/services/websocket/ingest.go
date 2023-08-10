@@ -21,7 +21,6 @@ var maxSize = 1000000
 // ingest is triggered from the gRPC service. It indexes a chunk into the database.
 func ingest(frame *Frame, state *state.State, maxIndexSize int) {
 	maxSize = maxIndexSize
-	state.Log.Printf("Max index size: %d\n", maxSize)
 	client, ctx := state.Elastic, state.ElasticCtx
 	for _, entry := range frame.Payload {
 
