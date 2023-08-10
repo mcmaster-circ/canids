@@ -4,13 +4,13 @@ import (
 	"context"
 	"log"
 	"net/http"
+
+	// "net/http"
 	"time"
 
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 )
-
-const key = "hello"
 
 type RecievedMsg struct {
 	MsgType int `json:"type,omitempty"` // Message type: 0 - Misc, 1 - Ping
@@ -26,27 +26,46 @@ var queues = &MessageChannels{
 
 func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	// Attempt connection to server
-	url := "http://host.docker.internal:6060/websocket/"
-	log.Printf("[CanIDS] attempting connection to %s\n", url)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
+	log.Printf("[CanIDS] attempting connection to %s\n", endpoint)
 
 	dialOptions := websocket.DialOptions{
 		HTTPHeader: http.Header{},
 	}
 
-	dialOptions.HTTPHeader.Set("Authorization", key)
+	dialOptions.HTTPHeader.Set("Authorization", s.EncryptionKey)
 
-	conn, _, err := websocket.Dial(ctx, url, &dialOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+	conn, _, err := websocket.Dial(ctx, endpoint, &dialOptions)
 	if err != nil {
 		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
 		return err
 	}
 	// Defer closure for client exit
 	defer conn.Close(websocket.StatusInternalError, "WebSocket closed")
+	cancel()
 
-	log.Println("[CanIDS] successful connection")
+	// // START OF OLD CONNECTION PROCESS
+	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	// defer cancel()
+
+	// dialOptions := websocket.DialOptions{
+	// 	HTTPHeader: http.Header{},
+	// }
+
+	// dialOptions.HTTPHeader.Set("Authorization", key)
+
+	// conn, _, err := websocket.Dial(ctx, endpoint, &dialOptions)
+	// if err != nil {
+	// 	log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
+	// 	return err
+	// }
+	// // Defer closure for client exit
+	// defer conn.Close(websocket.StatusInternalError, "WebSocket closed")
+
+	// log.Println("[CanIDS] successful connection")
+
+	// END OF OLD CONNECTION PROCESS
 
 	// Start period poll of file system for new files and stale files
 	go fsPollingLoop(s, db)

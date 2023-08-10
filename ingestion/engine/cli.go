@@ -30,6 +30,7 @@ var (
 	valFileMode      = zero
 	valFileScan      = 5 * time.Second
 	valFileChunkSize = 10
+	valEncryptionkey = ""
 )
 
 // Run executes the CLI app to begin ingestion. It will return an error upon
@@ -70,6 +71,11 @@ func Run() error {
 			Value:       valFileScan,
 			Destination: &valFileScan,
 		},
+		cli.StringFlag{
+			Name:        "key",
+			Usage:       "set the encryption key",
+			Destination: &valEncryptionkey,
+		},
 	}
 	app.Commands = []cli.Command{
 		{
@@ -104,6 +110,9 @@ func cmd(c *cli.Context) error {
 	if valAssetID == "" || strings.ContainsAny(valAssetID, "`~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/? ") {
 		return errAssetID
 	}
+	if valEncryptionkey == "" {
+		return errNoEncrptionKey
+	}
 	// ensure directory/file exists
 	valFilePath := args[0]
 	info, err := os.Stat(valFilePath)
@@ -132,6 +141,7 @@ func cmd(c *cli.Context) error {
 		FileMode:      valFileMode,
 		FileScan:      valFileScan,
 		FileChunkSize: valFileChunkSize,
+		EncryptionKey: valEncryptionkey,
 	}
 
 	// sync the scanner to retreive+update (or create) latest database
@@ -161,6 +171,7 @@ func cmd(c *cli.Context) error {
 			FileMode:      valFileMode,
 			FileScan:      valFileScan,
 			FileChunkSize: valFileChunkSize,
+			EncryptionKey: valEncryptionkey,
 		}
 		time.Sleep(config.RetryDelay)
 	}

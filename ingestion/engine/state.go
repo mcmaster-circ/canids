@@ -54,6 +54,7 @@ var (
 	errAssetID        = errors.New("[CanIDS] error: must provide unique asset (network tap) identifier, only alphanumeric characters, no spaces")
 	errBadJSON        = errors.New("[CanIDS] error: malformed JSON")
 	errBadTSV         = errors.New("[CanIDS] error: malformed TSV")
+	errNoEncrptionKey = errors.New("[CanIDS] error: must provide encryption key")
 )
 
 // fileMode indicates if a single regular file or directory was passed
@@ -81,4 +82,5 @@ type state struct {
 	FileMode      fileMode      // FileMode indicates type of file mode being used (regular file or directory provided)
 	FileScan      time.Duration // FileScan indicates how often to scan for new files on the file system
 	FileChunkSize int           // FileChunkSize indicates number of lines to send in frame
+	EncryptionKey string        // Encryption key is the key used to encrypt the connection to the backend
 }

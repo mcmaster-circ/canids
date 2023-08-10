@@ -55,5 +55,5 @@ func registerRoutes(s *state.State, a *auth.State, unsecure *mux.Router, secure 
 
 	websocket.RegisterWS(s, unsecure.PathPrefix("/websocket/").Subrouter())
 
-	websocket.RegisterUpdateFunctions(s, secure.PathPrefix("/elasticsearchMax/").Subrouter())
+	websocket.RegisterUpdateFunctions(s, secure.PathPrefix("/ingestion/").Subrouter())
 }

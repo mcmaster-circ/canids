@@ -1672,7 +1672,7 @@ paths:
           description: |
             Internal server error
 
-  /api/elasticsearchMax/get:
+  /api/ingestion/getESMax:
     get:
       summary: Get max elastic search index size.
       description: |
@@ -1687,7 +1687,7 @@ paths:
                 "maxIndexSize": 1000000
               }
 
-  /api/elasticsearchMax/set:
+  /api/ingestion/getESMax:
     post:
       summary: Set max elastic search index size.
       description: |
