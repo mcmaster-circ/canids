@@ -242,7 +242,7 @@ func ingest(frame *Frame, state *state.State, maxIndexSize int) {
 		} else {
 			activeIndices[selectedIndex] = activeIndices[selectedIndex] + 1
 		}
-		state.Log.Printf("Indexing: %s\n", dataIndex)
+		// state.Log.Printf("Indexing: %s\n", dataIndex)
 	}
 }
 

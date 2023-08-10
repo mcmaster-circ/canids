@@ -12,6 +12,18 @@ import (
 
 const key = "hello"
 
+type RecievedMsg struct {
+	MsgType int `json:"type,omitempty"` // Message type: 0 - Misc, 1 - Ping
+}
+
+type MessageChannels struct {
+	pingQueue chan *RecievedMsg
+}
+
+var queues = &MessageChannels{
+	pingQueue: make(chan *RecievedMsg, 10000),
+}
+
 func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	// Attempt connection to server
 	url := "http://host.docker.internal:6060/websocket/"
@@ -39,13 +51,25 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	// Start period poll of file system for new files and stale files
 	go fsPollingLoop(s, db)
 
+	go wsReader(s, conn)
+
 	// Start file scanner
 	for {
-		// Get next frame, generate JSON payload
-		frame, err := scannerGetFrame(s, db)
-		if err != nil {
-			log.Println("[CanIDS] failed to generate frame", err)
-			continue
+
+		var frame *UploadRequest
+		select {
+		case <-queues.pingQueue:
+			log.Println("Item in ping queue")
+
+			frame = generatePongFrame(s)
+		default:
+			log.Println("No ping")
+			// Get next frame, generate JSON payload
+			frame, err = scannerGetFrame(s, db)
+			if err != nil {
+				log.Println("[CanIDS] failed to generate frame", err)
+				continue
+			}
 		}
 
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
@@ -61,10 +85,11 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 		}
 		cancel()
 
-		log.Printf("[CanIDS] successful frame sent")
+		//log.Printf("[CanIDS] successful frame sent")
 		// if s.Debug {
 		// 	log.Printf("[CanIDS] successful frame sent: %+v\n", frame)
 		// }
+
 	}
 }
 
@@ -85,6 +110,21 @@ func fsPollingLoop(s *state, db *database) {
 			db.Next = new.Next
 			db.Files = new.Files
 			time.Sleep(s.FileScan)
+		}
+	}
+}
+
+func wsReader(s *state, conn *websocket.Conn) {
+	for {
+		var msg RecievedMsg
+		err := wsjson.Read(context.Background(), conn, &msg)
+		if err != nil {
+			log.Println("Invalid message reived")
+			break
+		}
+
+		if msg.MsgType == 1 {
+			queues.pingQueue <- &msg
 		}
 	}
 }

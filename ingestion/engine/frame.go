@@ -16,6 +16,7 @@ type Header struct {
 	MsgTimestamp time.Time `json:"msg_timestamp,omitempty"` // Message timestamp
 	ErrorMsg     string    `json:"error_msg,omitempty"`     // Request error message(s) (use with NACK)
 	Session      string    `json:"session,omitempty"`       // Connection session UUID
+	MsgType      int       `json:"type,omitempty"`          // Message type: 0 - data, 1 - pong
 }
 
 type UploadRequest struct {
@@ -123,6 +124,7 @@ func generateFrame(s *state, f *file, baseName string) (*UploadRequest, error) {
 			MsgTimestamp: time.Now(),
 			ErrorMsg:     "",
 			Session:      s.Session,
+			MsgType:      0,
 		},
 		AssetId:  s.AssetID,
 		FileName: baseName,
@@ -130,4 +132,21 @@ func generateFrame(s *state, f *file, baseName string) (*UploadRequest, error) {
 	}
 
 	return frame, nil
+}
+
+func generatePongFrame(s *state) *UploadRequest {
+	chunks := [][]byte{}
+	frame := &UploadRequest{
+		Header: Header{
+			MsgUuid:      uuid.New().String(),
+			MsgTimestamp: time.Now(),
+			ErrorMsg:     "",
+			Session:      s.Session,
+			MsgType:      1,
+		},
+		AssetId:  s.AssetID,
+		FileName: "",
+		Payload:  chunks,
+	}
+	return frame
 }
