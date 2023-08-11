@@ -4,6 +4,7 @@
 package engine
 
 import (
+	"encoding/base64"
 	"log"
 	"os"
 	"strings"
@@ -111,8 +112,14 @@ func cmd(c *cli.Context) error {
 		return errAssetID
 	}
 	if valEncryptionkey == "" {
-		return errNoEncrptionKey
+		return errBadKey
 	}
+
+	_, err := base64.StdEncoding.DecodeString(valEncryptionkey)
+	if err != nil {
+		return errBadKey
+	}
+
 	// ensure directory/file exists
 	valFilePath := args[0]
 	info, err := os.Stat(valFilePath)

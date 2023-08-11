@@ -1,11 +1,18 @@
 package websocket
 
 import (
+	"bytes"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
+	"errors"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
@@ -31,8 +38,9 @@ type Frame struct {
 	Payload  [][]byte `json:"payload,omitempty"`   // Multiple JSON byte lines from Zeek
 }
 
-type SentMsg struct {
-	MsgType int `json:"type,omitempty"` // Message type: 0 - Misc, 1 - Ping
+type Message struct {
+	MsgType int    `json:"type,omitempty"` // Message type: 0 - Misc, 1 - Ping
+	Msg     string `json:"msg,omitempty"`
 }
 
 // IngestServer handles WebSocket connections.
@@ -44,7 +52,6 @@ var server = &WebSocketServer{
 	queue: make(chan *Frame, bufferSize),
 }
 
-var allowedKeys = []string{"hello", "there"}
 var maxIndexSize = 1000000
 
 func SetMaxElasticIndexSize(newSize int) {
@@ -59,26 +66,73 @@ func GetMaxElasticIndexSize() int {
 func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Recieved connection request")
-	token := r.Header.Get("Authorization")
-	allowed := false
-	for _, item := range allowedKeys {
-		if token == item {
-			allowed = true
-			log.Println("Valid auth token")
-		}
-	}
+	uuid := r.Header.Get("Authorization")
 
-	if !allowed {
-		log.Println("Invalid auth token")
+	ingestion, err := elasticsearch.QueryIngestionByUUID(s, uuid)
+	if err != nil {
+		log.Println("Unable to get specified ingestion from elasticsearch: ", err)
 		return
 	}
 
+	// Accept (temporarily) ws connection
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		log.Println("Error upgrading to WebSocket:", err)
 		return
 	}
 	defer conn.Close(websocket.StatusInternalError, "WebSocket closed")
+
+	// Generate random data for symmetrical encryption key check
+	randData := make([]byte, 32)
+	_, err = rand.Read(randData)
+	if err != nil {
+		log.Println("Failed to generate random data: ", err)
+		return
+	}
+
+	encodedData := base64.StdEncoding.EncodeToString(randData)
+
+	dataMessage := Message{
+		MsgType: 0,
+		Msg:     encodedData,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+	wsjson.Write(ctx, conn, dataMessage)
+	cancel()
+
+	// Get encrypted message
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+	var msg Message
+	err = wsjson.Read(ctx, conn, &msg)
+	if err != nil {
+		log.Println("Did not receive response: ", err)
+		cancel()
+		return
+	}
+	cancel()
+
+	decoded, err := base64.StdEncoding.DecodeString(msg.Msg)
+	if err != nil {
+		log.Println("Failed to decode message", err)
+	}
+
+	decodedKey, err := base64.StdEncoding.DecodeString(ingestion.Key)
+	if err != nil {
+		log.Println("Failed to decode key: ", err)
+	}
+
+	decrypted, err := decrypt(decoded, decodedKey)
+	if err != nil {
+		log.Println("Failed to decrypt received text: ", err)
+	}
+
+	if !bytes.Equal(randData, decrypted) {
+		log.Println("Data received does not equal original data")
+		return
+	}
+
+	log.Println("Successful connection with: ", ingestion.UUID)
 
 	var timeLastPong = time.Now()
 	var timeLastPing = time.Now()
@@ -87,7 +141,7 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 
 		if timeLastPing.Add(time.Second * 5).Before(time.Now()) {
 			timeLastPing = time.Now()
-			var pingMessage SentMsg
+			var pingMessage Message
 			pingMessage.MsgType = 1
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
 			err := wsjson.Write(ctx, conn, pingMessage)
@@ -97,7 +151,6 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 				conn.Close(websocket.StatusBadGateway, "Failed to send ping message")
 				break
 			}
-			log.Println("Successfully sent ping message")
 		}
 
 		var frame Frame
@@ -114,7 +167,6 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		}
 
 		if frame.Header.MsgType == 1 {
-			log.Printf("Pong recieved")
 			timeLastPong = time.Now()
 			continue
 		}
@@ -124,8 +176,6 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 			conn.Close(websocket.StatusBadGateway, "No pong received")
 			break
 		}
-
-		log.Printf("[ws] Frame recieved\n")
 		server.queue <- &frame
 	}
 }
@@ -136,4 +186,24 @@ func HandleQueue(s *state.State) {
 
 		ingest(chunk, s, maxIndexSize)
 	}
+}
+
+func decrypt(text []byte, key []byte) ([]byte, error) {
+	c, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(c)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(text) < nonceSize {
+		return nil, errors.New("ciphertext too short")
+	}
+
+	nonce, text := text[:nonceSize], text[nonceSize:]
+	return gcm.Open(nil, nonce, text, nil)
 }

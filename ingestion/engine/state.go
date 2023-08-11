@@ -54,7 +54,7 @@ var (
 	errAssetID        = errors.New("[CanIDS] error: must provide unique asset (network tap) identifier, only alphanumeric characters, no spaces")
 	errBadJSON        = errors.New("[CanIDS] error: malformed JSON")
 	errBadTSV         = errors.New("[CanIDS] error: malformed TSV")
-	errNoEncrptionKey = errors.New("[CanIDS] error: must provide encryption key")
+	errBadKey         = errors.New("[CanIDS] error: must provide valid encryption key")
 )
 
 // fileMode indicates if a single regular file or directory was passed

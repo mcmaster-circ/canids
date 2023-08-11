@@ -2,6 +2,11 @@ package engine
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
+	"io"
 	"log"
 	"net/http"
 
@@ -12,16 +17,17 @@ import (
 	"nhooyr.io/websocket/wsjson"
 )
 
-type RecievedMsg struct {
-	MsgType int `json:"type,omitempty"` // Message type: 0 - Misc, 1 - Ping
+type Message struct {
+	MsgType int    `json:"type,omitempty"` // Message type: 0 - Misc, 1 - Ping
+	Msg     string `json:"msg,omitempty"`
 }
 
 type MessageChannels struct {
-	pingQueue chan *RecievedMsg
+	pingQueue chan *Message
 }
 
 var queues = &MessageChannels{
-	pingQueue: make(chan *RecievedMsg, 10000),
+	pingQueue: make(chan *Message, 10000),
 }
 
 func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
@@ -33,7 +39,7 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 		HTTPHeader: http.Header{},
 	}
 
-	dialOptions.HTTPHeader.Set("Authorization", s.EncryptionKey)
+	dialOptions.HTTPHeader.Set("Authorization", s.AssetID)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
 	conn, _, err := websocket.Dial(ctx, endpoint, &dialOptions)
@@ -45,27 +51,43 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	defer conn.Close(websocket.StatusInternalError, "WebSocket closed")
 	cancel()
 
-	// // START OF OLD CONNECTION PROCESS
-	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	// defer cancel()
+	// Get random message for handshake
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+	var msg Message
+	err = wsjson.Read(ctx, conn, &msg)
+	if err != nil {
+		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
+		return err
+	}
+	cancel()
 
-	// dialOptions := websocket.DialOptions{
-	// 	HTTPHeader: http.Header{},
-	// }
+	text, err := base64.StdEncoding.DecodeString(msg.Msg)
+	if err != nil {
+		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
+		return err
+	}
 
-	// dialOptions.HTTPHeader.Set("Authorization", key)
+	key, err := base64.StdEncoding.DecodeString(s.EncryptionKey)
+	if err != nil {
+		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
+		return err
+	}
 
-	// conn, _, err := websocket.Dial(ctx, endpoint, &dialOptions)
-	// if err != nil {
-	// 	log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
-	// 	return err
-	// }
-	// // Defer closure for client exit
-	// defer conn.Close(websocket.StatusInternalError, "WebSocket closed")
+	encrypted, err := encrypt(text, key)
+	if err != nil {
+		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
+		return err
+	}
 
-	// log.Println("[CanIDS] successful connection")
+	encodedString := base64.StdEncoding.EncodeToString(encrypted)
 
-	// END OF OLD CONNECTION PROCESS
+	msg.Msg = encodedString
+	msg.MsgType = 0
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+	wsjson.Write(ctx, conn, msg)
+	cancel()
+
+	log.Println("Successful connection")
 
 	// Start period poll of file system for new files and stale files
 	go fsPollingLoop(s, db)
@@ -78,11 +100,8 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 		var frame *UploadRequest
 		select {
 		case <-queues.pingQueue:
-			log.Println("Item in ping queue")
-
 			frame = generatePongFrame(s)
 		default:
-			log.Println("No ping")
 			// Get next frame, generate JSON payload
 			frame, err = scannerGetFrame(s, db)
 			if err != nil {
@@ -135,7 +154,7 @@ func fsPollingLoop(s *state, db *database) {
 
 func wsReader(s *state, conn *websocket.Conn) {
 	for {
-		var msg RecievedMsg
+		var msg Message
 		err := wsjson.Read(context.Background(), conn, &msg)
 		if err != nil {
 			log.Println("Invalid message reived")
@@ -146,4 +165,25 @@ func wsReader(s *state, conn *websocket.Conn) {
 			queues.pingQueue <- &msg
 		}
 	}
+}
+
+func encrypt(text []byte, key []byte) ([]byte, error) {
+	c, err := aes.NewCipher(key)
+	if err != nil {
+		log.Println("Failed to generate cipher")
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(c)
+	if err != nil {
+		log.Println("Failed to generate gcm")
+		return nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+
+	return gcm.Seal(nonce, nonce, text, nil), nil
 }
