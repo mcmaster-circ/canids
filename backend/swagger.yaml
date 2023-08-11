@@ -1727,3 +1727,46 @@ paths:
                 "success": false,
                 "message": "Bad request format."
               }
+
+  /api/ingestion/create:
+    post:
+      summary: Create new ingestion client.
+      description: |
+        Pass the name (uuid) of new ingestion client. A crypto random encryption key will be generated and returned. The uuid-key pair will be indexed into elasticsearch.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    Name of new ingestion client
+              required:
+                - uuid
+            example: {
+             "uuid": "Ingestion1"
+            }
+      responses:
+        '200':
+          description: |
+            New ingestion client successfully indexed.
+          content:
+            application/json:
+              example: {
+                "key" : "38f3dfe8880b211d861ec679f91dd28b2c51e296ae6a20b65985277d202439c5"
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '500':
+          description: |
+            Internal server error
