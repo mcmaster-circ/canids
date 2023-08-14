@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await logoutRequest()
     Object.values(ac).forEach((f) => removeCookie(f, { path: '/' }))
     setLogedIn(false)
-  }, [logoutRequest, addNotification, removeCookie])
+  }, [logoutRequest, removeCookie])
 
   // Check if there is a currently active session
   // when the provider is mounted for the first time.

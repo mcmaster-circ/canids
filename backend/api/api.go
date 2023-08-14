@@ -11,6 +11,7 @@ import (
 	"mime"
 	"net/http"
 	_ "net/http/pprof" // performance profiling
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -76,12 +77,8 @@ func Start(s *state.State, a *jwtauth.Config, p *auth.State) error {
 		statusHandler(s, w, r)
 	})
 
-	// subFilesystem, _ := fs.Sub(frontendContent, "frontend/out")
-	// router.PathPrefix("/").Handler(http.FileServer(http.FS(subFilesystem)))
-
 	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		fileExtension := ".html"
 
 		// load index.html for paths ending in '/'
 		if path[len(path)-1] == '/' {
@@ -100,7 +97,7 @@ func Start(s *state.State, a *jwtauth.Config, p *auth.State) error {
 			return
 		}
 
-		w.Header().Add("Content-Type", mime.TypeByExtension(fileExtension))
+		w.Header().Add("Content-Type", mime.TypeByExtension(filepath.Ext(path)))
 		w.Header().Add("Content-Length", fmt.Sprintf("%d", len(contents)))
 		w.Write(contents)
 	})
