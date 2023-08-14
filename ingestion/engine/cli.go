@@ -32,6 +32,7 @@ var (
 	valFileScan      = 5 * time.Second
 	valFileChunkSize = 10
 	valEncryptionkey = ""
+	valEncrypt       = false
 )
 
 // Run executes the CLI app to begin ingestion. It will return an error upon
@@ -76,6 +77,11 @@ func Run() error {
 			Name:        "key",
 			Usage:       "set the encryption key",
 			Destination: &valEncryptionkey,
+		},
+		cli.BoolFlag{
+			Name:        "encrypt",
+			Usage:       "enable encrypted data transfer",
+			Destination: &valEncrypt,
 		},
 	}
 	app.Commands = []cli.Command{
@@ -149,6 +155,7 @@ func cmd(c *cli.Context) error {
 		FileScan:      valFileScan,
 		FileChunkSize: valFileChunkSize,
 		EncryptionKey: valEncryptionkey,
+		Encryption:    valEncrypt,
 	}
 
 	// sync the scanner to retreive+update (or create) latest database
@@ -179,6 +186,7 @@ func cmd(c *cli.Context) error {
 			FileScan:      valFileScan,
 			FileChunkSize: valFileChunkSize,
 			EncryptionKey: valEncryptionkey,
+			Encryption:    valEncrypt,
 		}
 		time.Sleep(config.RetryDelay)
 	}

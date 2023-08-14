@@ -61,24 +61,28 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	}
 	cancel()
 
+	// Decode message
 	text, err := base64.StdEncoding.DecodeString(msg.Msg)
 	if err != nil {
 		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
 		return err
 	}
 
+	// Decode encryption key
 	key, err := base64.StdEncoding.DecodeString(s.EncryptionKey)
 	if err != nil {
 		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
 		return err
 	}
 
-	encrypted, err := encrypt(text, key)
+	// Encrypt received message
+	encrypted, err := Encrypt(text, key)
 	if err != nil {
 		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
 		return err
 	}
 
+	// Encode and write message
 	encodedString := base64.StdEncoding.EncodeToString(encrypted)
 
 	msg.Msg = encodedString
@@ -86,6 +90,8 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
 	wsjson.Write(ctx, conn, msg)
 	cancel()
+
+	//Success message
 
 	log.Println("Successful connection")
 
@@ -103,11 +109,15 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 			frame = generatePongFrame(s)
 		default:
 			// Get next frame, generate JSON payload
-			frame, err = scannerGetFrame(s, db)
+			frame, err = scannerGetFrame(s, db, key)
 			if err != nil {
 				log.Println("[CanIDS] failed to generate frame", err)
 				continue
 			}
+		}
+
+		if s.Encryption {
+			frame.Header.Encrypted = true
 		}
 
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
@@ -167,7 +177,7 @@ func wsReader(s *state, conn *websocket.Conn) {
 	}
 }
 
-func encrypt(text []byte, key []byte) ([]byte, error) {
+func Encrypt(text []byte, key []byte) ([]byte, error) {
 	c, err := aes.NewCipher(key)
 	if err != nil {
 		log.Println("Failed to generate cipher")

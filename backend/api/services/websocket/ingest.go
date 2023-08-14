@@ -24,6 +24,17 @@ func ingest(frame *Frame, state *state.State, maxIndexSize int) {
 	client, ctx := state.Elastic, state.ElasticCtx
 	for _, entry := range frame.Payload {
 
+		// If encrypted data has been sent, decrypt it
+		if frame.Header.Encrypted {
+			var err error
+			entry, err = Decrypt(entry, frame.Key)
+
+			if err != nil {
+				state.Log.Println("Error decrypting data: ", err)
+				continue
+			}
+		}
+
 		updated, _, alarm := dynamicInjection(state, entry)
 
 		var selectedIndex string

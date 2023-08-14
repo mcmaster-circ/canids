@@ -83,4 +83,5 @@ type state struct {
 	FileScan      time.Duration // FileScan indicates how often to scan for new files on the file system
 	FileChunkSize int           // FileChunkSize indicates number of lines to send in frame
 	EncryptionKey string        // Encryption key is the key used to encrypt the connection to the backend
+	Encryption    bool          // Whether the payload data is encrypted before transmission
 }

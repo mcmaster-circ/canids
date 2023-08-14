@@ -32,7 +32,7 @@ type UploadRequest struct {
 // a payload entry. If the line is not valid, it will be ignored. It
 // also updates the provided file, updating how much if the file was read. It
 // will return complete frame or an error.
-func generateFrame(s *state, f *file, baseName string) (*UploadRequest, error) {
+func generateFrame(s *state, f *file, baseName string, key []byte) (*UploadRequest, error) {
 	// open file
 	fs, err := os.Open(f.Path)
 	if err != nil {
@@ -104,6 +104,13 @@ func generateFrame(s *state, f *file, baseName string) (*UploadRequest, error) {
 			payload, err := parseLine(line, h)
 			// no error parsing, append to chunks
 			if err == nil {
+				if s.Encryption {
+					payload, err = Encrypt(payload, key)
+					if err != nil {
+						log.Println("Error encrypting payload line: ", err)
+						continue
+					}
+				}
 				chunks = append(chunks, payload)
 			} else {
 				// print error message

@@ -29,6 +29,7 @@ type Header struct {
 	ErrorMsg     string    `json:"error_msg,omitempty"`     // Request error message(s) (use with NACK)
 	Session      string    `json:"session,omitempty"`       // Connection session UUID
 	MsgType      int       `json:"type,omitempty"`          // Message type: 0 - data, 1 - pong
+	Encrypted    bool      `json:"encrypted,omitempty"`     // Whether the payload is encrypted (true) or not (false)
 }
 
 type Frame struct {
@@ -36,6 +37,7 @@ type Frame struct {
 	AssetID  string   `json:"asset_id,omitempty"`  // Asset identifier
 	FileName string   `json:"file_name,omitempty"` // Name of file payload is from
 	Payload  [][]byte `json:"payload,omitempty"`   // Multiple JSON byte lines from Zeek
+	Key      []byte   // For storing associated key
 }
 
 type Message struct {
@@ -122,7 +124,7 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		log.Println("Failed to decode key: ", err)
 	}
 
-	decrypted, err := decrypt(decoded, decodedKey)
+	decrypted, err := Decrypt(decoded, decodedKey)
 	if err != nil {
 		log.Println("Failed to decrypt received text: ", err)
 	}
@@ -166,6 +168,10 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		if frame.Header.Encrypted {
+			frame.Key = decodedKey
+		}
+
 		if frame.Header.MsgType == 1 {
 			timeLastPong = time.Now()
 			continue
@@ -188,7 +194,7 @@ func HandleQueue(s *state.State) {
 	}
 }
 
-func decrypt(text []byte, key []byte) ([]byte, error) {
+func Decrypt(text []byte, key []byte) ([]byte, error) {
 	c, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err

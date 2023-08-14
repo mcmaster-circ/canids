@@ -60,7 +60,7 @@ func syncScanner(s *state) (*database, error) {
 
 // scannerGetFrame will generate the next frame to be sent over Websockets. If a
 // frame cannot be generated, the scanner will sleep until a frame is available.
-func scannerGetFrame(s *state, db *database) (*UploadRequest, error) {
+func scannerGetFrame(s *state, db *database, key []byte) (*UploadRequest, error) {
 	s.DatabaseMutex.Lock()
 
 	select {
@@ -78,7 +78,7 @@ func scannerGetFrame(s *state, db *database) (*UploadRequest, error) {
 		}
 		s.DatabaseMutex.Unlock()
 		time.Sleep(scannerSleep)
-		return scannerGetFrame(s, db)
+		return scannerGetFrame(s, db, key)
 	}
 
 	// check if there is at least one file that has been modified
@@ -99,7 +99,7 @@ func scannerGetFrame(s *state, db *database) (*UploadRequest, error) {
 			if err != nil {
 				return nil, errSavingDatabase
 			}
-			return scannerGetFrame(s, db)
+			return scannerGetFrame(s, db, key)
 		}
 		// check if file has gotten smaller (file rotation)
 		if info.Size() < file.Size {
@@ -114,7 +114,7 @@ func scannerGetFrame(s *state, db *database) (*UploadRequest, error) {
 			if err != nil {
 				return nil, errSavingDatabase
 			}
-			return scannerGetFrame(s, db)
+			return scannerGetFrame(s, db, key)
 		}
 		// file exists, see if file has been modified
 		if info.Size() != file.Size {
@@ -129,7 +129,7 @@ func scannerGetFrame(s *state, db *database) (*UploadRequest, error) {
 		}
 		s.DatabaseMutex.Unlock()
 		time.Sleep(scannerSleep)
-		return scannerGetFrame(s, db)
+		return scannerGetFrame(s, db, key)
 	}
 
 	// ensure local database is valid (sync)
@@ -143,7 +143,7 @@ func scannerGetFrame(s *state, db *database) (*UploadRequest, error) {
 		}
 		db.Next = 0 // start at zero for synchronization
 		db.Files = new.Files
-		return scannerGetFrame(s, db)
+		return scannerGetFrame(s, db, key)
 	}
 
 	// get current file info
@@ -167,7 +167,7 @@ func scannerGetFrame(s *state, db *database) (*UploadRequest, error) {
 		if err != nil {
 			return nil, errSavingDatabase
 		}
-		return scannerGetFrame(s, db)
+		return scannerGetFrame(s, db, key)
 	}
 
 	// if file size hasn't changed, nothing to do, get next frame
@@ -185,11 +185,11 @@ func scannerGetFrame(s *state, db *database) (*UploadRequest, error) {
 			return nil, errSavingDatabase
 		}
 		// get next frame
-		return scannerGetFrame(s, db)
+		return scannerGetFrame(s, db, key)
 	}
 
 	// generate frame (updated provided file)
-	frame, frameErr := generateFrame(s, &file, info.Name())
+	frame, frameErr := generateFrame(s, &file, info.Name(), key)
 
 	// sync modified file with database and commit
 	db.Files[db.Next] = file
