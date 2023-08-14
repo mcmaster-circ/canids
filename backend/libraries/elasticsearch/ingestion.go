@@ -44,3 +44,10 @@ func QueryIngestionByUUID(s *state.State, uuid string) (DocumentIngestion, error
 	// successful query
 	return d, nil
 }
+
+func DeleteIngestByUUID(s *state.State, uuid string) error {
+	client, ctx := s.Elastic, s.ElasticCtx
+	termQuery := elastic.NewTermQuery("uuid.keyword", uuid)
+	_, err := client.DeleteByQuery(indexIngestion).Query(termQuery).Refresh("true").Size(1000).Do(ctx)
+	return err
+}

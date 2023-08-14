@@ -1,8 +1,6 @@
 package websocket
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -12,20 +10,11 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
-type createIngestionRequest struct {
-	UUID string `json:"uuid"` // Name of the ingestion engine
+type deleteIngestionRequest struct {
+	UUID string `json:"uuid"`
 }
 
-type createIngestionResponse struct {
-	Key string `json:"key"` // Encryption key
-}
-
-type GeneralResponse struct {
-	Success bool   `json:"success"` // Success indicates if the request was successful
-	Message string `json:"message"` // Message describes the request response
-}
-
-func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
+func deleteIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 
 	var request createIngestionRequest
 	l := ctxlog.Log(r.Context())
@@ -59,49 +48,24 @@ func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate key
-
-	key := make([]byte, 32)
-
-	_, err = rand.Read(key)
+	err = elasticsearch.DeleteIngestByUUID(s, request.UUID)
 	if err != nil {
-		l.Error("Failed to generate key", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		out := GeneralResponse{
 			Success: false,
-			Message: "Please contact your system administrator.",
+			Message: "Unable to delete ingestion of given UUID",
 		}
 		json.NewEncoder(w).Encode(out)
-		return
 	}
 
-	encodedKey := base64.StdEncoding.EncodeToString(key)
+	//Success
 
-	document := elasticsearch.DocumentIngestion{
-		Key:  encodedKey,
-		UUID: request.UUID,
-	}
-
-	_, err = document.Index(s)
-	if err != nil {
-		l.Error("Failed to index ingestion", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Please contact your system administrator.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
-	}
-
-	// Success
-
-	resp := createIngestionResponse{
-		Key: encodedKey,
-	}
-
-	l.Info("Created ingestion in elasticsearch")
+	// Do something to close connection if deleted uuid is currently connected
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	out := GeneralResponse{
+		Success: true,
+		Message: "Successfully deleted given uuid from ingestion index",
+	}
+	json.NewEncoder(w).Encode(out)
 }

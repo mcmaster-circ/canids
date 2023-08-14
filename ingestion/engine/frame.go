@@ -17,6 +17,7 @@ type Header struct {
 	ErrorMsg     string    `json:"error_msg,omitempty"`     // Request error message(s) (use with NACK)
 	Session      string    `json:"session,omitempty"`       // Connection session UUID
 	MsgType      int       `json:"type,omitempty"`          // Message type: 0 - data, 1 - pong
+	Encrypted    bool      `json:"encrypted,omitempty"`     // Whether the payload is encrypted (true) or not (false)
 }
 
 type UploadRequest struct {
