@@ -4,6 +4,7 @@
 package engine
 
 import (
+	"encoding/base64"
 	"log"
 	"os"
 	"strings"
@@ -25,12 +26,13 @@ var (
 	// state for comments)
 	valAssetID       = ""
 	valHostname      = ""
-	valInsecure      = false
 	valDebug         = false
 	valRetryDelay    = 5 * time.Second
 	valFileMode      = zero
 	valFileScan      = 5 * time.Second
 	valFileChunkSize = 10
+	valEncryptionkey = ""
+	valEncrypt       = false
 )
 
 // Run executes the CLI app to begin ingestion. It will return an error upon
@@ -55,11 +57,6 @@ func Run() error {
 			Destination: &valHostname,
 		},
 		cli.BoolFlag{
-			Name:        "insecure",
-			Usage:       "do not enforce secure connection with CanIDS backend",
-			Destination: &valInsecure,
-		},
-		cli.BoolFlag{
 			Name:        "verbose",
 			Usage:       "enable verbose logging",
 			Destination: &valDebug,
@@ -75,6 +72,16 @@ func Run() error {
 			Usage:       "how often to scan file system for new files in directory",
 			Value:       valFileScan,
 			Destination: &valFileScan,
+		},
+		cli.StringFlag{
+			Name:        "key",
+			Usage:       "set the encryption key",
+			Destination: &valEncryptionkey,
+		},
+		cli.BoolFlag{
+			Name:        "encrypt",
+			Usage:       "enable encrypted data transfer",
+			Destination: &valEncrypt,
 		},
 	}
 	app.Commands = []cli.Command{
@@ -110,6 +117,15 @@ func cmd(c *cli.Context) error {
 	if valAssetID == "" || strings.ContainsAny(valAssetID, "`~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/? ") {
 		return errAssetID
 	}
+	if valEncryptionkey == "" {
+		return errBadKey
+	}
+
+	_, err := base64.StdEncoding.DecodeString(valEncryptionkey)
+	if err != nil {
+		return errBadKey
+	}
+
 	// ensure directory/file exists
 	valFilePath := args[0]
 	info, err := os.Stat(valFilePath)
@@ -130,7 +146,6 @@ func cmd(c *cli.Context) error {
 		NetworkMutex:  &sync.Mutex{},
 		DatabaseMutex: &sync.Mutex{},
 		Session:       "",
-		Insecure:      valInsecure,
 		PollingAbort:  make(chan struct{}),
 		ScannerAbort:  make(chan struct{}),
 		Debug:         valDebug,
@@ -139,6 +154,8 @@ func cmd(c *cli.Context) error {
 		FileMode:      valFileMode,
 		FileScan:      valFileScan,
 		FileChunkSize: valFileChunkSize,
+		EncryptionKey: valEncryptionkey,
+		Encryption:    valEncrypt,
 	}
 
 	// sync the scanner to retreive+update (or create) latest database
@@ -150,7 +167,7 @@ func cmd(c *cli.Context) error {
 
 	for {
 		// initialize connection to gRPC and start
-		err = Connect(config, db, valHostname)
+		err = ConnectWebsocketServer(config, db, valHostname)
 		if config.Debug {
 			log.Println("[CanIDS DEBUG]", err)
 		}
@@ -160,7 +177,6 @@ func cmd(c *cli.Context) error {
 			NetworkMutex:  &sync.Mutex{},
 			DatabaseMutex: &sync.Mutex{},
 			Session:       "",
-			Insecure:      valInsecure,
 			PollingAbort:  make(chan struct{}),
 			ScannerAbort:  make(chan struct{}),
 			Debug:         valDebug,
@@ -169,6 +185,8 @@ func cmd(c *cli.Context) error {
 			FileMode:      valFileMode,
 			FileScan:      valFileScan,
 			FileChunkSize: valFileChunkSize,
+			EncryptionKey: valEncryptionkey,
+			Encryption:    valEncrypt,
 		}
 		time.Sleep(config.RetryDelay)
 	}

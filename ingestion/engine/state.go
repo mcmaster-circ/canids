@@ -54,6 +54,8 @@ var (
 	errAssetID        = errors.New("[CanIDS] error: must provide unique asset (network tap) identifier, only alphanumeric characters, no spaces")
 	errBadJSON        = errors.New("[CanIDS] error: malformed JSON")
 	errBadTSV         = errors.New("[CanIDS] error: malformed TSV")
+	errBadKey         = errors.New("[CanIDS] error: must provide valid encryption key")
+	errNoSuccess      = errors.New("Success message not received")
 )
 
 // fileMode indicates if a single regular file or directory was passed
@@ -73,7 +75,6 @@ type state struct {
 	NetworkMutex  *sync.Mutex   // NetworkMutex is for preventing concurrent writing to websocket
 	DatabaseMutex *sync.Mutex   // DatabaseMutex is for preventing concurrent operations to local database
 	Session       string        // Session is the session identifier
-	Insecure      bool          // Insecure indicates insecure gRPC connection
 	PollingAbort  chan struct{} // PollingAbort is for signalling the file system polling loop to terminate
 	ScannerAbort  chan struct{} // ScannerAbort is for signalling the recursive scanner to terminate
 	Debug         bool          // Debug indicates if debugging logging should be used
@@ -82,4 +83,6 @@ type state struct {
 	FileMode      fileMode      // FileMode indicates type of file mode being used (regular file or directory provided)
 	FileScan      time.Duration // FileScan indicates how often to scan for new files on the file system
 	FileChunkSize int           // FileChunkSize indicates number of lines to send in frame
+	EncryptionKey string        // Encryption key is the key used to encrypt the connection to the backend
+	Encryption    bool          // Whether the payload data is encrypted before transmission
 }

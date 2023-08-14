@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/websocket"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
@@ -106,17 +108,8 @@ func Start(s *state.State, a *jwtauth.Config, p *auth.State) error {
 	// register all routes
 	registerRoutes(s, a, p, router, secureRouter)
 
-	// provision gRPC server
-	// go func() {
-	// 	ctx := context.Background()
-	// 	s.Log.Info("[grpc] server now listening on :50000")
-	// 	err := grpcservice.Provision(ctx, s)
-	// 	if err != nil {
-	// 		s.Log.Errorf("failed to provision gRPC service: %s", err)
-	// 		os.Exit(1)
-	// 		return
-	// 	}
-	// }()
+	// Start frame queue handler
+	go websocket.HandleQueue(s)
 
 	server := &http.Server{
 		Addr:         ":6060",

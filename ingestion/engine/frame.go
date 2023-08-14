@@ -6,18 +6,33 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/mcmaster-circ/canids-v2/protocol"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+type Header struct {
+	MsgUuid      string    `json:"msg_uuid,omitempty"`      // Unique message identifier
+	MsgTimestamp time.Time `json:"msg_timestamp,omitempty"` // Message timestamp
+	ErrorMsg     string    `json:"error_msg,omitempty"`     // Request error message(s) (use with NACK)
+	Session      string    `json:"session,omitempty"`       // Connection session UUID
+	MsgType      int       `json:"type,omitempty"`          // Message type: 0 - data, 1 - pong
+	Encrypted    bool      `json:"encrypted,omitempty"`     // Whether the payload is encrypted (true) or not (false)
+}
+
+type UploadRequest struct {
+	Header   Header   `json:"header,omitempty"`    // Header
+	AssetId  string   `json:"asset_id,omitempty"`  // Asset identifier
+	FileName string   `json:"file_name,omitempty"` // Name of file payload is from
+	Payload  [][]byte `json:"payload,omitempty"`   // Multiple JSON byte lines from Zeek
+}
 
 // generateFrame state and local database file. It will attempt to read
 // unread lines in the file. For each line, the line will be parsed and generate
 // a payload entry. If the line is not valid, it will be ignored. It
 // also updates the provided file, updating how much if the file was read. It
 // will return complete frame or an error.
-func generateFrame(s *state, f *file, baseName string) (*protocol.UploadRequest, error) {
+func generateFrame(s *state, f *file, baseName string, key []byte) (*UploadRequest, error) {
 	// open file
 	fs, err := os.Open(f.Path)
 	if err != nil {
@@ -89,6 +104,13 @@ func generateFrame(s *state, f *file, baseName string) (*protocol.UploadRequest,
 			payload, err := parseLine(line, h)
 			// no error parsing, append to chunks
 			if err == nil {
+				if s.Encryption {
+					payload, err = Encrypt(payload, key)
+					if err != nil {
+						log.Println("Error encrypting payload line: ", err)
+						continue
+					}
+				}
 				chunks = append(chunks, payload)
 			} else {
 				// print error message
@@ -104,13 +126,13 @@ func generateFrame(s *state, f *file, baseName string) (*protocol.UploadRequest,
 	f.Size = newBytes
 
 	// generate actual frame
-	frame := &protocol.UploadRequest{
-		Header: &protocol.Header{
+	frame := &UploadRequest{
+		Header: Header{
 			MsgUuid:      uuid.New().String(),
-			MsgTimestamp: timestamppb.Now(),
-			Status:       protocol.Status_REQUEST,
+			MsgTimestamp: time.Now(),
 			ErrorMsg:     "",
 			Session:      s.Session,
+			MsgType:      0,
 		},
 		AssetId:  s.AssetID,
 		FileName: baseName,
@@ -118,4 +140,21 @@ func generateFrame(s *state, f *file, baseName string) (*protocol.UploadRequest,
 	}
 
 	return frame, nil
+}
+
+func generatePongFrame(s *state) *UploadRequest {
+	chunks := [][]byte{}
+	frame := &UploadRequest{
+		Header: Header{
+			MsgUuid:      uuid.New().String(),
+			MsgTimestamp: time.Now(),
+			ErrorMsg:     "",
+			Session:      s.Session,
+			MsgType:      1,
+		},
+		AssetId:  s.AssetID,
+		FileName: "",
+		Payload:  chunks,
+	}
+	return frame
 }

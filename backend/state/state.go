@@ -181,14 +181,20 @@ func (s *State) elasticsearch() error {
 	if err != nil {
 		return err
 	}
-	// ping to ensure connectivity
-	_, _, err = client.Ping(esURI).Do(s.ElasticCtx)
-	if err != nil {
-		// give warning, Elastcsearch is probably still starting up
-		s.Log.Warn("[state] elasticsearch ping failed, database is starting or incorrect parameters, sleeping 30 seconds...")
-		time.Sleep(30 * time.Second)
+
+	flag := true
+	for flag {
+		// ping to ensure connectivity
+		_, _, err = client.Ping(esURI).Do(s.ElasticCtx)
+		if err != nil {
+			// give warning, Elastcsearch is probably still starting up
+			s.Log.Warn("[state] elasticsearch ping failed, database is starting or incorrect parameters, sleeping 30 seconds...")
+			time.Sleep(30 * time.Second)
+		} else {
+			flag = false
+		}
+		s.Elastic = client
 	}
-	s.Elastic = client
 
 	// create indexes
 	for _, index := range esIndexes {

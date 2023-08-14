@@ -1816,3 +1816,143 @@ paths:
         '500':
           description: |
             Internal server error
+
+  /api/ingestion/getESMax:
+    get:
+      summary: Get max elastic search index size.
+      description: |
+        Gets the max size that elastic search indecies can grow to before a new one is created.
+      responses:
+        '200':
+          description: |
+            Max index successfully returned.
+          content:
+            application/json:
+              example: {
+                "maxIndexSize": 1000000
+              }
+
+  /api/ingestion/getESMax:
+    post:
+      summary: Set max elastic search index size.
+      description: |
+        Sets the max size that elastic search indecies can grow to before a new one is created.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                maxIndexSize:
+                  type: int
+                  description: |
+                    Desired max size
+              required:
+                - maxIndexSize
+            example: {
+             "maxIndexSize": 1000000
+            }
+      responses:
+        '200':
+          description: |
+            Max index successfully updated.
+          content:
+            application/json:
+              example: {
+                "success" : true,
+                "message": "Successfully updated max index size"
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+
+  /api/ingestion/create:
+    post:
+      summary: Create new ingestion client.
+      description: |
+        Pass the name (uuid) of new ingestion client. A crypto random encryption key will be generated and returned. The uuid-key pair will be indexed into elasticsearch.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    Name of new ingestion client
+              required:
+                - uuid
+            example: {
+             "uuid": "Ingestion1"
+            }
+      responses:
+        '200':
+          description: |
+            New ingestion client successfully indexed.
+          content:
+            application/json:
+              example: {
+                "key" : "38f3dfe8880b211d861ec679f91dd28b2c51e296ae6a20b65985277d202439c5"
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }
+        '500':
+          description: |
+            Internal server error
+
+  /api/ingestion/delete:
+    post:
+      summary: Delete ingestion client.
+      description: |
+        Pass the name (uuid) of ingestion client. Connection will be ended and ingestion uuid will be removed from elasticsearch.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    Name of ingestion client
+              required:
+                - uuid
+            example: {
+             "uuid": "Ingestion1"
+            }
+      responses:
+        '200':
+          description: |
+            New ingestion client successfully indexed.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "Successfully deleted given uuid from ingestion index"
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }

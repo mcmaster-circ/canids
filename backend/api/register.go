@@ -15,6 +15,7 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/fields"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/user"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/view"
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/websocket"
 	authUtils "github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
@@ -56,4 +57,8 @@ func registerRoutes(s *state.State, a *jwtauth.Config, p *authUtils.State, unsec
 
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())
+
+	websocket.RegisterWS(s, unsecure.PathPrefix("/websocket/").Subrouter())
+
+	websocket.RegisterUpdateFunctions(s, secure.PathPrefix("/ingestion/").Subrouter())
 }
