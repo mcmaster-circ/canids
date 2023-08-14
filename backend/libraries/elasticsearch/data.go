@@ -48,7 +48,6 @@ type Alarm struct {
 // will return the newly created document ID or an error.
 func IndexPayload(s *state.State, indexName string, payload []byte) (string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
-	s.Log.Printf("Indexed data: %+v", string(payload))
 	result, err := client.Index().Index(indexName).BodyString(string(payload)).Do(ctx)
 	if err != nil {
 		return "", err

@@ -23,4 +23,7 @@ func RegisterUpdateFunctions(s *state.State, r *mux.Router) {
 	r.HandleFunc("/create/", func(w http.ResponseWriter, r *http.Request) {
 		createIngestion(s, w, r)
 	})
+	r.HandleFunc("/delete/", func(w http.ResponseWriter, r *http.Request) {
+		deleteIngestion(s, w, r)
+	})
 }

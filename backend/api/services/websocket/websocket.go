@@ -33,11 +33,12 @@ type Header struct {
 }
 
 type Frame struct {
-	Header   Header   `json:"header,omitempty"`    // Header
-	AssetID  string   `json:"asset_id,omitempty"`  // Asset identifier
-	FileName string   `json:"file_name,omitempty"` // Name of file payload is from
-	Payload  [][]byte `json:"payload,omitempty"`   // Multiple JSON byte lines from Zeek
-	Key      []byte   // For storing associated key
+	Header    Header   `json:"header,omitempty"`    // Header
+	AssetID   string   `json:"asset_id,omitempty"`  // Asset identifier
+	FileName  string   `json:"file_name,omitempty"` // Name of file payload is from
+	Payload   [][]byte `json:"payload,omitempty"`   // Multiple JSON byte lines from Zeek
+	Key       []byte   // For storing associated key
+	GoingAway bool     // Will be set to true when ingestion client has been closed. Flag for ingest (backend) to be able to remove given ingestion client from delete map
 }
 
 type Message struct {
@@ -53,6 +54,8 @@ type WebSocketServer struct {
 var server = &WebSocketServer{
 	queue: make(chan *Frame, bufferSize),
 }
+
+var deleted = map[string]bool{} // String: ingestion client name. Bool: Whether index has been deleted from es
 
 var maxIndexSize = 1000000
 
@@ -148,6 +151,20 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 	var timeLastPing = time.Now()
 
 	for {
+
+		for name := range deleted {
+			if name == ingestion.UUID {
+				conn.Close(websocket.StatusGoingAway, "Access revoked.")
+				closeFrame := Frame{
+					GoingAway: true,
+					AssetID:   ingestion.UUID,
+				}
+
+				s.Log.Printf("Ingestion staged for deletion. Sending close frame")
+				server.queue <- &closeFrame
+				break
+			}
+		}
 
 		if timeLastPing.Add(time.Second * 5).Before(time.Now()) {
 			timeLastPing = time.Now()

@@ -1770,3 +1770,44 @@ paths:
         '500':
           description: |
             Internal server error
+
+  /api/ingestion/delete:
+    post:
+      summary: Delete ingestion client.
+      description: |
+        Pass the name (uuid) of ingestion client. Connection will be ended and ingestion uuid will be removed from elasticsearch.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                  description: |
+                    Name of ingestion client
+              required:
+                - uuid
+            example: {
+             "uuid": "Ingestion1"
+            }
+      responses:
+        '200':
+          description: |
+            New ingestion client successfully indexed.
+          content:
+            application/json:
+              example: {
+                "success": true,
+                "message": "Successfully deleted given uuid from ingestion index"
+              }
+        '400':
+          description: |
+            Request parameters are not valid.
+          content:
+            application/json:
+              example: {
+                "success": false,
+                "message": "Bad request format."
+              }

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
-	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
@@ -16,7 +15,7 @@ type deleteIngestionRequest struct {
 
 func deleteIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 
-	var request createIngestionRequest
+	var request deleteIngestionRequest
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "application/json")
 
@@ -48,19 +47,9 @@ func deleteIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = elasticsearch.DeleteIngestByUUID(s, request.UUID)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Unable to delete ingestion of given UUID",
-		}
-		json.NewEncoder(w).Encode(out)
-	}
-
 	//Success
 
-	// Do something to close connection if deleted uuid is currently connected
+	deleted[request.UUID] = false
 
 	w.WriteHeader(http.StatusOK)
 	out := GeneralResponse{

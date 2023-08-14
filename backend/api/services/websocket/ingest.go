@@ -20,6 +20,28 @@ var maxSize = 1000000
 
 // ingest is triggered from the gRPC service. It indexes a chunk into the database.
 func ingest(frame *Frame, state *state.State, maxIndexSize int) {
+
+	for name, isDeleted := range deleted {
+		if name == frame.AssetID {
+			state.Log.Println("Received frame from deleted ingestion")
+			if !isDeleted {
+				err := elasticsearch.DeleteIngestByUUID(state, name)
+				if err != nil {
+					state.Log.Println("Error deleting ingest from es: ", err)
+					return
+				}
+				state.Log.Println("Deleted ingestion index")
+				deleted[name] = true
+			}
+
+			if frame.GoingAway == true {
+				delete(deleted, name)
+			}
+
+			return
+		}
+	}
+
 	maxSize = maxIndexSize
 	client, ctx := state.Elastic, state.ElasticCtx
 	for _, entry := range frame.Payload {
