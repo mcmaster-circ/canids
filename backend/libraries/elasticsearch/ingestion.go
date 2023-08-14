@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
-	"github.com/olivere/elastic"
 )
 
 type DocumentIngestion struct {
@@ -26,8 +26,11 @@ func QueryIngestionByUUID(s *state.State, uuid string) (DocumentIngestion, error
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for ingestion with provided uuid
-	termQuery := elastic.NewTermQuery("uuid.keyword", uuid)
-	result, err := client.Search().Index(indexIngestion).Query(termQuery).Do(ctx)
+	result, err := client.Search().Index(indexDashboard).Query(&types.Query{
+		Term: map[string]types.TermQuery{
+			"uuid.keyword": {Value: uuid},
+		},
+	}).Do(ctx)
 	if err != nil {
 		return d, err
 	}
@@ -47,7 +50,10 @@ func QueryIngestionByUUID(s *state.State, uuid string) (DocumentIngestion, error
 
 func DeleteIngestByUUID(s *state.State, uuid string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	termQuery := elastic.NewTermQuery("uuid.keyword", uuid)
-	_, err := client.DeleteByQuery(indexIngestion).Query(termQuery).Refresh("true").Size(1000).Do(ctx)
+	_, err := client.DeleteByQuery(indexBlacklist).Query(&types.Query{
+		Term: map[string]types.TermQuery{
+			"uuid.keyword": {Value: uuid},
+		},
+	}).Refresh(true).Do(ctx)
 	return err
 }

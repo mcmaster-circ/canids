@@ -1,0 +1,25 @@
+name: Deploy onto staging
+
+on:
+  push:
+    branches:
+      - "khaos-staging"
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "ingestion/**"
+      - "config/**"
+      - ".github/workflows/deploy_staging.yml"
+      - "deploy-staging.yml"
+
+jobs:
+  deploy_staging:
+    name: (${{ github.event_name }}) - Deploy onto staging
+    runs-on: [self-hosted, khaos]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build and push images
+        run: docker compose -f deploy-staging.yml build --push
+      - name: Deploy
+        run: docker stack deploy -c deploy-staging.yml canids-staging

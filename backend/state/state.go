@@ -13,9 +13,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/joho/godotenv"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ipsetmgr"
-	"github.com/olivere/elastic/v7"
 	"github.com/oschwald/geoip2-golang"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -39,15 +39,15 @@ var (
 
 // State is the global state for the backend.
 type State struct {
-	Hash       string           // Hash is the hash of the latest Git commit
-	Log        *log.Logger      // Log is a structured event logger
-	Start      time.Time        // Start is the start time of the backend
-	IsDocker   bool             // IsDocker indicates if running inside Docker
-	Config     *Config          // Config contains global configuration
-	Elastic    *elastic.Client  // Elastic is the Elasticsearch client state
-	ElasticCtx context.Context  // ElasticCtx is the Elasticsearch client context
-	AuthReady  bool             // AuthReady is if the "auth" index exists
-	SendGrid   *sendgrid.Client // SendGrid is the email client
+	Hash       string                     // Hash is the hash of the latest Git commit
+	Log        *log.Logger                // Log is a structured event logger
+	Start      time.Time                  // Start is the start time of the backend
+	IsDocker   bool                       // IsDocker indicates if running inside Docker
+	Config     *Config                    // Config contains global configuration
+	Elastic    *elasticsearch.TypedClient // Elastic is the Elasticsearch client state
+	ElasticCtx context.Context            // ElasticCtx is the Elasticsearch client context
+	AuthReady  bool                       // AuthReady is if the "auth" index exists
+	SendGrid   *sendgrid.Client           // SendGrid is the email client
 
 	GeoIPASN     *geoip2.Reader // GeoIPASN is the GeoIP ASN database
 	GeoIPCity    *geoip2.Reader // GeoIPCity is the geoIP City database
@@ -158,8 +158,8 @@ func (s *State) elasticsearch() error {
 	s.ElasticCtx = context.Background()
 
 	// elasticsearch transport mechanism
-	httpTransport := &http.Client{
-		Transport: &http.Transport{
+	httpTransport :=
+		&http.Transport{
 			MaxIdleConns:       esIdleConns,
 			IdleConnTimeout:    esIdleTimeout,
 			DisableCompression: true,
@@ -167,15 +167,14 @@ func (s *State) elasticsearch() error {
 				Timeout:   esDialTimeout,
 				KeepAlive: esKeepAlive,
 			}).Dial,
-		},
-	}
+		}
 
-	// connect to Elasticsearch
+	// connect to ElasticsearcH
 	esURI := fmt.Sprintf("http://%s:%s", s.Config.ElasticHost, s.Config.ElasticPort)
-	client, err := elastic.NewSimpleClient(
-		elastic.SetURL(esURI),
-		elastic.SetHttpClient(httpTransport),
-	)
+	client, err := elasticsearch.NewTypedClient(elasticsearch.Config{
+		Addresses: []string{esURI},
+		Transport: httpTransport,
+	})
 	if err != nil {
 		return err
 	}
@@ -196,7 +195,7 @@ func (s *State) elasticsearch() error {
 
 	// create indexes
 	for _, index := range esIndexes {
-		s.Elastic.CreateIndex(index).Do(s.ElasticCtx)
+		s.Elastic.Indices.Create(index).Do(s.ElasticCtx)
 	}
 
 	return nil
@@ -207,7 +206,7 @@ func (s *State) elasticsearch() error {
 // checked, an error will be returned.
 func checkAuthReady(s *State) error {
 	s.Log.Info("[state] checking if elasticsearch 'auth' index exists")
-	exists, err := s.Elastic.IndexExists("auth").Do(s.ElasticCtx)
+	exists, err := s.Elastic.Indices.Exists("auth").Do(s.ElasticCtx)
 	if err != nil {
 		return err
 	}

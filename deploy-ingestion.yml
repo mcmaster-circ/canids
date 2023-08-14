@@ -24,8 +24,10 @@ services:
       - hostname=http://host.docker.internal:6060/websocket/ # Change this to specify the address of the backend
     volumes:
       - ./ingestion/logs:/logs # Change this to specify the location of your logs
-      - ./ingestion/cert:/cert
       - ingestiondb:/db
 
+secrets:
+  canids_ca_cert:
+    file: ./ingestion/cert
 volumes:
   ingestiondb:

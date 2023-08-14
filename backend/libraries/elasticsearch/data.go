@@ -5,14 +5,16 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
-	"github.com/olivere/elastic"
 )
 
 // index format : data-index-assetID-yyyy-mm-dd
@@ -48,11 +50,11 @@ type Alarm struct {
 // will return the newly created document ID or an error.
 func IndexPayload(s *state.State, indexName string, payload []byte) (string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
-	result, err := client.Index().Index(indexName).BodyString(string(payload)).Do(ctx)
+	result, err := client.Index(indexName).Raw(bytes.NewReader(payload)).Do(ctx)
 	if err != nil {
 		return "", err
 	}
-	return result.Id, nil
+	return result.Id_, nil
 }
 
 // GetAllDataMapping will fetch all data mappings. It returns a list of
@@ -102,7 +104,7 @@ func GetAllDataMapping(s *state.State) ([]IndexDataField, error) {
 // GetIndexes queries for a list of all indexes. Returns list of indicies or error.
 func GetIndexes(s *state.State) ([]string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
-	indexes, err := client.CatIndices().Do(ctx)
+	indexes, err := client.Cat.Indices().Do(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +114,7 @@ func GetIndexes(s *state.State) ([]string, error) {
 	}
 	out := make([]string, count)
 	for i, index := range indexes {
-		out[i] = index.Index
+		out[i] = *index.Index
 	}
 	return out, nil
 }
@@ -124,9 +126,17 @@ func GetDataMapping(s *state.State, indexPrefix string) ([]DataField, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// Get latest doc
-	latestDoc, err := client.Search().Index(indexPrefix+"*").
-		Query(elastic.NewMatchAllQuery()).
-		Sort("timestamp", false).Size(1).Do(ctx)
+	latestDoc, err := client.Search().Index(indexPrefix + "*").
+		Query(&types.Query{
+			MatchAll: &types.MatchAllQuery{},
+		}).
+		Sort(types.SortOptions{ // sort timestamp descending
+			SortOptions: map[string]types.FieldSort{
+				"timestamp": {
+					Order: &sortorder.Desc,
+				},
+			},
+		}).Size(1).Do(ctx)
 	if err != nil {
 		return []DataField{}, err
 	}
@@ -135,33 +145,28 @@ func GetDataMapping(s *state.State, indexPrefix string) ([]DataField, error) {
 		return []DataField{}, errors.New(fmt.Sprintf("GetDataConnMapping: Expected 1 hit, got %d", len(latestDoc.Hits.Hits)))
 	}
 	// get the mapping for the index of the document found above
-	mappingQuery, err := client.GetMapping().Index(latestDoc.Hits.Hits[0].Index).Do(ctx)
+	mappingQuery, err := client.Indices.GetMapping().Index(latestDoc.Hits.Hits[0].Index_).Do(ctx)
 	if err != nil {
 		return []DataField{}, err
 	}
 	// Get the properties map from the query result above
-	index, hasIndex := mappingQuery[latestDoc.Hits.Hits[0].Index].(map[string]interface{})
+	index, hasIndex := mappingQuery[latestDoc.Hits.Hits[0].Index_]
 	if !hasIndex {
 		return []DataField{}, errors.New("GetDataConnMapping: mapping query doesn't have 'index' field")
 	}
-	mappings, hasMapping := index["mappings"].(map[string]interface{})
-	if !hasMapping {
-		return []DataField{}, errors.New("GetDataConnMapping: mapping query doesn't have 'mappings' field")
-	}
-	properties, hasProperties := mappings["properties"].(map[string]interface{})
-	if !hasProperties {
-		return []DataField{}, errors.New("GetDataConnMapping: mapping query doesn't have 'properties' field")
-	}
+	properties := index.Mappings.Properties
+
 	// put the field names into an array
 	fields := []DataField{}
 	for propertyName, property := range properties {
-		propertyType, hasType := (property.(map[string]interface{}))["type"].(string)
-		if hasType {
-			fields = append(fields, DataField{
-				Name: propertyName,
-				Type: propertyType,
-			})
-		}
+		blob, _ := json.Marshal(property)
+		var m map[string]interface{}
+		_ = json.Unmarshal(blob, &m) // this is patently insane but they give me no better way to do it
+		propertyType := m["type"].(string)
+		fields = append(fields, DataField{
+			Name: propertyName,
+			Type: propertyType,
+		})
 	}
 	return fields, nil
 }
@@ -172,15 +177,15 @@ func ListDataAssets(s *state.State) ([]string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// query for all index names
-	indicesQuery, err := client.CatIndices().Do(ctx)
+	indicesQuery, err := client.Cat.Indices().Do(ctx)
 	if err != nil {
 		return []string{}, err
 	}
 	// split index names to get the asset names and add them to a set
 	assetNameSet := make(map[string]bool)
 	for _, index := range indicesQuery {
-		if strings.HasPrefix(index.Index, "data-") {
-			splitIndexName := strings.Split(index.Index, "-")
+		if strings.HasPrefix(*index.Index, "data-") {
+			splitIndexName := strings.Split(*index.Index, "-")
 			if len(splitIndexName) == 6 {
 				assetName := splitIndexName[2]
 				assetNameSet[assetName] = true
@@ -215,16 +220,54 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 		indices[i] = fmt.Sprintf("data-%s-*", index)
 	}
 
-	r := elastic.NewRangeQuery("timestamp").
-		From(start.Format(time.RFC3339)).
-		To(end.Format(time.RFC3339))
+	r := types.Query{
+		Range: map[string]types.RangeQuery{
+			"timestamp": types.DateRangeQuery{
+				From: start.Format(time.RFC3339),
+				To:   end.Format(time.RFC3339),
+			},
+		},
+	}
+
+	origSources := types.Query{
+		Terms: &types.TermsQuery{
+			TermsQuery: map[string]types.TermsQueryField{
+				"id_orig_h_pos": sources,
+			},
+		},
+	}
+
+	respSources := types.Query{
+		Terms: &types.TermsQuery{
+			TermsQuery: map[string]types.TermsQueryField{
+				"id_resp_h_pos": sources,
+			},
+		},
+	}
+
+	hasSource := types.Query{
+		Bool: &types.BoolQuery{
+			Should: []types.Query{origSources, respSources},
+		},
+	}
+
 	// query for all alarms in range and filter for either origSource or respSource being in alarmSources
-	origSources := elastic.NewTermsQuery("id_orig_h_pos", alarmSources...)
-	respSources := elastic.NewTermsQuery("id_resp_h_pos", alarmSources...)
-	hasSource := elastic.NewBoolQuery().Should(origSources, respSources)
-	query := elastic.NewBoolQuery().Must(r).Must(hasSource)
-	queryResult, err := client.Search().Index(indices...).
-		Query(query).Sort("timestamp", false).Size(size).From(from).Do(ctx)
+	query := &types.Query{
+		Bool: &types.BoolQuery{
+			Must: []types.Query{
+				r,
+				hasSource,
+			},
+		},
+	}
+	queryResult, err := client.Search().Index(strings.Join(indices, ",")).
+		Query(query).Sort(types.SortOptions{
+			SortOptions: map[string]types.FieldSort{
+				"timestamp": {
+					Order: &sortorder.Desc,
+				},
+			},
+		}).Size(size).From(from).Do(ctx)
 	if err != nil {
 		return []Alarm{}, 0, err
 	}
@@ -234,37 +277,68 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 	// loop through each alarm and unmarshal it into an Alarm struct
 	for _, hit := range queryResult.Hits.Hits {
 		var alarm Alarm
-		err = json.Unmarshal(hit.Source, &alarm)
+		err = json.Unmarshal(hit.Source_, &alarm)
 		if err != nil {
 			return alarms, 0, err
 		}
 		alarms = append(alarms, alarm)
 	}
 
-	return alarms, int(queryResult.Hits.TotalHits.Value), nil
+	return alarms, int(queryResult.Hits.Total.Value), nil
 }
 
 func QueryDataInRangeAggregated(s *state.State, indexPrefix string, xField string, yField string, start time.Time, end time.Time, interval int64) ([]interface{}, []interface{}, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// query for docs in the given time range
-	query := elastic.NewRangeQuery("timestamp").From(start.Format(time.RFC3339)).To(end.Format(time.RFC3339))
+	query := &types.Query{
+		Range: map[string]types.RangeQuery{
+			"timestamp": types.DateRangeQuery{
+				From: start.Format(time.RFC3339),
+				To:   end.Format(time.RFC3339),
+			},
+		},
+	}
 
 	// aggregate time buckets given by interval (in seconds), average xfield and
 	// yfield for each bucket
-	aggregation := elastic.NewDateHistogramAggregation().Field("timestamp").Interval(fmt.Sprintf("%ds", interval)).
-		SubAggregation("aggX", elastic.NewAvgAggregation().Field(xField)).
-		SubAggregation("aggY", elastic.NewAvgAggregation().Field(yField))
+
+	ts := "timestamp"
+	duration := fmt.Sprintf("%ds", interval)
+	aggregation := types.DateHistogramAggregation{
+		Field:         &ts,
+		FixedInterval: duration,
+	}
+
+	aggX := types.AverageAggregation{
+		Field: &xField,
+	}
+	aggY := types.AverageAggregation{
+		Field: &yField,
+	}
 
 	// do query
 	indexName := fmt.Sprintf("%s-*", indexPrefix)
-	queryResult, err := client.Search().Index(indexName).Query(query).Size(0).Aggregation("aggT", aggregation).Do(ctx)
+	queryResult, err := client.Search().Index(indexName).Query(query).Size(0).Aggregations(map[string]types.Aggregations{
+		"aggT": {
+			DateHistogram: &aggregation,
+			Aggregations: map[string]types.Aggregations{
+				"aggX": {
+					Avg: &aggX,
+				},
+				"aggY": {
+					Avg: &aggY,
+				},
+			},
+		},
+	}).Do(ctx)
+
 	if err != nil {
 		return []interface{}{}, []interface{}{}, err
 	}
 
 	// get time histogram aggregation
-	aggT, foundAggT := queryResult.Aggregations.DateHistogram("aggT")
+	aggT, foundAggT := queryResult.Aggregations["aggT"].(*types.DateHistogramAggregate)
 	if !foundAggT {
 		// no aggT date histogram found, this probably mean the asset doesnt
 		// have any indices yet
@@ -276,10 +350,10 @@ func QueryDataInRangeAggregated(s *state.State, indexPrefix string, xField strin
 	yresult := []interface{}{}
 
 	// process buckets from time aggregation
-	for _, bucket := range aggT.Buckets {
+	for _, bucket := range aggT.Buckets.([]types.DateHistogramBucket) {
 		// get x & y avg aggregations
-		aggX, foundAggX := bucket.Aggregations.Avg("aggX")
-		aggY, foundAggY := bucket.Aggregations.Avg("aggY")
+		aggX, foundAggX := bucket.Aggregations["aggX"].(*types.AvgAggregate)
+		aggY, foundAggY := bucket.Aggregations["aggY"].(*types.AvgAggregate)
 
 		if foundAggX && foundAggY {
 			// either get the averaged value or the date string from the bucket
@@ -310,10 +384,21 @@ func QueryDataInRange(s *state.State, indexPrefix string, fields []string, start
 	// sorted in descending time
 	indexName := fmt.Sprintf("%s-*", indexPrefix)
 	queryResult, err := client.Search().Index(indexName).
-		Query(elastic.NewRangeQuery("timestamp").
-			From(start.Format(time.RFC3339)).
-			To(end.Format(time.RFC3339))).
-		Sort("timestamp", false).Size(size).From(from).Do(ctx)
+		Query(&types.Query{
+			Range: map[string]types.RangeQuery{
+				"timestamp": types.DateRangeQuery{
+					From: start.Format(time.RFC3339),
+					To:   end.Format(time.RFC3339),
+				},
+			},
+		}).
+		Sort(types.SortOptions{
+			SortOptions: map[string]types.FieldSort{
+				"timestamp": {
+					Order: &sortorder.Desc,
+				},
+			},
+		}).Size(size).From(from).Do(ctx)
 	if err != nil {
 		return [][]interface{}{}, 0, err
 	}
@@ -328,7 +413,7 @@ func QueryDataInRange(s *state.State, indexPrefix string, fields []string, start
 	// unmarshal elasticsearch hits
 	for _, hit := range queryResult.Hits.Hits {
 		var d map[string]json.RawMessage
-		err = json.Unmarshal(hit.Source, &d)
+		err = json.Unmarshal(hit.Source_, &d)
 		if err != nil {
 			return result, 0, err
 		}
@@ -338,7 +423,7 @@ func QueryDataInRange(s *state.State, indexPrefix string, fields []string, start
 		}
 	}
 
-	return result, int(queryResult.Hits.TotalHits.Value), nil
+	return result, int(queryResult.Hits.Total.Value), nil
 }
 
 func CountDataInRange(s *state.State, indexPrefix, field string, start time.Time, end time.Time) ([]string, []int64, error) {
@@ -362,13 +447,25 @@ func CountDataInRange(s *state.State, indexPrefix, field string, start time.Time
 		field = fmt.Sprintf("%s.keyword", field)
 	}
 
+	agg := types.TermsAggregation{
+		Field: &field,
+	}
+
 	// query for all data conn documents for this asset in the given timerange, sorted in ascending time
 	indexName := fmt.Sprintf("%s-*", indexPrefix)
 	queryResult, err := client.Search().Index(indexName).
-		Query(elastic.NewRangeQuery("timestamp").
-			From(start.Format(time.RFC3339)).
-			To(end.Format(time.RFC3339))).
-		Aggregation("count", elastic.NewTermsAggregation().Field(field)).Do(ctx)
+		Query(&types.Query{
+			Range: map[string]types.RangeQuery{
+				"timestamp": types.DateRangeQuery{
+					From: start.Format(time.RFC3339),
+					To:   end.Format(time.RFC3339),
+				},
+			},
+		}).Aggregations(map[string]types.Aggregations{
+		"count": {
+			Terms: &agg,
+		},
+	}).Do(ctx)
 	if err != nil {
 		return []string{}, []int64{}, err
 	}
@@ -376,15 +473,14 @@ func CountDataInRange(s *state.State, indexPrefix, field string, start time.Time
 	keys := []string{}
 	counts := []int64{}
 
-	termsAgg, found := queryResult.Aggregations.Terms("count")
+	termsAgg, found := queryResult.Aggregations["count"].(*types.StringTermsAggregate)
 	if !found {
 		// no count terms aggregation found, this probably mean the asset doesnt have any indices yet
 		return []string{}, []int64{}, nil
 	}
 
 	// unmarshal elasticsearch hits
-	for _, bucket := range termsAgg.Buckets {
-		s.Log.Infof("Bucket %+v", bucket)
+	for _, bucket := range termsAgg.Buckets.([]types.StringTermsBucket) {
 		key := fmt.Sprintf("%v", bucket.Key)
 		keys = append(keys, key)
 		counts = append(counts, bucket.DocCount)
@@ -397,7 +493,9 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// Create Range Aggregation
-	agg := elastic.NewRangeAggregation().Field(field)
+	agg := types.RangeAggregation{
+		Field: &field,
+	}
 	numOfBars := 10
 	daysPerBar := int(end.Sub(start).Hours()/24) / numOfBars
 	if daysPerBar == 0 { // If the amount of days is less than 1 default to 1 bar with the current day
@@ -411,16 +509,28 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 		if rangeEnd.After(end) || (i+1) == numOfBars {
 			rangeEnd = end
 		}
-		agg.AddRange(rangeStart.Format(time.RFC3339), rangeEnd.Format(time.RFC3339))
+		agg.Ranges = append(agg.Ranges, types.AggregationRange{
+			From: rangeStart.Format(time.RFC3339),
+			To:   rangeEnd.Format(time.RFC3339),
+		})
 	}
 
 	// query for all data conn documents for this asset in the given timerange, sorted in ascending time
 	indexName := "data-*"
 	queryResult, err := client.Search().Index(indexName).
-		Query(elastic.NewRangeQuery("timestamp").
-			From(start.Format(time.RFC3339)).
-			To(end.Format(time.RFC3339))).
-		Aggregation("count", agg).
+		Query(&types.Query{
+			Range: map[string]types.RangeQuery{
+				"timestamp": types.DateRangeQuery{
+					From: start.Format(time.RFC3339),
+					To:   end.Format(time.RFC3339),
+				},
+			},
+		}).
+		Aggregations(map[string]types.Aggregations{
+			"count": {
+				Range: &agg,
+			},
+		}).
 		Do(ctx)
 	if err != nil {
 		return []string{}, []int64{}, err
@@ -429,7 +539,7 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 	keys := []string{}
 	counts := []int64{}
 
-	termsAgg, found := queryResult.Aggregations.Terms("count")
+	termsAgg, found := queryResult.Aggregations["count"].(*types.RangeAggregate)
 	if !found {
 		// no count terms aggregation found, this probably mean the asset doesnt have any indices yet
 		return []string{}, []int64{}, nil
@@ -437,7 +547,7 @@ func CountTotalDataInRange(s *state.State, field string, start time.Time, end ti
 
 	timeFormat := "02 Jan 2006"
 	// unmarshal elasticsearch hits
-	for i, bucket := range termsAgg.Buckets {
+	for i, bucket := range termsAgg.Buckets.([]types.RangeBucket) {
 		// Create a condensed key name for ease of viewing
 		startRange := start.AddDate(0, 0, i*daysPerBar)
 		endRange := start.AddDate(0, 0, (i+1)*daysPerBar)

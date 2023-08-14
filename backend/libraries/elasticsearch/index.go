@@ -10,7 +10,7 @@ import "github.com/mcmaster-circ/canids-v2/backend/state"
 // return an error if the index cannot be created.
 func CreateIndex(s *state.State, indexName string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	_, err := client.CreateIndex(indexName).Do(ctx)
+	_, err := client.Indices.Create(indexName).Do(ctx)
 	return err
 }
 
@@ -18,6 +18,6 @@ func CreateIndex(s *state.State, indexName string) error {
 // return an error if the index cannot be deleted.
 func DeleteIndex(s *state.State, indexName string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	_, err := client.DeleteIndex(indexName).Do(ctx)
+	_, err := client.Indices.Delete(indexName).Do(ctx)
 	return err
 }

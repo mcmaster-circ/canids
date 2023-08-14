@@ -8,9 +8,10 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
-	"github.com/olivere/elastic"
 )
 
 const (
@@ -30,8 +31,11 @@ type DocumentAuth struct {
 // the newly created document ID or an error.
 func (d *DocumentAuth) Index(s *state.State) (string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
-	result, err := client.Index().Index(indexAuth).BodyJson(d).Do(ctx)
-	return result.Id, err
+	response, err := client.Index(indexAuth).Document(d).Do(ctx)
+	if err != nil {
+		return "", err
+	}
+	return response.Id_, err
 }
 
 // Update will attempt to update the document in the "auth" with the provided
@@ -39,14 +43,7 @@ func (d *DocumentAuth) Index(s *state.State) (string, error) {
 // be performed.
 func (d *DocumentAuth) Update(s *state.State, esDocID string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	_, err := client.Update().Index(indexAuth).Id(esDocID).
-		Doc(map[string]interface{}{
-			"uuid":      d.UUID,
-			"password":  d.Password,
-			"class":     d.Class,
-			"name":      d.Name,
-			"activated": d.Activated,
-		}).DetectNoop(true).Do(ctx)
+	_, err := client.Update(indexAuth, esDocID).Doc(d).Do(ctx)
 	return err
 }
 
@@ -58,31 +55,42 @@ func QueryAuthByUUID(s *state.State, uuid string) (DocumentAuth, string, error) 
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for user with provided uuid
-	termQuery := elastic.NewTermQuery("uuid.keyword", uuid)
-	result, err := client.Search().Index(indexAuth).Query(termQuery).Do(ctx)
+	res, err := client.Search().
+		Index(indexAuth).
+		Request(&search.Request{
+			Query: &types.Query{
+				Term: map[string]types.TermQuery{
+					"uuid.keyword": {Value: uuid},
+				},
+			},
+		}).Do(ctx)
 	if err != nil {
 		return d, "", err
 	}
+
 	// ensure user was returned
-	if result.Hits.TotalHits.Value == 0 {
+	if res.Hits.Total.Value == 0 {
 		return d, "", errors.New("auth: no document with uuid found")
 	}
 	// select + parse user into DocumentAuth
-	user := result.Hits.Hits[0]
-	err = json.Unmarshal(user.Source, &d)
-	if err != nil {
-		return d, "", err
-	}
+	user := res.Hits.Hits[0]
+	err = json.Unmarshal(user.Source_, &d)
+
 	// successful query
-	return d, user.Id, nil
+	return d, user.Id_, nil
 }
 
 // DeleteAuthByUUID will attempt to delete a document in the "auth" index with
 // the specified UUID. It may return an error if the deletion cannot be completed.
 func DeleteAuthByUUID(s *state.State, uuid string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	termQuery := elastic.NewTermQuery("uuid.keyword", uuid)
-	_, err := client.DeleteByQuery(indexAuth).Query(termQuery).Do(ctx)
+
+	_, err := client.DeleteByQuery(indexAuth).
+		Query(&types.Query{
+			Term: map[string]types.TermQuery{
+				"uuid.keyword": {Value: uuid},
+			},
+		}).Do(ctx)
 	return err
 }
 
@@ -91,8 +99,9 @@ func DeleteAuthByUUID(s *state.State, uuid string) error {
 // return an error if the password cannot be updated.
 func UpdatePassword(s *state.State, docID string, newPass string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
+
 	updates := map[string]interface{}{"password": newPass}
-	_, err := client.Update().Index(indexAuth).Id(docID).Doc(updates).Do(ctx)
+	_, err := client.Update(indexAuth, docID).Doc(updates).Do(ctx)
 	return err
 }
 
@@ -103,15 +112,17 @@ func AllAuth(s *state.State) ([]DocumentAuth, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for all documents
-	allQuery := elastic.NewMatchAllQuery()
-	results, err := client.Search().Index(indexAuth).Query(allQuery).Size(1000).Do(ctx)
+	results, err := client.Search().Index(indexAuth).
+		Query(&types.Query{
+			MatchAll: &types.MatchAllQuery{},
+		}).Size(1000).Do(ctx)
 	if err != nil {
 		return nil, err
 	}
 	// parse document into DocumentAuth, append to out
 	for _, document := range results.Hits.Hits {
 		var d DocumentAuth
-		err := json.Unmarshal(document.Source, &d)
+		err := json.Unmarshal(document.Source_, &d)
 		if err != nil {
 			return nil, err
 		}

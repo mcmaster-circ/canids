@@ -102,7 +102,7 @@ func dataHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.
 			keys, counts, err = elasticsearch.CountDataInRange(s, indexName, view.Fields[0], start, end)
 		}
 		if err != nil {
-			l.Error("error querying data conn: ", err)
+			l.Error("error querying data conn1: ", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(InternalServerError)
 			return

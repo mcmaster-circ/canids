@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.6.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
     container_name: elasticsearch
     env_file:
       - config/config.env
@@ -28,7 +28,7 @@ services:
       - elasticsearch:/usr/share/elasticsearch/data
 
   kibana:
-    image: docker.elastic.co/kibana/kibana-oss:7.6.0
+    image: docker.elastic.co/kibana/kibana:8.9.0
     container_name: kibana
     depends_on:
       - elasticsearch
@@ -54,64 +54,62 @@ services:
         soft: 65536
         hard: 65536
 
-  # canids-v2-backend:
-  #   build:
-  #     context: .
-  #     dockerfile: backend/Dockerfile
-  #   image: mcmaster-circ/canids-v2-backend
-  #   container_name: canids-v2-backend
-  #   depends_on:
-  #     - elasticsearch
-  #   env_file:
-  #     - config/config.env
-  #     - config/secret.env
-  #   expose:
-  #     - 6060 # internal HTTP port
-  #     - 50000 # grpc
-  #   ports:
-  #     - 6060:6060
-  #     - 50000:50000
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "1m"
-  #       max-file: "5"
-  #   networks:
-  #     - vlan
-  #   restart: unless-stopped
-  #   security_opt:
-  #     - apparmor:unconfined
-  #   volumes:
-  #     - ./cert:/cert
+  canids-v2-backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: mcmaster-circ/canids-v2-backend
+    container_name: canids-v2-backend
+    depends_on:
+      - elasticsearch
+    env_file:
+      - config/config.env
+      - config/secret.env
+    expose:
+      - 6060 # internal HTTP port
+    ports:
+      - 6060:6060
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "5"
+    networks:
+      - vlan
+    restart: unless-stopped
+    secrets:
+      - canids_server_cert
+      - canids_server_key
+    security_opt:
+      - apparmor:unconfined
 
-  # canids-v2-frontend:
-  #   build:
-  #     context: .
-  #     dockerfile: frontend/Dockerfile
-  #   image: mcmaster-circ/canids-v2-frontend
-  #   container_name: canids-v2-frontend
-  #   depends_on:
-  #     - canids-v2-backend
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "1m"
-  #       max-file: "5"
-  #   networks:
-  #     - vlan
-  #   ports:
-  #     - 80:80 # external HTTP port
-  #     - 443:443 # external HTTPS port
-  #   restart: unless-stopped
-  #   security_opt:
-  #     - apparmor:unconfined
-  #   ulimits:
-  #     nofile:
-  #       soft: 65536
-  #       hard: 65536
-  #   volumes:
-  #     - ./Caddyfile:/etc/Caddyfile
-  #     - caddy:/root/.caddy
+  canids-v2-frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: mcmaster-circ/canids-v2-frontend
+    container_name: canids-v2-frontend
+    depends_on:
+      - canids-v2-backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "5"
+    networks:
+      - vlan
+    ports:
+      - 80:80 # external HTTP port
+    restart: unless-stopped
+    security_opt:
+      - apparmor:unconfined
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - caddy:/data
+      - ./config/Caddyfile-dev:/etc/caddy/Caddyfile
 
   swagger:
     image: swaggerapi/swagger-ui
@@ -141,3 +139,9 @@ networks:
 volumes:
   caddy:
   elasticsearch:
+
+secrets:
+  canids_server_cert:
+    file: ./cert/server-cert.pem
+  canids_server_key:
+    file: ./cert/server-key.pem
