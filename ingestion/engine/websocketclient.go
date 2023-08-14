@@ -18,7 +18,7 @@ import (
 )
 
 type Message struct {
-	MsgType int    `json:"type,omitempty"` // Message type: 0 - Misc, 1 - Ping
+	MsgType int    `json:"type,omitempty"` // Message type: 0 - Misc, 1 - Ping, 2 - connection success
 	Msg     string `json:"msg,omitempty"`
 }
 
@@ -90,6 +90,20 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
 	wsjson.Write(ctx, conn, msg)
 	cancel()
+
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+	err = wsjson.Read(ctx, conn, &msg)
+	if err != nil {
+		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
+		return err
+	}
+	cancel()
+
+	if msg.MsgType != 2 {
+		err = errNoSuccess
+		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
+		return err
+	}
 
 	//Success message
 

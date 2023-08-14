@@ -28,7 +28,7 @@ type Header struct {
 	MsgTimestamp time.Time `json:"msg_timestamp,omitempty"` // Message timestamp
 	ErrorMsg     string    `json:"error_msg,omitempty"`     // Request error message(s) (use with NACK)
 	Session      string    `json:"session,omitempty"`       // Connection session UUID
-	MsgType      int       `json:"type,omitempty"`          // Message type: 0 - data, 1 - pong
+	MsgType      int       `json:"type,omitempty"`          // Message type: 0 - data, 1 - pong, 2 - connection success
 	Encrypted    bool      `json:"encrypted,omitempty"`     // Whether the payload is encrypted (true) or not (false)
 }
 
@@ -133,6 +133,14 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		log.Println("Data received does not equal original data")
 		return
 	}
+
+	successMsg := Message{
+		MsgType: 2,
+		Msg:     "",
+	}
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+	wsjson.Write(ctx, conn, successMsg)
+	cancel()
 
 	log.Println("Successful connection with: ", ingestion.UUID)
 

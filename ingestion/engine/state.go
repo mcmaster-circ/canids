@@ -55,6 +55,7 @@ var (
 	errBadJSON        = errors.New("[CanIDS] error: malformed JSON")
 	errBadTSV         = errors.New("[CanIDS] error: malformed TSV")
 	errBadKey         = errors.New("[CanIDS] error: must provide valid encryption key")
+	errNoSuccess      = errors.New("Success message not received")
 )
 
 // fileMode indicates if a single regular file or directory was passed
