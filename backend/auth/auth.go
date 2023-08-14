@@ -5,8 +5,8 @@
 package auth
 
 import (
-	"crypto/rand"
-	"encoding/base64"
+	// "io/ioutil"
+	// "os"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -41,6 +41,15 @@ func Provision(s *state.State) (*jwtauth.Config, error) {
 	var err error
 	var a *jwtauth.Config
 
+	err = elasticsearch.CreateIndex(s, "auth")
+	if err != nil {
+		// return setup page with general error
+		s.Log.Error("[Default user setup] cannot create 'auth' index ", err)
+		return nil, err
+	}
+
+	s.AuthReady = true
+
 	s.Log.Info("[api] initializing authentication secret")
 	secret, err := jwtauth.GenerateSeed(SecretLength)
 	if err != nil {
@@ -55,62 +64,6 @@ func Provision(s *state.State) (*jwtauth.Config, error) {
 	}
 
 	return a, nil
-}
-
-func DefaultUserSetup(s *state.State, a *jwtauth.Config) {
-
-	err := elasticsearch.CreateIndex(s, "auth")
-	if err != nil {
-		// return setup page with general error
-		s.Log.Error("[Default user setup] cannot create 'auth' index ", err)
-		return
-	}
-
-	// Create default random password
-	password, err := randomPass(32)
-	if err != nil {
-		s.Log.Error("[Default user setup] Failed to generate random password")
-		return
-	} else {
-		s.Log.Info("[Default user setup] Default password: ", password)
-
-	}
-
-	// Hash and salt random password
-	hashedPass, err := jwtauth.HashPassword(password)
-	if err != nil {
-		s.Log.Error("[Default user setup] Failed to hash password")
-		return
-	}
-
-	user := elasticsearch.DocumentAuth{
-		Name:      "Admin",
-		UUID:      "admin@system.test",
-		Class:     jwtauth.UserAdmin,
-		Password:  hashedPass,
-		Activated: true,
-	}
-
-	_, err = user.Index(s)
-	if err != nil {
-		s.Log.Error("[Default user setup] cannot index user", err)
-		return
-	}
-
-	s.AuthReady = true
-
-	s.Log.Info("[Default user setup] created new default admin user. Scroll up to find password. Email is admin@system.test")
-}
-
-func randomPass(n int) (string, error) {
-	bytes := make([]byte, n)
-	_, err := rand.Read(bytes)
-
-	if err != nil {
-		return "", err
-	}
-
-	return base64.URLEncoding.EncodeToString(bytes), err
 }
 
 //  EXTRA STUFF TO FACILITATE BACKEND HOSTED LOGIN WHILE TRANSITIONING TO ENDPOINTS

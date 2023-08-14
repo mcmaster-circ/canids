@@ -42,9 +42,6 @@ func main() {
 		s.Log.Fatal(err)
 	}
 
-	// create default user
-	auth.DefaultUserSetup(s, a)
-
 	p := auth.ProvisionAuthPage(s)
 
 	// start API server
