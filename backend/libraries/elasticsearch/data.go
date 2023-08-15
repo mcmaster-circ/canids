@@ -252,13 +252,13 @@ func GetAlarms(s *state.State, indices []string, sources []string, destinations 
 
 	sourceIPQuery := types.Query{
 		MatchPhrasePrefix: map[string]types.MatchPhrasePrefixQuery{
-			"id_orig_h": *&types.MatchPhrasePrefixQuery{Query: sourceIP},
+			"id_orig_h": {Query: sourceIP},
 		},
 	}
 
 	destIPQuery := types.Query{
 		MatchPhrasePrefix: map[string]types.MatchPhrasePrefixQuery{
-			"id_resp_h": types.MatchPhrasePrefixQuery{Query: destIP},
+			"id_resp_h": {Query: destIP},
 		},
 	}
 

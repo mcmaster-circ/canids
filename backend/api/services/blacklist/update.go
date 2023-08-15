@@ -79,7 +79,7 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 		return
 	}
 
-	// ensure request name is unique
+	// ensure request name and url is unique
 	for _, blacklist := range blacklists {
 		if request.Name == blacklist.Name {
 			l.Warn("blacklist name in use")
@@ -87,6 +87,17 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 			out := GeneralResponse{
 				Success: false,
 				Message: "Blacklist name already in use.",
+			}
+			json.NewEncoder(w).Encode(out)
+			return
+		}
+
+		if request.URL == blacklist.URL {
+			l.Warn("blacklist url in use")
+			w.WriteHeader(http.StatusBadRequest)
+			out := GeneralResponse{
+				Success: false,
+				Message: "Blacklist url already in use.",
 			}
 			json.NewEncoder(w).Encode(out)
 			return
