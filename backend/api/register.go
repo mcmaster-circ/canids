@@ -58,7 +58,9 @@ func registerRoutes(s *state.State, a *jwtauth.Config, p *authUtils.State, unsec
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())
 
+	// Register ws for ingestion
 	websocket.RegisterWS(s, unsecure.PathPrefix("/websocket/").Subrouter())
 
+	// Register functions for updating ingestion
 	websocket.RegisterUpdateFunctions(s, secure.PathPrefix("/ingestion/").Subrouter())
 }

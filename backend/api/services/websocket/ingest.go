@@ -97,7 +97,8 @@ func ingest(frame *Frame, state *state.State, maxIndexSize int) {
 
 		// Not found locally
 		if selectedIndex == "" {
-			elasticIndices, err := client.IndexGet(fmt.Sprintf("data-%s-%s-*", getElasticIndex(frame.FileName), frame.AssetID)).Do(ctx)
+
+			elasticIndices, err := client.Indices.Get(fmt.Sprintf("data-%s-%s-*", getElasticIndex(frame.FileName), frame.AssetID)).Do(ctx)
 			if err != nil {
 				state.Log.WithFields(logrus.Fields{
 					"file_name": frame.FileName,
@@ -131,16 +132,17 @@ func ingest(frame *Frame, state *state.State, maxIndexSize int) {
 				if highestIndexNum > 0 {
 					selectedIndex = fmt.Sprintf("data-%s-%s-%d", getElasticIndex(frame.FileName), frame.AssetID, highestIndexNum)
 
-					currentSize, err := client.Count(selectedIndex).Do(ctx)
+					currentSize, err := client.Count().Index(selectedIndex).Do(ctx)
 					if err != nil {
 						state.Log.WithFields(logrus.Fields{
 							"file_name": frame.FileName,
 							"index":     selectedIndex,
 						}).Errorf("Error getting current size of index: %s", err)
 					} else {
+						currentSizeCount := currentSize.Count
 						// Size check
-						if currentSize < int64(maxSize) {
-							activeIndices[selectedIndex] = int(currentSize)
+						if currentSizeCount < int64(maxSize) {
+							activeIndices[selectedIndex] = int(currentSizeCount)
 						} else {
 							highestIndexNum += 1
 							selectedIndex = fmt.Sprintf("data-%s-%s-%d", getElasticIndex(frame.FileName), frame.AssetID, highestIndexNum)
@@ -194,7 +196,7 @@ func ingest(frame *Frame, state *state.State, maxIndexSize int) {
 
 			// Not found locally
 			if selectedAlarmIndex == "" {
-				elasticIndices, err := client.IndexGet(fmt.Sprintf("data-%s.alarm-%s-*", getElasticIndex(frame.FileName), frame.AssetID)).Do(ctx)
+				elasticIndices, err := client.Indices.Get(fmt.Sprintf("data-%s.alarm-%s-*", getElasticIndex(frame.FileName), frame.AssetID)).Do(ctx)
 				if err != nil {
 					state.Log.WithFields(logrus.Fields{
 						"file_name": frame.FileName + ".alarm",
@@ -228,7 +230,7 @@ func ingest(frame *Frame, state *state.State, maxIndexSize int) {
 					if highestIndexNum > 0 {
 						selectedAlarmIndex = fmt.Sprintf("data-%s.alarm-%s-%d", getElasticIndex(frame.FileName), frame.AssetID, highestIndexNum)
 
-						currentSize, err := client.Count(selectedAlarmIndex).Do(ctx)
+						currentSize, err := client.Count().Index(selectedAlarmIndex).Do(ctx)
 						if err != nil {
 							state.Log.WithFields(logrus.Fields{
 								"file_name": frame.FileName,
@@ -236,8 +238,9 @@ func ingest(frame *Frame, state *state.State, maxIndexSize int) {
 							}).Errorf("Error getting current size of index: %s", err)
 						} else {
 							// Size check
-							if currentSize < int64(maxSize) {
-								activeAlarmIndices[selectedAlarmIndex] = int(currentSize)
+							currentSizeCount := currentSize.Count
+							if currentSizeCount < int64(maxSize) {
+								activeAlarmIndices[selectedAlarmIndex] = int(currentSizeCount)
 							} else {
 								highestIndexNum += 1
 								selectedAlarmIndex = fmt.Sprintf("data-%s.alarm-%s-%d", getElasticIndex(frame.FileName), frame.AssetID, highestIndexNum)

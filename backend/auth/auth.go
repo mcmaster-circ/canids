@@ -13,7 +13,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 	"github.com/tdewolff/minify"
@@ -40,13 +39,6 @@ func Provision(s *state.State) (*jwtauth.Config, error) {
 	// empty API state
 	var err error
 	var a *jwtauth.Config
-
-	err = elasticsearch.CreateIndex(s, "auth")
-	if err != nil {
-		// return setup page with general error
-		s.Log.Error("[Default user setup] cannot create 'auth' index ", err)
-		return nil, err
-	}
 
 	s.AuthReady = true
 

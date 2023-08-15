@@ -203,7 +203,7 @@ func ListDataAssets(s *state.State) ([]string, error) {
 }
 
 // get alarms for a given asset in a given time range from a
-func GetAlarms(s *state.State, indices []string, sources []string, start time.Time, end time.Time, size int, from int) ([]Alarm, int, error) {
+func GetAlarms(s *state.State, indices []string, sources []string, destinations []string, start time.Time, end time.Time, size int, from int, sourceIP string, destIP string) ([]Alarm, int, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// return empty array if no sources or indices
@@ -214,6 +214,11 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 	alarmSources := make([]interface{}, len(sources))
 	for i, source := range sources {
 		alarmSources[i] = source
+	}
+
+	alarmDestinations := make([]interface{}, len(destinations))
+	for i, destination := range destinations {
+		alarmDestinations[i] = destination
 	}
 
 	for i, index := range indices {
@@ -240,14 +245,20 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 	respSources := types.Query{
 		Terms: &types.TermsQuery{
 			TermsQuery: map[string]types.TermsQueryField{
-				"id_resp_h_pos": sources,
+				"id_resp_h_pos": destinations,
 			},
 		},
 	}
 
-	hasSource := types.Query{
-		Bool: &types.BoolQuery{
-			Should: []types.Query{origSources, respSources},
+	sourceIPQuery := types.Query{
+		MatchPhrasePrefix: map[string]types.MatchPhrasePrefixQuery{
+			"id_orig_h": *&types.MatchPhrasePrefixQuery{Query: sourceIP},
+		},
+	}
+
+	destIPQuery := types.Query{
+		MatchPhrasePrefix: map[string]types.MatchPhrasePrefixQuery{
+			"id_resp_h": types.MatchPhrasePrefixQuery{Query: destIP},
 		},
 	}
 
@@ -256,18 +267,22 @@ func GetAlarms(s *state.State, indices []string, sources []string, start time.Ti
 		Bool: &types.BoolQuery{
 			Must: []types.Query{
 				r,
-				hasSource,
+				origSources,
+				respSources,
+				sourceIPQuery,
+				destIPQuery,
 			},
 		},
 	}
 	queryResult, err := client.Search().Index(strings.Join(indices, ",")).
 		Query(query).Sort(types.SortOptions{
-			SortOptions: map[string]types.FieldSort{
-				"timestamp": {
-					Order: &sortorder.Desc,
-				},
+		SortOptions: map[string]types.FieldSort{
+			"timestamp": {
+				Order: &sortorder.Desc,
 			},
-		}).Size(size).From(from).Do(ctx)
+		},
+	}).Size(size).From(from).Do(ctx)
+
 	if err != nil {
 		return []Alarm{}, 0, err
 	}

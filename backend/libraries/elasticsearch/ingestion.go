@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/refresh"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
@@ -17,8 +18,8 @@ const indexIngestion = "ingestion"
 
 func (d *DocumentIngestion) Index(s *state.State) (string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
-	result, err := client.Index().Index(indexIngestion).BodyJson(d).Do(ctx)
-	return result.Id, err
+	result, err := client.Index(indexIngestion).Document(d).Refresh(refresh.True).Do(ctx)
+	return result.Id_, err
 }
 
 func QueryIngestionByUUID(s *state.State, uuid string) (DocumentIngestion, error) {
@@ -35,12 +36,12 @@ func QueryIngestionByUUID(s *state.State, uuid string) (DocumentIngestion, error
 		return d, err
 	}
 	// ensure ingestion was returned
-	if result.Hits.TotalHits.Value == 0 {
+	if result.Hits.Total.Value == 0 {
 		return d, errors.New("ingestion: no document with uuid found")
 	}
 	// select + parse ingestion into DocumentIngestion
 	ingestion := result.Hits.Hits[0]
-	err = json.Unmarshal(ingestion.Source, &d)
+	err = json.Unmarshal(ingestion.Source_, &d)
 	if err != nil {
 		return d, err
 	}

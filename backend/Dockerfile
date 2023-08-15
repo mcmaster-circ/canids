@@ -7,7 +7,6 @@ RUN apk --no-cache add ca-certificates tzdata git
 # builder w/ git injection
 FROM goalpine as build
 COPY backend/ /project
-COPY protocol/ /protocol
 COPY .git/ /project/.git/
 WORKDIR /project
 RUN go mod vendor
@@ -19,7 +18,6 @@ FROM alpine
 RUN adduser -D -g '' gopher
 RUN mkdir /storage
 RUN chown gopher:gopher /storage
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /project /project
