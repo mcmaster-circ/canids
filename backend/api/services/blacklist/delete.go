@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/utils"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
@@ -54,12 +55,13 @@ func deleteHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 	}
 
 	// ensure field is specified
-	if request.UUID == "" {
+	err = utils.ValidateBasic(request.UUID)
+	if err != nil {
 		l.Warn("uuid field not specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "Must specify UUID field.",
+			Message: "UUID " + err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 		return

@@ -8,10 +8,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"regexp"
 	"time"
-	"unicode"
 
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/utils"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/email"
@@ -61,35 +60,41 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		return
 	}
 	// ensure all fields are present
-	if request.Name == "" || request.UUID == "" || request.Class == "" {
+	err = utils.ValidateBasic(request.UUID)
+	if err != nil {
 		l.Warn("not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "All fields must be specified.",
+			Message: "UUID " + err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+	err = utils.ValidateBasic(request.Name)
+	if err != nil {
+		l.Warn("not all fields specified")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Name " + err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+	err = utils.ValidateBasic(request.Class)
+	if err != nil {
+		l.Warn("not all fields specified")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Class " + err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 		return
 	}
 
-	// Ensure name of user is not beginning or ending in whitespace
-	for i, character := range request.Name {
-
-		if unicode.IsSpace(character) {
-			if i == 0 || i == (len(request.Name)-1) {
-				l.Warn("Name cannot begin or end in whitespace")
-				w.WriteHeader(http.StatusBadRequest)
-				out := GeneralResponse{
-					Success: false,
-					Message: "Name cannot begin or end in whitespace",
-				}
-				json.NewEncoder(w).Encode(out)
-				return
-			}
-		}
-	}
-
-	validEmail := IsValidEmail(request.UUID)
+	validEmail := utils.ValidEmail(request.UUID)
 	if !validEmail {
 		l.Warn("invalid email")
 		w.WriteHeader(http.StatusBadRequest)
@@ -171,16 +176,4 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		Message: "The user account has been successfully created. The user has been emailed to complete account activation.",
 	}
 	json.NewEncoder(w).Encode(out)
-}
-
-func IsValidEmail(email string) bool {
-	// Regular expression pattern for email validation
-	pattern := `^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`
-
-	match, err := regexp.MatchString(pattern, email)
-	if err != nil {
-		return false
-	}
-
-	return match
 }

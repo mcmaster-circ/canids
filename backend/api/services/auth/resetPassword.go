@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/utils"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
@@ -74,13 +75,26 @@ func resetHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *h
 		return
 	}
 
-	// Check that passwords are not empty
-	if request.Password == "" || request.PasswordConfirm == "" {
+	// Validate passwords
+	err = utils.ValidateBasic(request.Password)
+	if err != nil {
 		l.Info("[reset] not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "All fields must be specified",
+			Message: "Fields " + err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	err = utils.ValidateBasic(request.PasswordConfirm)
+	if err != nil {
+		l.Info("[reset] not all fields specified")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Fields " + err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 		return

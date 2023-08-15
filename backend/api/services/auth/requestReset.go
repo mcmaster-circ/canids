@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/utils"
 	"github.com/mcmaster-circ/canids-v2/backend/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
@@ -47,12 +48,13 @@ func requestResetHandler(s *state.State, a *jwtauth.Config, w http.ResponseWrite
 	}
 
 	// Ensure email is entered
-	if request.UUID == "" {
+	err = utils.ValidateBasic(request.UUID)
+	if err != nil {
 		l.Info("[request reset] password reset email not specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "An email must be specified.",
+			Message: "Email " + err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 		return

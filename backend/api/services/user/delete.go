@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/utils"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
@@ -52,17 +53,19 @@ func deleteHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 		json.NewEncoder(w).Encode(out)
 		return
 	}
-	// ensure email field is present
-	if request.UUID == "" {
-		l.Warn("uuid field not specified")
+	// ensure uuid present
+	err = utils.ValidateBasic(request.UUID)
+	if err != nil {
+		l.Warn("not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "UUID field must be specified.",
+			Message: "UUID " + err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 		return
 	}
+
 	// user cannot delete self
 	if current.UUID == request.UUID {
 		l.Warn("user attempting to delete self")

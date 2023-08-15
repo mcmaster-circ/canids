@@ -7,13 +7,10 @@ package blacklist
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
-	"strings"
-	"unicode"
 
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/utils"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
@@ -62,23 +59,33 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		return
 	}
 
-	//ensure that the blacklist name is not " " or "  "
-	trimmed := strings.TrimSpace(request.Name)
-
-	// ensure name is not empty
-	if request.Name == "" || len(trimmed) == 0 {
-		l.Warn("blacklist name not specified specified")
+	// Validate name and url
+	err = utils.ValidateBasic(request.Name)
+	if err != nil {
+		l.Warn("invalid request format: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "Name field must be specified.",
+			Message: "Name " + err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	err = utils.ValidateBasic(request.URL)
+	if err != nil {
+		l.Warn("invalid request format: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "URL " + err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 		return
 	}
 
 	_, err = url.ParseRequestURI(request.URL)
-	validUrl := validateURLforIPAddr(request.URL)
+	validUrl := utils.ValidateURLforIPAddr(request.URL)
 
 	if err != nil || !validUrl {
 		l.Warn("blacklist url not valid")
@@ -89,40 +96,6 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		}
 		json.NewEncoder(w).Encode(out)
 		return
-	}
-
-	// Ensure name of blacklist is not beginning or ending in whitespace
-	for i, character := range request.Name {
-
-		if unicode.IsSpace(character) {
-			if i == 0 || i == (len(request.Name)-1) {
-				l.Warn("Blacklist name cannot begin or end in whitespace")
-				w.WriteHeader(http.StatusBadRequest)
-				out := GeneralResponse{
-					Success: false,
-					Message: "Blacklist name cannot begin or end in whitespace",
-				}
-				json.NewEncoder(w).Encode(out)
-				return
-			}
-		}
-	}
-
-	// Ensure url of blacklist is not beginning or ending in whitespace
-	for i, character := range request.URL {
-
-		if unicode.IsSpace(character) {
-			if i == 0 || i == (len(request.Name)-1) {
-				l.Warn("Blacklist url cannot begin or end in whitespace")
-				w.WriteHeader(http.StatusBadRequest)
-				out := GeneralResponse{
-					Success: false,
-					Message: "Blacklist url cannot begin or end in whitespace",
-				}
-				json.NewEncoder(w).Encode(out)
-				return
-			}
-		}
 	}
 
 	// generate new blacklist
@@ -186,34 +159,4 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		Message: "Blacklist successfully created.",
 	}
 	json.NewEncoder(w).Encode(out)
-}
-
-func validateURLforIPAddr(url string) bool {
-	response, err := http.Get(url)
-	if err != nil {
-		return false
-	}
-	defer response.Body.Close()
-
-	// Read the response body
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return false
-	}
-
-	// Extract IP addresses from the response body
-	ipList := strings.Split(string(body), "\n")
-
-	for _, ipAddress := range ipList {
-		if len(ipAddress) == 0 {
-			continue
-		}
-		if len(ipAddress) > 0 && string(ipAddress[0]) == "#" {
-			continue
-		}
-		if net.ParseIP(ipAddress) == nil {
-			return false
-		}
-	}
-	return true
 }

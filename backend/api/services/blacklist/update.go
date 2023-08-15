@@ -9,9 +9,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
-	"strings"
 	"unicode"
 
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/utils"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
@@ -57,23 +57,44 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 		return
 	}
 
-	//ensure that the blacklist name is not " " or "  "
-	trimmed := strings.TrimSpace(request.Name)
-
-	// ensure all fields are specified
-	if request.Name == "" || request.UUID == "" || len(trimmed) == 0 {
+	err = utils.ValidateBasic(request.Name)
+	if err != nil {
 		l.Warn("not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "All fields must be specified.",
+			Message: "Name " + err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	err = utils.ValidateBasic(request.UUID)
+	if err != nil {
+		l.Warn("not all fields specified")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "UUID " + err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	err = utils.ValidateBasic(request.URL)
+	if err != nil {
+		l.Warn("not all fields specified")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "URL " + err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 		return
 	}
 
 	_, err = url.ParseRequestURI(request.URL)
-	validUrl := validateURLforIPAddr(request.URL)
+	validUrl := utils.ValidateURLforIPAddr(request.URL)
 
 	if err != nil || !validUrl {
 		l.Warn("blacklist url not valid")

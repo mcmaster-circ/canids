@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/utils"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
@@ -39,12 +40,49 @@ func registerUserHandler(s *state.State, a *jwtauth.Config, w http.ResponseWrite
 	}
 
 	// Validate all fields
-	if request.Name == "" || request.UUID == "" || request.Password == "" || request.PasswordConfirm == "" {
+	err = utils.ValidateBasic(request.Name)
+	if err != nil {
 		l.Info("[register] not all fields specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "All fields must be specified.",
+			Message: "Fields " + err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	err = utils.ValidateBasic(request.UUID)
+	if err != nil {
+		l.Info("[register] not all fields specified")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Fields " + err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	err = utils.ValidateBasic(request.Password)
+	if err != nil {
+		l.Info("[register] not all fields specified")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Fields " + err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	err = utils.ValidateBasic(request.PasswordConfirm)
+	if err != nil {
+		l.Info("[register] not all fields specified")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Fields " + err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 		return
