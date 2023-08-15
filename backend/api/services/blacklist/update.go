@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strings"
 	"unicode"
 
@@ -71,13 +72,15 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 		return
 	}
 
-	//ensure url is not empty
-	if request.URL == "" {
-		l.Warn("blacklist url not specified specified")
+	_, err = url.ParseRequestURI(request.URL)
+	validUrl := validateURLforIPAddr(request.URL)
+
+	if err != nil || !validUrl {
+		l.Warn("blacklist url not valid")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "Url field must be specified.",
+			Message: "Invalid URL.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return

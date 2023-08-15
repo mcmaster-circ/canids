@@ -7,7 +7,10 @@ package blacklist
 import (
 	"context"
 	"encoding/json"
+	"io/ioutil"
+	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"unicode"
 
@@ -74,13 +77,15 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		return
 	}
 
-	//ensure url is not empty
-	if request.URL == "" {
-		l.Warn("blacklist url not specified specified")
+	_, err = url.ParseRequestURI(request.URL)
+	validUrl := validateURLforIPAddr(request.URL)
+
+	if err != nil || !validUrl {
+		l.Warn("blacklist url not valid")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "Url field must be specified.",
+			Message: "Invalid URL.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return
@@ -181,4 +186,34 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		Message: "Blacklist successfully created.",
 	}
 	json.NewEncoder(w).Encode(out)
+}
+
+func validateURLforIPAddr(url string) bool {
+	response, err := http.Get(url)
+	if err != nil {
+		return false
+	}
+	defer response.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return false
+	}
+
+	// Extract IP addresses from the response body
+	ipList := strings.Split(string(body), "\n")
+
+	for _, ipAddress := range ipList {
+		if len(ipAddress) == 0 {
+			continue
+		}
+		if len(ipAddress) > 0 && string(ipAddress[0]) == "#" {
+			continue
+		}
+		if net.ParseIP(ipAddress) == nil {
+			return false
+		}
+	}
+	return true
 }

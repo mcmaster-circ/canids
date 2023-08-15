@@ -3,6 +3,7 @@ package scheduler
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -125,7 +126,10 @@ func getIPsFromText(text string) []string {
 		if len(line) > 0 && string(line[0]) == "#" {
 			continue
 		}
-		results = append(results, line)
+		//validate line is valid ip
+		if net.ParseIP(line) != nil {
+			results = append(results, line)
+		}
 	}
 	return results
 }
