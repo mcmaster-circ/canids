@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"unicode"
 
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
@@ -70,6 +71,52 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 		return
 	}
 
+	//ensure url is not empty
+	if request.URL == "" {
+		l.Warn("blacklist url not specified specified")
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Url field must be specified.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	// Ensure name of blacklist is not beginning or ending in whitespace
+	for i, character := range request.Name {
+
+		if unicode.IsSpace(character) {
+			if i == 0 || i == (len(request.Name)-1) {
+				l.Warn("Blacklist name cannot begin or end in whitespace")
+				w.WriteHeader(http.StatusBadRequest)
+				out := GeneralResponse{
+					Success: false,
+					Message: "Blacklist name cannot begin or end in whitespace",
+				}
+				json.NewEncoder(w).Encode(out)
+				return
+			}
+		}
+	}
+
+	// Ensure url of blacklist is not beginning or ending in whitespace
+	for i, character := range request.URL {
+
+		if unicode.IsSpace(character) {
+			if i == 0 || i == (len(request.Name)-1) {
+				l.Warn("Blacklist url cannot begin or end in whitespace")
+				w.WriteHeader(http.StatusBadRequest)
+				out := GeneralResponse{
+					Success: false,
+					Message: "Blacklist url cannot begin or end in whitespace",
+				}
+				json.NewEncoder(w).Encode(out)
+				return
+			}
+		}
+	}
+
 	// retreive all blacklists
 	blacklists, err := elasticsearch.AllBlacklists(s)
 	if err != nil {
@@ -81,7 +128,7 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 
 	// ensure request name and url is unique
 	for _, blacklist := range blacklists {
-		if request.Name == blacklist.Name {
+		if request.Name == blacklist.Name && blacklist.UUID != request.UUID {
 			l.Warn("blacklist name in use")
 			w.WriteHeader(http.StatusBadRequest)
 			out := GeneralResponse{

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+	"unicode"
 
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
@@ -69,6 +70,23 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		}
 		json.NewEncoder(w).Encode(out)
 		return
+	}
+
+	// Ensure name of user is not beginning or ending in whitespace
+	for i, character := range request.Name {
+
+		if unicode.IsSpace(character) {
+			if i == 0 || i == (len(request.Name)-1) {
+				l.Warn("Name cannot begin or end in whitespace")
+				w.WriteHeader(http.StatusBadRequest)
+				out := GeneralResponse{
+					Success: false,
+					Message: "Name cannot begin or end in whitespace",
+				}
+				json.NewEncoder(w).Encode(out)
+				return
+			}
+		}
 	}
 
 	validEmail := IsValidEmail(request.UUID)
