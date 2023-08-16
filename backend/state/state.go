@@ -13,12 +13,11 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/ainsleyclark/go-mail/mail"
 	"github.com/joho/godotenv"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ipsetmgr"
 	"github.com/olivere/elastic/v7"
 	"github.com/oschwald/geoip2-golang"
-	"github.com/sendgrid/sendgrid-go"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -39,15 +38,16 @@ var (
 
 // State is the global state for the backend.
 type State struct {
-	Hash       string           // Hash is the hash of the latest Git commit
-	Log        *log.Logger      // Log is a structured event logger
-	Start      time.Time        // Start is the start time of the backend
-	IsDocker   bool             // IsDocker indicates if running inside Docker
-	Config     *Config          // Config contains global configuration
-	Elastic    *elastic.Client  // Elastic is the Elasticsearch client state
-	ElasticCtx context.Context  // ElasticCtx is the Elasticsearch client context
-	AuthReady  bool             // AuthReady is if the "auth" index exists
-	SendGrid   *sendgrid.Client // SendGrid is the email client
+	Hash       string          // Hash is the hash of the latest Git commit
+	Log        *log.Logger     // Log is a structured event logger
+	Start      time.Time       // Start is the start time of the backend
+	IsDocker   bool            // IsDocker indicates if running inside Docker
+	Config     *Config         // Config contains global configuration
+	Elastic    *elastic.Client // Elastic is the Elasticsearch client state
+	ElasticCtx context.Context // ElasticCtx is the Elasticsearch client context
+	AuthReady  bool            // AuthReady is if the "auth" index exists
+	Settings   *Settings
+	Mailer     mail.Mailer
 
 	GeoIPASN     *geoip2.Reader // GeoIPASN is the GeoIP ASN database
 	GeoIPCity    *geoip2.Reader // GeoIPCity is the geoIP City database
@@ -89,15 +89,14 @@ func Provision(gitHash string) (*State, error) {
 		return &s, err
 	}
 
+	// generate Settings in State
+	s.Log.Info("[state] initializing settings in state")
+	err = s.settings()
+
 	// generate AuthReady in State
 	if err := checkAuthReady(&s); err != nil {
 		s.Log.Error("[state] failed to check if Elasticsearch 'auth' index exists")
 		return &s, err
-	}
-
-	// generate SendGrid in State
-	if s.Config.SendGridToken != "" {
-		s.SendGrid = sendgrid.NewSendClient(s.Config.SendGridToken)
 	}
 
 	// generate GeoIP entryes in state
@@ -126,11 +125,7 @@ func (s *State) config() error {
 		if err != nil {
 			return err
 		}
-		secretPath, err := filepath.Abs("../config/secret.env")
-		if err != nil {
-			return err
-		}
-		err = godotenv.Load(configPath, secretPath)
+		err = godotenv.Load(configPath)
 		if err != nil {
 			return err
 		}
@@ -196,6 +191,11 @@ func (s *State) elasticsearch() error {
 	return nil
 }
 
+func (s *State) settings() error {
+	s.Settings = &Settings{}
+	return s.Settings.init(s)
+}
+
 // checkAuthReady attempts to populate the AuthReady field in State. It checks
 // if the "auth" index is created. If the existence of the index can not be
 // checked, an error will be returned.
@@ -247,17 +247,6 @@ func (s *State) geoIP() error {
 		return err
 	}
 	s.GeoIPCountry = db
-
-	return nil
-}
-
-// SendEmail sends an email using sendgrid if a sendgrid token was provided,
-// otherwise no-ops
-func (s *State) SendEmail(message *mail.SGMailV3) error {
-	if s.SendGrid != nil {
-		_, err := s.SendGrid.Send(message)
-		return err
-	}
 
 	return nil
 }

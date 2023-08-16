@@ -10,6 +10,7 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/assets"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/auth"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/blacklist"
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/configuration"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/dashboard"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/data"
 	"github.com/mcmaster-circ/canids-v2/backend/api/services/fields"
@@ -53,6 +54,9 @@ func registerRoutes(s *state.State, a *jwtauth.Config, p *authUtils.State, unsec
 
 	// register assets service, require authentication: /api/blacklist
 	blacklist.RegisterRoutes(s, a, secure.PathPrefix("/blacklist/").Subrouter())
+
+	// register assets service, require authentication: /api/configuration
+	configuration.RegisterRoutes(s, a, secure.PathPrefix("/configuration/").Subrouter())
 
 	// register assets service, require authentication: /api/assets
 	assets.RegisterRoutes(s, a, secure.PathPrefix("/assets/").Subrouter())

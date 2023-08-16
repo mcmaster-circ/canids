@@ -76,7 +76,7 @@ func loginHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *h
 				HttpOnly: true, // secure the cookie from JS attacks
 			}
 			// upgrade cookie security if site is accessible over SSL
-			if s.Config.HTTPSEnabled {
+			if s.Settings.HTTPSEnabled {
 				cookie.SameSite = http.SameSiteStrictMode
 				cookie.Secure = true
 			}
@@ -90,7 +90,7 @@ func loginHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *h
 				HttpOnly: true, // secure the cookie from JS attacks
 			}
 			// upgrade cookie security if site is accessible over SSL
-			if s.Config.HTTPSEnabled {
+			if s.Settings.HTTPSEnabled {
 				cookie.SameSite = http.SameSiteStrictMode
 				cookie.Secure = true
 			}

@@ -93,7 +93,7 @@ func registerUserHandler(s *state.State, a *jwtauth.Config, w http.ResponseWrite
 		UUID:      request.UUID,
 		Name:      request.Name,
 		Password:  hashedPass,
-		Activated: s.Config.UserActivated,
+		Activated: s.Settings.UserActivated,
 		Class:     jwtauth.UserStandard,
 	}
 
@@ -114,7 +114,7 @@ func registerUserHandler(s *state.State, a *jwtauth.Config, w http.ResponseWrite
 	l.Info("[register] created new user auth/", docID)
 	// if the account isn't activated yet, notify the user
 	successMsg := "Successful registration. Now redirecting to login page."
-	if !s.Config.UserActivated {
+	if !s.Settings.UserActivated {
 		successMsg = "Successful registration. An administrator must activate your account before you can sign in. Now redirecting to login page."
 	}
 	w.WriteHeader(http.StatusOK)

@@ -25,7 +25,7 @@ func main() {
 	}
 
 	// enable debug logging if requested in configuration
-	if s.Config.DebugLogging {
+	if s.Settings.DebugLogging {
 		s.Log.Info("[main] debug logging enabled")
 		s.Log.SetLevel(log.DebugLevel)
 	}

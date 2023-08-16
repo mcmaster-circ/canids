@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Computing Infrastructure Research
 // Centre (CIRC), McMaster University. All rights reserved.
 
-// Package email provides email service through SendGrid.
+// Package email provides email service.
 package email
 
 const newEmail = `<!DOCTYPE html>

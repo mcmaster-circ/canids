@@ -5,7 +5,6 @@ services:
     container_name: elasticsearch
     env_file:
       - config/config.env
-      - config/secret.env
     expose:
       - 9200 # internal HTTP port
     logging:
@@ -34,7 +33,6 @@ services:
       - elasticsearch
     env_file:
       - config/config.env
-      - config/secret.env
     expose:
       - 5601 # internal HTTP port
     logging:
@@ -64,7 +62,6 @@ services:
       - elasticsearch
     env_file:
       - config/config.env
-      - config/secret.env
     expose:
       - 6060 # internal HTTP port
       - 50000 # grpc

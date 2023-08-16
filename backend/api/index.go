@@ -72,7 +72,7 @@ func registerIndexAssets(s *state.State, a *jwtauth.Config, p *auth.State, r *mu
 		resetHandler(s, a, p, w, r)
 	})
 	// only register "/register" route if user registration is enabled
-	if s.Config.UserRegistration {
+	if s.Settings.UserRegistration {
 		r.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
 			registerHandler(s, a, p, w, r)
 		})
@@ -113,7 +113,7 @@ func loginHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.Respo
 					Page:             loginPage,
 					SuccessMsg:       "",
 					ErrorMsg:         "Please contact the system administrator.",
-					UserRegistration: s.Config.UserRegistration,
+					UserRegistration: s.Settings.UserRegistration,
 					Version:          s.Hash,
 				})
 				return
@@ -126,7 +126,7 @@ func loginHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.Respo
 				HttpOnly: true, // secure the cookie from JS attacks
 			}
 			// upgrade cookie security if site is accessible over SSL
-			if s.Config.HTTPSEnabled {
+			if s.Settings.HTTPSEnabled {
 				cookie.SameSite = http.SameSiteStrictMode
 				cookie.Secure = true
 			}
@@ -140,7 +140,7 @@ func loginHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.Respo
 				HttpOnly: true, // secure the cookie from JS attacks
 			}
 			// upgrade cookie security if site is accessible over SSL
-			if s.Config.HTTPSEnabled {
+			if s.Settings.HTTPSEnabled {
 				cookie.SameSite = http.SameSiteStrictMode
 				cookie.Secure = true
 			}
@@ -153,7 +153,7 @@ func loginHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.Respo
 				Page:             loginPage,
 				SuccessMsg:       "Successful login. Now redirecting to dashboard.",
 				ErrorMsg:         "",
-				UserRegistration: s.Config.UserRegistration,
+				UserRegistration: s.Settings.UserRegistration,
 				Version:          s.Hash,
 			})
 			return
@@ -164,7 +164,7 @@ func loginHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.Respo
 			Page:             loginPage,
 			SuccessMsg:       "",
 			ErrorMsg:         "Incorrect login or inactive account. Please try again.",
-			UserRegistration: s.Config.UserRegistration,
+			UserRegistration: s.Settings.UserRegistration,
 			Version:          s.Hash,
 		})
 		return
@@ -174,7 +174,7 @@ func loginHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.Respo
 		Page:             loginPage,
 		SuccessMsg:       "",
 		ErrorMsg:         "",
-		UserRegistration: s.Config.UserRegistration,
+		UserRegistration: s.Settings.UserRegistration,
 		Version:          s.Hash,
 	})
 }
@@ -199,7 +199,7 @@ func logoutHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.Resp
 		HttpOnly: true, // secure the cookie from JS attacks
 	}
 	// upgrade cookie security is site is accessible over SSL
-	if s.Config.HTTPSEnabled {
+	if s.Settings.HTTPSEnabled {
 		cookie.SameSite = http.SameSiteStrictMode
 		cookie.Secure = true
 	}
@@ -213,7 +213,7 @@ func logoutHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.Resp
 		HttpOnly: true, // secure the cookie from JS attacks
 	}
 	// upgrade cookie security is site is accessible over SSL
-	if s.Config.HTTPSEnabled {
+	if s.Settings.HTTPSEnabled {
 		cookie.SameSite = http.SameSiteStrictMode
 		cookie.Secure = true
 	}
@@ -399,7 +399,7 @@ func requestResetHandler(s *state.State, a *jwtauth.Config, p *auth.State, w htt
 			return
 		}
 		// send password reset email
-		domain := s.Config.SendGridDomain
+		domain := s.Settings.EmailConfig.Domain
 		resetRequest := "http://" + domain + "/reset?token=" + token
 		err = email.SendPasswordReset(s, user.Name, user.UUID, resetRequest)
 		if err != nil {
@@ -632,7 +632,7 @@ func registerHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.Re
 			Password:  hashedPass,
 			Class:     jwtauth.UserStandard,
 			Name:      formName,
-			Activated: s.Config.UserActivated,
+			Activated: s.Settings.UserActivated,
 		}
 		// index user in "auth"
 		docID, err := user.Index(s)
@@ -651,7 +651,7 @@ func registerHandler(s *state.State, a *jwtauth.Config, p *auth.State, w http.Re
 		l.Info("[register] created new user auth/", docID)
 		// if the account isn't activated yet, notify the user
 		successMsg := "Successful registration. Now redirecting to login page."
-		if !s.Config.UserActivated {
+		if !s.Settings.UserActivated {
 			successMsg = "Successful registration. An administrator must activate your account before you can sign in. Now redirecting to login page."
 		}
 		p.AuthPage.Execute(w, page{

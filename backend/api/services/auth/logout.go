@@ -35,7 +35,7 @@ func logoutHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *
 		HttpOnly: true, // secure the cookie from JS attacks
 	}
 	// upgrade cookie security is site is accessible over SSL
-	if s.Config.HTTPSEnabled {
+	if s.Settings.HTTPSEnabled {
 		cookie.SameSite = http.SameSiteStrictMode
 		cookie.Secure = true
 	}
@@ -49,7 +49,7 @@ func logoutHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, r *
 		HttpOnly: true, // secure the cookie from JS attacks
 	}
 	// upgrade cookie security is site is accessible over SSL
-	if s.Config.HTTPSEnabled {
+	if s.Settings.HTTPSEnabled {
 		cookie.SameSite = http.SameSiteStrictMode
 		cookie.Secure = true
 	}
