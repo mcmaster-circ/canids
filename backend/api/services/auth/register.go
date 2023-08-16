@@ -33,4 +33,8 @@ func RegisterRoutes(s *state.State, a *jwtauth.Config, r *mux.Router) {
 	r.HandleFunc("/setup", func(w http.ResponseWriter, r *http.Request) {
 		setupUserHandler(s, a, w, r)
 	})
+
+	r.HandleFunc("/isActive", func(w http.ResponseWriter, r *http.Request) {
+		IsActiveHandler(s, w, r)
+	})
 }

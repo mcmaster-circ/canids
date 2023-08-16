@@ -5,13 +5,22 @@ import { authRoutes, dashboardRoutes } from '@constants/routes'
 
 export default () => {
   const router = useRouter()
-  const { logedIn } = useAuth()
+  const { logedIn, isActive } = useAuth()
 
   useEffect(() => {
     if (logedIn) {
       router.replace(dashboardRoutes.DASHBOARD)
-    } else router.replace(authRoutes.LOGIN)
-  }, [logedIn, router])
+    } else {
+      isActive().then((data) => {
+        if (data) {
+          console.log('Data = true')
+        } else {
+          console.log('Data = false')
+        }
+      })
+      router.replace(authRoutes.LOGIN)
+    }
+  }, [logedIn, router, isActive])
 
   return null
 }

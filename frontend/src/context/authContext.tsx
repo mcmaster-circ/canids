@@ -8,7 +8,11 @@ import {
   useContext,
 } from 'react'
 import { useCookies } from 'react-cookie'
-import { login as loginApiCall, logout as logoutApiCall } from '@api/auth'
+import {
+  login as loginApiCall,
+  logout as logoutApiCall,
+  isActive as isActiveApiCall,
+} from '@api/auth'
 import { userInfo } from '@api/user'
 import { useRequest } from '@hooks'
 import useNotification, { NotificationType } from '@context/notificationContext'
@@ -21,6 +25,7 @@ interface AuthContextType {
   logedIn?: boolean
   login: (d: LoginProps) => void
   logout: () => void
+  isActive: () => Promise<boolean>
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
@@ -46,6 +51,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     request: logoutApiCall,
     needSuccess: 'Successfull Logout',
   })
+  const { makeRequest: isActiveRequest } = useRequest({
+    requestByDefault: false,
+    request: isActiveApiCall,
+  })
   const [cookies, setCookie, removeCookie] = useCookies(
     Object.values(ac) as string[]
   )
@@ -59,6 +68,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     userProfileCookies.forEach((f) => (cachedUser[f] = fields[f]))
     setUser(cachedUser)
   }, [])
+
+  const isActive = useCallback(async () => {
+    const res: any = await isActiveRequest()
+    if (res) {
+      console.log(res)
+
+      return Boolean(res.active)
+    }
+    return false
+  }, [isActiveRequest])
 
   const login = useCallback(
     async (d: LoginProps) => {
@@ -100,8 +119,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logedIn,
       login,
       logout,
+      isActive,
     }),
-    [user, loginLoading, userLoading, logedIn, login, logout]
+    [user, loginLoading, userLoading, logedIn, login, logout, isActive]
   )
 
   return (

@@ -1,4 +1,4 @@
-import { post } from './fetchRequests'
+import { get, post } from './fetchRequests'
 import {
   LoginProps,
   RegisterProps,
@@ -32,6 +32,13 @@ export const resetPassword = async ({ params }: { params: ResetProps }) => {
   const data = await post({
     url: baseUrl + '/auth/resetPassword',
     body: params,
+  })
+  return data
+}
+
+export const isActive = async () => {
+  const data = await get({
+    url: baseUrl + '/auth/isActive',
   })
   return data
 }

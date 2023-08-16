@@ -283,7 +283,7 @@ paths:
                 "uptime": "1h5m31.570680928s"
               }
   
-  /auth/setup:
+  api/auth/setup:
     post:
       summary: User setup endpoint
       description: |
@@ -322,7 +322,7 @@ paths:
           description: |
             Error hashing password or inserting user into database, failed to create token for login
 
-  /auth/login:
+  api/auth/login:
     post:
       summary: Login endpoint
       description: |
@@ -353,7 +353,7 @@ paths:
           description: |
             Authentication is not ready
 
-  /auth/logout:
+  api/auth/logout:
     get:
       summary: Logout endpoint
       description: |
@@ -366,7 +366,7 @@ paths:
         '500':
           description: Authentication is not ready
 
-  /auth/requestReset:
+  api/auth/requestReset:
     post:
       summary: Request password reset
       description: |
@@ -393,7 +393,7 @@ paths:
           description: |
             Auth not ready, failed to generate token, failed to send email
         
-  /auth/resetPassword:
+  api/auth/resetPassword:
     post:
       summary: Reset user password
       description: |
@@ -428,7 +428,7 @@ paths:
           description: |
             Authentication not ready, error hashing password, error querying user, error updating passowrd
 
-  /auth/registerUser:
+  api/auth/registerUser:
     post:
       summary: User self registration endpoint
       description: |
@@ -466,6 +466,19 @@ paths:
         '500':
           description: |
             Error hashing password or inserting user into database
+  api/auth/isActive:
+    get:
+      summary: Whether auth is active
+      description: |
+        Returns true if the auth index exists and is not empty
+      tags:
+      - Primary
+      responses:
+        '200':
+          description: Succesfully returned boolean
+          example: {
+            "active": false
+          }
 
   /api/user/info:
     get:
