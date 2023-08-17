@@ -92,6 +92,9 @@ func Provision(gitHash string) (*State, error) {
 	// generate Settings in State
 	s.Log.Info("[state] initializing settings in state")
 	err = s.settings()
+	if err != nil {
+		s.Log.Println("[state] error initializing settings")
+	}
 
 	// generate AuthReady in State
 	if err := checkAuthReady(&s); err != nil {

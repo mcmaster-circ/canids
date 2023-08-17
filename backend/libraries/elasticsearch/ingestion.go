@@ -10,8 +10,8 @@ import (
 )
 
 type DocumentIngestion struct {
-	UUID string `json:"uuid"` // Represents the name of the ingestion engine
-	Key  string `json:"key"`  // Represents the encryption key shared with the ingestion engine
+	UUID string `json:"uuid"` // Represents the name of the ingestion client
+	Key  string `json:"key"`  // Represents the encryption key shared with the ingestion client
 }
 
 const indexIngestion = "ingestion"
@@ -57,4 +57,30 @@ func DeleteIngestByUUID(s *state.State, uuid string) error {
 		},
 	}).Refresh(true).Do(ctx)
 	return err
+}
+
+// AllAuth will attempt to query the "auth" index and return all users in the
+// system. It may return an error if the query cannot be completed.
+func AllIngest(s *state.State) ([]DocumentIngestion, error) {
+	var out []DocumentIngestion
+	client, ctx := s.Elastic, s.ElasticCtx
+
+	// perform query for all documents
+	results, err := client.Search().Index(indexIngestion).
+		Query(&types.Query{
+			MatchAll: &types.MatchAllQuery{},
+		}).Size(1000).Do(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// parse document into DocumentIngestion, append to out
+	for _, document := range results.Hits.Hits {
+		var d DocumentIngestion
+		err := json.Unmarshal(document.Source_, &d)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, d)
+	}
+	return out, nil
 }

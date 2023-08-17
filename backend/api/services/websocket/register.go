@@ -26,4 +26,7 @@ func RegisterUpdateFunctions(s *state.State, r *mux.Router) {
 	r.HandleFunc("/delete/", func(w http.ResponseWriter, r *http.Request) {
 		deleteIngestion(s, w, r)
 	})
+	r.HandleFunc("/list/", func(w http.ResponseWriter, r *http.Request) {
+		listHandler(s, w, r)
+	})
 }

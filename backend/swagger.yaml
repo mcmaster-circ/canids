@@ -2025,3 +2025,61 @@ paths:
                 "success": false,
                 "message": "Bad request format."
               }
+
+  /api/ingestion/list:
+    get:
+      summary: List all ingestion clients
+      description: |
+        List ingestion clients in the system.
+      tags:
+      - Ingestion
+      responses:
+        '200':
+          description: |
+            List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: |
+                      Indicator if request was successful
+                  clients:
+                    type: array
+                    description: |
+                      List of users
+                    items:
+                      type: object
+                      properties:
+                        uuid:
+                          type: string
+                          description: |
+                            UUID of ingestion client
+                        key:
+                          type: string
+                          description: |
+                            Encryption key associated with client
+                      required: 
+                        - uuid
+                        - key
+                required:
+                  - success
+                  - clients
+              example: {
+                "success": true,
+                "clients": [
+                  {
+                    "uuid": "testdata",
+                    "key": "38f3dfe8880b211d861ec679f91dd28b2c51e296ae6a20b65985277d202439c5",
+                  }
+                ]
+              }
+                  
+        '401':
+          description: |
+            User is not authenticated
+        '500':
+          description: |
+            Internal server error

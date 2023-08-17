@@ -73,7 +73,7 @@ func GetAllDataMapping(s *state.State) ([]IndexDataField, error) {
 	for _, index := range indexes {
 		parts := strings.Split(index, "-")
 		// pattern data-fileName-assetID-yyyy-mm-dd
-		if len(parts) != 6 {
+		if len(parts) != 4 {
 			// ingore non-data files
 			continue
 		}
@@ -186,7 +186,7 @@ func ListDataAssets(s *state.State) ([]string, error) {
 	for _, index := range indicesQuery {
 		if strings.HasPrefix(*index.Index, "data-") {
 			splitIndexName := strings.Split(*index.Index, "-")
-			if len(splitIndexName) == 6 {
+			if len(splitIndexName) == 4 {
 				assetName := splitIndexName[2]
 				assetNameSet[assetName] = true
 			} else {
