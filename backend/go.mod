@@ -3,6 +3,7 @@ module github.com/mcmaster-circ/canids-v2/backend
 go 1.20
 
 require (
+	github.com/ainsleyclark/go-mail v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 
 	github.com/gorilla/mux v1.8.0
@@ -10,7 +11,6 @@ require (
 	github.com/oschwald/geoip2-golang v1.9.0
 	github.com/elastic/go-elasticsearch/v8 v8.9.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/sendgrid/sendgrid-go v3.12.0+incompatible
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tdewolff/minify v2.3.6+incompatible
 	github.com/yl2chen/cidranger v1.0.2
@@ -27,7 +27,6 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/oschwald/maxminddb-golang v1.12.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/tdewolff/parse v2.3.4+incompatible // indirect
 	github.com/tdewolff/test v1.0.6 // indirect
 	golang.org/x/net v0.13.0 // indirect

@@ -159,7 +159,7 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		return
 	}
 	// send account activation email
-	domain := s.Config.SendGridDomain
+	domain := s.Settings.EmailConfig.Domain
 	resetRequest := "http://" + domain + "/reset?token=" + token
 	err = email.SendNewReset(s, user.Name, user.UUID, resetRequest, current.Name, current.UUID)
 	if err != nil {

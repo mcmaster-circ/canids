@@ -95,7 +95,7 @@ docker-compose up -d --no-build
 Navigate to `/certfiles`. `gen-certs.sh` contains the commands to run to generate the keys.
 
 ### Parameters
-Please ensure `config/config.env` and `config/secret.env` are present. Any
+Please ensure `config/config.env` is present. Any
 adjustable parameters may be found in these files.
 
 ## Backend Documentation

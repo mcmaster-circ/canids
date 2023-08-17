@@ -37,7 +37,6 @@ func statusHandler(s *state.State, w http.ResponseWriter, r *http.Request) {
 	// generate response
 	now := time.Now().UTC()
 	out := status{
-		Name:        s.Config.SendGridName,
 		Build:       s.Hash,
 		IsDocker:    s.IsDocker,
 		ElasticPing: elasticPing,

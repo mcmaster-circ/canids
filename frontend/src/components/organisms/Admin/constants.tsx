@@ -4,10 +4,12 @@ import {
   PeopleAltRounded,
   PlaylistRemoveRounded,
   QueryStatsRounded,
+  Settings,
 } from '@mui/icons-material'
 import UsersTab from './components/UsersTab'
 import VisualizationsTab from './components/VisualizationsTab'
 import BlacklistsTab from './components/BlacklistsTab'
+import ConfigurationTab from './components/ConfigurationTab'
 import { GridRenderCellParams } from '@mui/x-data-grid'
 
 const tabSx = { justifyContent: 'flex-start', pl: 3, pr: 4 }
@@ -31,6 +33,12 @@ export const tabs = [
     label: 'View Blacklists',
     sx: tabSx,
   },
+  {
+    icon: <Settings />,
+    iconPosition: 'start' as 'start',
+    label: 'Configuration',
+    sx: tabSx,
+  },
 ]
 
 export const tabsPanels = [
@@ -42,6 +50,9 @@ export const tabsPanels = [
   },
   {
     c: <BlacklistsTab />,
+  },
+  {
+    c: <ConfigurationTab />,
   },
 ]
 
@@ -122,4 +133,16 @@ export const defaultDeleteModalState: {
   open: false,
   label: undefined,
   params: undefined,
+}
+export const defaultSaveModalState: {
+  open: boolean
+} = {
+  open: false,
+}
+export const defaultSetupMailModalState: {
+  open: boolean
+  values: any
+} = {
+  open: false,
+  values: undefined,
 }

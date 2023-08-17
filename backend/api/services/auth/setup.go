@@ -200,7 +200,7 @@ func setupUserHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, 
 		HttpOnly: true, // secure the cookie from JS attacks
 	}
 	// upgrade cookie security if site is accessible over SSL
-	if s.Config.HTTPSEnabled {
+	if s.Settings.HTTPSEnabled {
 		cookie.SameSite = http.SameSiteStrictMode
 		cookie.Secure = true
 	}
@@ -214,7 +214,7 @@ func setupUserHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, 
 		HttpOnly: true, // secure the cookie from JS attacks
 	}
 	// upgrade cookie security if site is accessible over SSL
-	if s.Config.HTTPSEnabled {
+	if s.Settings.HTTPSEnabled {
 		cookie.SameSite = http.SameSiteStrictMode
 		cookie.Secure = true
 	}

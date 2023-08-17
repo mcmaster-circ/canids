@@ -49,7 +49,7 @@ func Middleware(s *state.State, a *jwtauth.Config, next http.Handler) http.Handl
 		l := ctxlog.Log(ctx)
 
 		// if middleware disabled, just serve request
-		if s.Config.MiddlewareDisable {
+		if s.Settings.MiddlewareDisable {
 			l.Info("[middleware]: middleware disabled")
 			next.ServeHTTP(w, r)
 			return
@@ -100,7 +100,7 @@ func Middleware(s *state.State, a *jwtauth.Config, next http.Handler) http.Handl
 					HttpOnly: true, // secure the cookie from JS attacks
 				}
 				// upgrade cookie security is site is accessible over SSL
-				if s.Config.HTTPSEnabled {
+				if s.Settings.HTTPSEnabled {
 					cookie.SameSite = http.SameSiteStrictMode
 					cookie.Secure = true
 				}
@@ -115,7 +115,7 @@ func Middleware(s *state.State, a *jwtauth.Config, next http.Handler) http.Handl
 					HttpOnly: true, // secure the cookie from JS attacks
 				}
 				// upgrade cookie security is site is accessible over SSL
-				if s.Config.HTTPSEnabled {
+				if s.Settings.HTTPSEnabled {
 					cookie.SameSite = http.SameSiteStrictMode
 					cookie.Secure = true
 				}
@@ -153,7 +153,7 @@ func Middleware(s *state.State, a *jwtauth.Config, next http.Handler) http.Handl
 				HttpOnly: true, // secure the cookie from JS attacks
 			}
 			// upgrade cookie security is site is accessible over SSL
-			if s.Config.HTTPSEnabled {
+			if s.Settings.HTTPSEnabled {
 				cookie.SameSite = http.SameSiteStrictMode
 				cookie.Secure = true
 			}
@@ -168,7 +168,7 @@ func Middleware(s *state.State, a *jwtauth.Config, next http.Handler) http.Handl
 				HttpOnly: true, // secure the cookie from JS attacks
 			}
 			// upgrade cookie security is site is accessible over SSL
-			if s.Config.HTTPSEnabled {
+			if s.Settings.HTTPSEnabled {
 				cookie.SameSite = http.SameSiteStrictMode
 				cookie.Secure = true
 			}
