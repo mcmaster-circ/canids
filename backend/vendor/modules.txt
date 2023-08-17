@@ -1,3 +1,11 @@
+# github.com/ainsleyclark/go-mail v1.1.1
+## explicit; go 1.16
+github.com/ainsleyclark/go-mail/drivers
+github.com/ainsleyclark/go-mail/internal/client
+github.com/ainsleyclark/go-mail/internal/errors
+github.com/ainsleyclark/go-mail/internal/httputil
+github.com/ainsleyclark/go-mail/internal/mime
+github.com/ainsleyclark/go-mail/mail
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 ## explicit
 github.com/dgrijalva/jwt-go
@@ -664,13 +672,6 @@ github.com/oschwald/maxminddb-golang
 # github.com/satori/go.uuid v1.2.0
 ## explicit
 github.com/satori/go.uuid
-# github.com/sendgrid/rest v2.6.9+incompatible
-## explicit
-github.com/sendgrid/rest
-# github.com/sendgrid/sendgrid-go v3.12.0+incompatible
-## explicit
-github.com/sendgrid/sendgrid-go
-github.com/sendgrid/sendgrid-go/helpers/mail
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus

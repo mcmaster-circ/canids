@@ -11,7 +11,8 @@ import (
 
 	"github.com/ainsleyclark/go-mail/drivers"
 	"github.com/ainsleyclark/go-mail/mail"
-	"github.com/olivere/elastic"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/refresh"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,7 +51,7 @@ const (
 
 // Initialize settings in configuration index
 func (settings *Settings) init(s *State) error {
-	exists, err := s.Elastic.IndexExists(indexConfiguration).Do(s.ElasticCtx)
+	exists, err := s.Elastic.Indices.Exists(indexConfiguration).Do(s.ElasticCtx)
 	if err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func (settings *Settings) init(s *State) error {
 			{"DEBUG_LOGGING", "true", true},
 		}
 
-		s.Elastic.CreateIndex(indexConfiguration).Do(s.ElasticCtx)
+		s.Elastic.Indices.Create(indexConfiguration).Do(s.ElasticCtx)
 		for _, setting := range defaultSettings {
 			_, err := setting.index(s)
 			if err != nil {
@@ -111,15 +112,16 @@ func AllSettings(s *State) ([]DocumentSetting, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for all documents
-	allQuery := elastic.NewMatchAllQuery()
-	results, err := client.Search().Index(indexConfiguration).Query(allQuery).Size(1000).Do(ctx)
+	results, err := client.Search().Index(indexConfiguration).Query(&types.Query{
+		MatchAll: types.NewMatchAllQuery(),
+	}).Size(1000).Do(ctx)
 	if err != nil {
 		return nil, err
 	}
 	// parse settings into DocumentSetting, append to out
 	for _, setting := range results.Hits.Hits {
 		var d DocumentSetting
-		err := json.Unmarshal(setting.Source, &d)
+		err := json.Unmarshal(setting.Source_, &d)
 		if err != nil {
 			return nil, err
 		}
@@ -137,23 +139,26 @@ func querySettingByName(s *State, name string) (DocumentSetting, string, error) 
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for dashboard with provided uuid
-	termQuery := elastic.NewTermQuery("name.keyword", name)
-	result, err := client.Search().Index(indexConfiguration).Query(termQuery).Do(ctx)
+	result, err := client.Search().Index(indexConfiguration).Query(&types.Query{
+		Term: map[string]types.TermQuery{
+			"name.keyword": {Value: name},
+		},
+	}).Do(ctx)
 	if err != nil {
 		return d, "", err
 	}
 	// ensure dashboard was returned
-	if result.Hits.TotalHits.Value == 0 {
+	if result.Hits.Total.Value == 0 {
 		return d, "", errors.New("dashboard: no document with uuid found")
 	}
 	// select + parse dashboard into DocumentDashboard
 	dashboard := result.Hits.Hits[0]
-	err = json.Unmarshal(dashboard.Source, &d)
+	err = json.Unmarshal(dashboard.Source_, &d)
 	if err != nil {
 		return d, "", err
 	}
 	// successful query
-	return d, dashboard.Id, nil
+	return d, dashboard.Id_, nil
 }
 
 func UpdateSettings(s *State, changedSettings []DocumentSetting) error {
@@ -237,8 +242,8 @@ type DocumentSetting struct {
 // the newly created document ID or an error.
 func (d *DocumentSetting) index(s *State) (string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
-	result, err := client.Index().Index(indexConfiguration).BodyJson(d).Refresh("true").Do(ctx)
-	return result.Id, err
+	result, err := client.Index(indexConfiguration).Document(d).Refresh(refresh.True).Do(ctx)
+	return result.Id_, err
 }
 
 // Update will attempt to update the document in the "configuration" with the provided
@@ -246,10 +251,12 @@ func (d *DocumentSetting) index(s *State) (string, error) {
 // be performed.
 func (d *DocumentSetting) update(s *State, esDocID string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	_, err := client.Update().Index(indexConfiguration).Id(esDocID).
-		Doc(map[string]interface{}{
+
+	_, err := client.Update(indexConfiguration, esDocID).Doc(
+		map[string]interface{}{
 			// "uuid":  d.UUID,
 			"value": d.Value,
-		}).DetectNoop(true).Refresh("true").Do(ctx)
+		}).DetectNoop(true).Refresh(refresh.True).Do(ctx)
+
 	return err
 }

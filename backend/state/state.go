@@ -13,11 +13,8 @@ import (
 	"path/filepath"
 	"time"
 
-<<<<<<< HEAD
-	"github.com/elastic/go-elasticsearch/v8"
-=======
 	"github.com/ainsleyclark/go-mail/mail"
->>>>>>> origin/new-frontend-integration
+	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/joho/godotenv"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ipsetmgr"
 	"github.com/oschwald/geoip2-golang"
@@ -41,14 +38,14 @@ var (
 
 // State is the global state for the backend.
 type State struct {
-	Hash       string          // Hash is the hash of the latest Git commit
-	Log        *log.Logger     // Log is a structured event logger
-	Start      time.Time       // Start is the start time of the backend
-	IsDocker   bool            // IsDocker indicates if running inside Docker
-	Config     *Config         // Config contains global configuration
-	Elastic    *elastic.Client // Elastic is the Elasticsearch client state
-	ElasticCtx context.Context // ElasticCtx is the Elasticsearch client context
-	AuthReady  bool            // AuthReady is if the "auth" index exists
+	Hash       string                     // Hash is the hash of the latest Git commit
+	Log        *log.Logger                // Log is a structured event logger
+	Start      time.Time                  // Start is the start time of the backend
+	IsDocker   bool                       // IsDocker indicates if running inside Docker
+	Config     *Config                    // Config contains global configuration
+	Elastic    *elasticsearch.TypedClient // Elastic is the Elasticsearch client state
+	ElasticCtx context.Context            // ElasticCtx is the Elasticsearch client context
+	AuthReady  bool                       // AuthReady is if the "auth" index exists
 	Settings   *Settings
 	Mailer     mail.Mailer
 
