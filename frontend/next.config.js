@@ -3,7 +3,7 @@ const path = require('path')
 
 const nextConfig = {
   output: 'export',
-  distDir: '../backend/api/frontend/out',
+  distDir: process.env.NODE_ENV == 'production' ? '../backend/api/frontend/out': 'out',
   images: {
     unoptimized: true,
   },
