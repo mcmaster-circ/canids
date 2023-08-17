@@ -12,12 +12,13 @@ import {
   login as loginApiCall,
   logout as logoutApiCall,
   isActive as isActiveApiCall,
+  setup as setupApiCall,
 } from '@api/auth'
 import { userInfo } from '@api/user'
 import { useRequest } from '@hooks'
 import useNotification, { NotificationType } from '@context/notificationContext'
 import { userProfileCookies, allCookies as ac } from '@constants/cookies'
-import { LoginProps, UserProps } from '@constants/types'
+import { LoginProps, SetupProps, UserProps } from '@constants/types'
 
 interface AuthContextType {
   user?: UserProps
@@ -26,6 +27,7 @@ interface AuthContextType {
   login: (d: LoginProps) => void
   logout: () => void
   isActive: () => Promise<boolean>
+  setup: (d: SetupProps) => void
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
@@ -40,6 +42,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { makeRequest: loginRequest, loading: loginLoading } = useRequest({
     requestByDefault: false,
     request: loginApiCall,
+    needSuccess: 'Successfull Login',
+  })
+  const { makeRequest: setupRequest, loading: setupLoading } = useRequest({
+    requestByDefault: false,
+    request: setupApiCall,
     needSuccess: 'Successfull Login',
   })
   const { makeRequest: userInfoRequest, loading: userLoading } = useRequest({
@@ -92,6 +99,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [loginRequest, setCookie, setUserFields, userInfoRequest]
   )
 
+  const setup = useCallback(
+    async (d: SetupProps) => {
+      await setupRequest({ ...d })
+      const res: any = await userInfoRequest()
+      if (res) {
+        userProfileCookies.forEach((f) => setCookie(f, res[f], { path: '/' }))
+        setUserFields(res)
+        setLogedIn(true)
+      }
+    },
+    [setupRequest, setCookie, setUserFields, userInfoRequest]
+  )
+
   const logout = useCallback(async () => {
     setUser(undefined)
     await logoutRequest()
@@ -120,8 +140,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       login,
       logout,
       isActive,
+      setup,
     }),
-    [user, loginLoading, userLoading, logedIn, login, logout, isActive]
+    [user, loginLoading, userLoading, logedIn, login, logout, isActive, setup]
   )
 
   return (

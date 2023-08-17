@@ -18,3 +18,10 @@ export interface ResetProps {
   password: string
   passwordConfirm: string
 }
+
+export interface SetupProps {
+  name: string
+  uuid: string
+  password: string
+  passwordConfirm: string
+}

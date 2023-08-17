@@ -4,6 +4,7 @@ import {
   RegisterProps,
   ForgotProps,
   ResetProps,
+  SetupProps,
 } from '@constants/types'
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL
@@ -40,5 +41,10 @@ export const isActive = async () => {
   const data = await get({
     url: baseUrl + '/auth/isActive',
   })
+  return data
+}
+
+export const setup = async ({ params }: { params: SetupProps }) => {
+  const data = await post({ url: baseUrl + '/auth/setup', body: params })
   return data
 }

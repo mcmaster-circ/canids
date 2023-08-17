@@ -14,8 +14,10 @@ export default () => {
       isActive().then((data) => {
         if (data) {
           console.log('Data = true')
+          router.replace(authRoutes.LOGIN)
         } else {
           console.log('Data = false')
+          router.replace(authRoutes.SETUP)
         }
       })
       router.replace(authRoutes.LOGIN)

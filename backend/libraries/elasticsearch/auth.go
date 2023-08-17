@@ -134,12 +134,12 @@ func AllAuth(s *state.State) ([]DocumentAuth, error) {
 func AuthIsActive(s *state.State) bool {
 	client, ctx := s.Elastic, s.ElasticCtx
 
-	isEmpty, err := client.Indices.Exists(indexAuth).Do(ctx)
+	exists, err := client.Indices.Exists(indexAuth).Do(ctx)
 
 	if err != nil {
 		return false
 	}
 
-	return isEmpty
+	return exists
 
 }

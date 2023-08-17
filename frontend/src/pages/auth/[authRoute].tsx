@@ -7,6 +7,7 @@ import {
   LoginForm,
   RegisterForm,
   ResetPasswordForm,
+  SetupForm,
 } from '@forms'
 import { authRouteParams, dashboardRoutes } from '@constants/routes'
 
@@ -43,6 +44,12 @@ export default () => {
           <ResetPasswordForm />
         </Auth>
       )
+    case authRouteParams.SETUP:
+      return (
+        <Auth title="Please enter credentials for initial user">
+          <SetupForm />
+        </Auth>
+      )
     case authRouteParams.LOGIN:
     default: {
       return (
@@ -65,6 +72,7 @@ export async function getStaticPaths() {
       { params: { authRoute: authRouteParams.FORGOT_PASSWORD } },
       { params: { authRoute: authRouteParams.RESET_PASSWORD } },
       { params: { authRoute: authRouteParams.LOGIN } },
+      { params: { authRoute: authRouteParams.SETUP } },
     ],
     fallback: false,
   }
