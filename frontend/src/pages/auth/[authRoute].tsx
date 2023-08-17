@@ -9,11 +9,11 @@ import {
   ResetPasswordForm,
   SetupForm,
 } from '@forms'
-import { authRouteParams, dashboardRoutes } from '@constants/routes'
+import { authRouteParams, dashboardRoutes, authRoutes } from '@constants/routes'
 
 export default () => {
   const { query, replace } = useRouter()
-  const { logedIn } = useAuth()
+  const { logedIn, isActive } = useAuth()
 
   useEffect(() => {
     if (logedIn) {
@@ -45,6 +45,13 @@ export default () => {
         </Auth>
       )
     case authRouteParams.SETUP:
+      isActive().then((data) => {
+        if (data) {
+          console.log('Data = true')
+          replace(authRoutes.LOGIN)
+          return null
+        }
+      })
       return (
         <Auth title="Please enter credentials for initial user">
           <SetupForm />

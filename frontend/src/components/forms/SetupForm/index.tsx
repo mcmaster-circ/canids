@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button, Typography } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
@@ -11,11 +11,16 @@ import { SetupProps } from '@constants/types'
 export default () => {
   const { setup } = useAuth()
 
+  const [submitted, setSubmitted] = useState<boolean>(false)
+
   const onSubmit = useCallback(
     (data: SetupProps) => {
-      setup(data)
+      if (!submitted) {
+        setup(data)
+      }
+      setSubmitted(true)
     },
-    [setup]
+    [setup, submitted, setSubmitted]
   )
 
   const {

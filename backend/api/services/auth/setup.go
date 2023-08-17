@@ -25,6 +25,16 @@ func setupUserHandler(s *state.State, a *jwtauth.Config, w http.ResponseWriter, 
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "application/json")
 
+	if elasticsearch.AuthIsActive(s) {
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "System already initialized.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
 	var request SetupRequest
 
 	// Decode request json
