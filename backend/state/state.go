@@ -33,6 +33,7 @@ var (
 	esIndexes = []string{
 		"dashboard",
 		"view",
+		"ingestion",
 	}
 )
 

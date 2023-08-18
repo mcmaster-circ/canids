@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
-	"strings"
 
+	"github.com/mcmaster-circ/canids-v2/backend/api/services/utils"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
@@ -44,16 +44,27 @@ func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//ensure that the uuid is not " " or "  "
-	trimmed := strings.TrimSpace(request.UUID)
-
-	// ensure name is not empty
-	if request.UUID == "" || len(trimmed) == 0 {
-		l.Warn("UUID name not specified specified")
+	err = utils.ValidateBasic(request.UUID)
+	if err != nil {
+		l.Warn("UUID name not specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "UUID field must be specified.",
+			Message: "UUID " + err.Error(),
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	// ensure ingestion client uuid does not already exist
+	_, err = elasticsearch.QueryIngestionByUUID(s, request.UUID)
+	if err == nil {
+		// no error means we located a client
+		l.Warn("uuid already exists ", request.UUID)
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Ingestion with this name already defined.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return
