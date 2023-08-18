@@ -12,10 +12,10 @@ import (
 // listReponse is the format of the list user response.
 type listResponse struct {
 	Success bool        `json:"success"` // Success indicates if the request was successful
-	Clients []Ingestion `json:"clients"` // Users is a list of users
+	Clients []Ingestion `json:"clients"` // Clients is a list of ingestion clients
 }
 
-// User represents the list of users in the system.
+// User represents the list of clients in the system.
 type Ingestion struct {
 	UUID string `json:"uuid"` // Represents the name of the ingestion client
 	Key  string `json:"key"`  // Represents the encryption key shared with the ingestion client
@@ -27,6 +27,8 @@ func listHandler(s *state.State, w http.ResponseWriter, r *http.Request) {
 	// get user making current request + logging context
 	w.Header().Set("Content-Type", "application/json")
 	l := ctxlog.Log(r.Context())
+
+	l.Println("Received list request")
 
 	// output
 	var out listResponse
