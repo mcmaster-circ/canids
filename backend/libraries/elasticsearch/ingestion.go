@@ -27,7 +27,7 @@ func QueryIngestionByUUID(s *state.State, uuid string) (DocumentIngestion, error
 	client, ctx := s.Elastic, s.ElasticCtx
 
 	// perform query for ingestion with provided uuid
-	result, err := client.Search().Index(indexDashboard).Query(&types.Query{
+	result, err := client.Search().Index(indexIngestion).Query(&types.Query{
 		Term: map[string]types.TermQuery{
 			"uuid.keyword": {Value: uuid},
 		},
@@ -51,7 +51,7 @@ func QueryIngestionByUUID(s *state.State, uuid string) (DocumentIngestion, error
 
 func DeleteIngestByUUID(s *state.State, uuid string) error {
 	client, ctx := s.Elastic, s.ElasticCtx
-	_, err := client.DeleteByQuery(indexBlacklist).Query(&types.Query{
+	_, err := client.DeleteByQuery(indexIngestion).Query(&types.Query{
 		Term: map[string]types.TermQuery{
 			"uuid.keyword": {Value: uuid},
 		},

@@ -13,10 +13,8 @@ export default () => {
     } else {
       isActive().then((data) => {
         if (data) {
-          console.log('Data = true')
           router.replace(authRoutes.LOGIN)
         } else {
-          console.log('Data = false')
           router.replace(authRoutes.SETUP)
         }
       })

@@ -33,7 +33,6 @@ export default () => {
             flexGrow: 1,
             display: 'flex',
             borderRadius: 2,
-            height: 'calc(100vh - 250px)',
           }}
         >
           <Tabs

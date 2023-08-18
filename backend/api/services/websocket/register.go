@@ -14,19 +14,19 @@ func RegisterWS(s *state.State, r *mux.Router) {
 }
 
 func RegisterUpdateFunctions(s *state.State, r *mux.Router) {
-	r.HandleFunc("/getESMax/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/getESMax", func(w http.ResponseWriter, r *http.Request) {
 		getMaxHandler(s, w, r)
 	})
-	r.HandleFunc("/setESMax/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/setESMax", func(w http.ResponseWriter, r *http.Request) {
 		setMaxHandler(s, w, r)
 	})
-	r.HandleFunc("/create/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
 		createIngestion(s, w, r)
 	})
-	r.HandleFunc("/delete/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/delete", func(w http.ResponseWriter, r *http.Request) {
 		deleteIngestion(s, w, r)
 	})
-	r.HandleFunc("/list/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
 		listHandler(s, w, r)
 	})
 }

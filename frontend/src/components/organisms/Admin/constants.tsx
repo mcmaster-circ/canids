@@ -1,6 +1,7 @@
 import {
   Check,
   Clear,
+  Computer,
   PeopleAltRounded,
   PlaylistRemoveRounded,
   QueryStatsRounded,
@@ -10,6 +11,7 @@ import UsersTab from './components/UsersTab'
 import VisualizationsTab from './components/VisualizationsTab'
 import BlacklistsTab from './components/BlacklistsTab'
 import ConfigurationTab from './components/ConfigurationTab'
+import IngestionTab from './components/IngestionTab'
 import { GridRenderCellParams } from '@mui/x-data-grid'
 
 const tabSx = { justifyContent: 'flex-start', pl: 3, pr: 4 }
@@ -39,6 +41,12 @@ export const tabs = [
     label: 'Configuration',
     sx: tabSx,
   },
+  {
+    icon: <Computer />,
+    iconPosition: 'start' as 'start',
+    label: 'Ingestion',
+    sx: tabSx,
+  },
 ]
 
 export const tabsPanels = [
@@ -53,6 +61,9 @@ export const tabsPanels = [
   },
   {
     c: <ConfigurationTab />,
+  },
+  {
+    c: <IngestionTab />,
   },
 ]
 
@@ -116,6 +127,16 @@ export const userColumns = (actions: (props: any) => JSX.Element[]) => [
   },
 ]
 
+export const ingestionColumns = (actions: (props: any) => JSX.Element[]) => [
+  { field: 'uuid', headerName: 'Name', flex: 0.27 },
+  {
+    field: 'actions',
+    type: 'actions',
+    flex: 0.02,
+    getActions: actions,
+  },
+]
+
 export const defaultAddModalState: {
   isUpdate: boolean
   open: boolean
@@ -145,4 +166,15 @@ export const defaultSetupMailModalState: {
 } = {
   open: false,
   values: undefined,
+}
+export const defaultKeyModalState: {
+  open: boolean
+  key?: string
+  title?: string
+  params?: any
+} = {
+  open: false,
+  key: undefined,
+  title: undefined,
+  params: undefined,
 }
