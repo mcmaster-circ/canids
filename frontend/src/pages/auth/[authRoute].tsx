@@ -47,7 +47,6 @@ export default () => {
     case authRouteParams.SETUP:
       isActive().then((data) => {
         if (data) {
-          console.log('Data = true')
           replace(authRoutes.LOGIN)
           return null
         }

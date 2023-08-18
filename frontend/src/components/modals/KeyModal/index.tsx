@@ -16,7 +16,6 @@ interface ModalTypes {
 }
 
 export default ({ open, handleClose }: ModalTypes) => {
-  console.log(open.key)
   return (
     <Dialog open={open.open} onClose={handleClose}>
       <DialogTitle

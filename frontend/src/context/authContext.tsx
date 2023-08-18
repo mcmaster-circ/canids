@@ -79,8 +79,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isActive = useCallback(async () => {
     const res: any = await isActiveRequest()
     if (res) {
-      console.log(res)
-
       return Boolean(res.active)
     }
     return false
