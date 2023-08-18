@@ -8,14 +8,17 @@ import { ingestionDelete, ingestionList } from '@api/ingestion'
 import {
   defaultAddModalState,
   defaultDeleteModalState,
+  defaultKeyModalState,
   ingestionColumns,
 } from '../constants'
 import { AddEditModal, DeleteModal } from '@modals'
 import AddIngestionForm from 'src/components/forms/AddIngestionForm'
+import KeyModal from 'src/components/modals/KeyModal'
 
 export default () => {
   const [addModal, setAddModal] = useState(defaultAddModalState)
   const [deleteModal, setDeleteModal] = useState(defaultDeleteModalState)
+  const [keyModal, setKeyModal] = useState(defaultKeyModalState)
   const { data, loading, makeRequest } = useRequest({
     request: ingestionList,
   })
@@ -23,8 +26,21 @@ export default () => {
   const { makeRequest: deleteRequest } = useRequest({
     request: ingestionDelete,
     requestByDefault: false,
-    needSuccess: 'The user account has been successfully deleted',
+    needSuccess: 'Successfully deleted',
   })
+
+  const handleCloseAddForm = useCallback(
+    (uuid: string, key: string) => {
+      setAddModal(defaultAddModalState)
+      setKeyModal(() => ({
+        key: key,
+        title: uuid,
+        open: true,
+      }))
+      setTimeout(() => makeRequest(), 3000)
+    },
+    [makeRequest]
+  )
 
   const handleCloseAdd = useCallback(() => {
     setAddModal(defaultAddModalState)
@@ -33,6 +49,11 @@ export default () => {
 
   const handleCloseDelete = useCallback(() => {
     setDeleteModal(defaultDeleteModalState)
+    setTimeout(() => makeRequest(), 3000)
+  }, [makeRequest])
+
+  const handleCloseKey = useCallback(() => {
+    setKeyModal(defaultKeyModalState)
     setTimeout(() => makeRequest(), 3000)
   }, [makeRequest])
 
@@ -49,7 +70,7 @@ export default () => {
                 action: () =>
                   setDeleteModal({
                     open: true,
-                    label: row.name,
+                    label: row.uuid,
                     params: { uuid: id },
                   }),
                 key: 'delete',
@@ -131,7 +152,7 @@ export default () => {
         <AddIngestionForm
           isUpdate={addModal.isUpdate}
           values={addModal.values}
-          handleClose={handleCloseAdd}
+          handleClose={handleCloseAddForm}
         />
       </AddEditModal>
       <DeleteModal
@@ -140,6 +161,7 @@ export default () => {
         request={deleteRequest}
         handleClose={handleCloseDelete}
       />
+      <KeyModal open={keyModal} handleClose={handleCloseKey} />
     </>
   )
 }

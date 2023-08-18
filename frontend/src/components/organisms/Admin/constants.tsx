@@ -167,3 +167,14 @@ export const defaultSetupMailModalState: {
   open: false,
   values: undefined,
 }
+export const defaultKeyModalState: {
+  open: boolean
+  key?: string
+  title?: string
+  params?: any
+} = {
+  open: false,
+  key: undefined,
+  title: undefined,
+  params: undefined,
+}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ctxlog"
+	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
@@ -42,6 +43,18 @@ func deleteIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 		out := GeneralResponse{
 			Success: false,
 			Message: "UUID field must be specified.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	err = elasticsearch.DeleteIngestByUUID(s, request.UUID)
+	if err != nil {
+		l.Error("Failed to delete ingestion client", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Please contact system administrator.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return

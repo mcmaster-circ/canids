@@ -9,7 +9,7 @@ import { AddClientProps } from '@constants/types/ingestionPropsTypes'
 import { ingestionAdd } from '@api/ingestion'
 
 interface FormProps {
-  handleClose: () => void
+  handleClose: (uuid: string, key: string) => void
   isUpdate?: boolean
   values?: AddClientProps
 }
@@ -23,8 +23,8 @@ export default ({ handleClose, isUpdate, values }: FormProps) => {
 
   const onSubmit = useCallback(
     async (data: AddClientProps) => {
-      await makeRequest(data)
-      handleClose()
+      var resp = await makeRequest(data)
+      handleClose(data.uuid, resp.key)
     },
     [handleClose, makeRequest]
   )
