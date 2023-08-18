@@ -32,7 +32,7 @@ var frontendContent embed.FS
 // Start accepts the global state and the authentication state. It will register
 // all routes and start the HTTP server. If the server fails to start an error
 // will be returned.
-func Start(s *state.State, a *jwtauth.Config, p *auth.State) error {
+func Start(s *state.State, a *jwtauth.Config) error {
 	// create main request router
 	router := mux.NewRouter()
 	router.StrictSlash(true)
@@ -103,7 +103,7 @@ func Start(s *state.State, a *jwtauth.Config, p *auth.State) error {
 	})
 
 	// register all routes
-	registerRoutes(s, a, p, router, secureRouter)
+	registerRoutes(s, a, router, secureRouter)
 
 	// Start frame queue handler
 	go websocket.HandleQueue(s)

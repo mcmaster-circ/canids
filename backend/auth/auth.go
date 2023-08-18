@@ -5,18 +5,10 @@
 package auth
 
 import (
-	// "io/ioutil"
-	// "os"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"text/template"
 	"time"
 
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/jwtauth"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
-	"github.com/tdewolff/minify"
-	html "github.com/tdewolff/minify/html"
 )
 
 const (
@@ -56,59 +48,4 @@ func Provision(s *state.State) (*jwtauth.Config, error) {
 	}
 
 	return a, nil
-}
-
-//  EXTRA STUFF TO FACILITATE BACKEND HOSTED LOGIN WHILE TRANSITIONING TO ENDPOINTS
-
-type State struct {
-	AuthPage *template.Template
-}
-
-func ProvisionAuthPage(s *state.State) *State {
-
-	var authState State
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		s.Log.Error("Failed to get cwd")
-	}
-
-	absPathAuth := filepath.Join(cwd, "assets/auth.html")
-	page := template.Must(compileTemplates(absPathAuth))
-	authState.AuthPage = page
-	return &authState
-}
-
-// compileTemplates accepts a list of file names. It will return a list of
-// parsed minified templates or an error.
-func compileTemplates(fileNames ...string) (*template.Template, error) {
-	// initalize new minifier
-	m := minify.New()
-	m.AddFunc("text/html", html.Minify)
-
-	var tmpl *template.Template
-
-	// iterate over all file names
-	for _, filename := range fileNames {
-		// new or append to templates
-		name := filepath.Base(filename)
-		if tmpl == nil {
-			tmpl = template.New(name)
-		} else {
-			tmpl = tmpl.New(name)
-		}
-		// read the file
-		b, err := ioutil.ReadFile(filename)
-		if err != nil {
-			return nil, err
-		}
-		// minify HTML
-		mb, err := m.Bytes("text/html", b)
-		if err != nil {
-			return nil, err
-		}
-		// add minifed HTML to templates
-		tmpl.Parse(string(mb))
-	}
-	return tmpl, nil
 }

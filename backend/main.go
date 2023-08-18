@@ -55,10 +55,8 @@ func main() {
 		s.Log.Fatal(err)
 	}
 
-	p := auth.ProvisionAuthPage(s)
-
 	// start API server
-	err = api.Start(s, a, p)
+	err = api.Start(s, a)
 	if err != nil {
 		s.Log.Fatal(err)
 	}
