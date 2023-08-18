@@ -242,25 +242,25 @@ func GetAlarms(s *state.State, indices []string, sources []string, destinations 
 		},
 	}
 
-	respSources := types.Query{
-		Terms: &types.TermsQuery{
-			TermsQuery: map[string]types.TermsQueryField{
-				"id_resp_h_pos": destinations,
-			},
-		},
-	}
+	// respSources := types.Query{
+	// 	Terms: &types.TermsQuery{
+	// 		TermsQuery: map[string]types.TermsQueryField{
+	// 			"id_resp_h_pos": destinations,
+	// 		},
+	// 	},
+	// }
 
-	sourceIPQuery := types.Query{
-		MatchPhrasePrefix: map[string]types.MatchPhrasePrefixQuery{
-			"id_orig_h": {Query: sourceIP},
-		},
-	}
+	// sourceIPQuery := types.Query{
+	// 	MatchPhrasePrefix: map[string]types.MatchPhrasePrefixQuery{
+	// 		"id_orig_h": {Query: sourceIP},
+	// 	},
+	// }
 
-	destIPQuery := types.Query{
-		MatchPhrasePrefix: map[string]types.MatchPhrasePrefixQuery{
-			"id_resp_h": {Query: destIP},
-		},
-	}
+	// destIPQuery := types.Query{
+	// 	MatchPhrasePrefix: map[string]types.MatchPhrasePrefixQuery{
+	// 		"id_resp_h": {Query: destIP},
+	// 	},
+	// }
 
 	// query for all alarms in range and filter for either origSource or respSource being in alarmSources
 	query := &types.Query{
@@ -268,9 +268,9 @@ func GetAlarms(s *state.State, indices []string, sources []string, destinations 
 			Must: []types.Query{
 				r,
 				origSources,
-				respSources,
-				sourceIPQuery,
-				destIPQuery,
+				// respSources,
+				// sourceIPQuery,
+				// destIPQuery,
 			},
 		},
 	}

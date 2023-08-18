@@ -51,10 +51,11 @@ export default () => {
   const viewsList = useMemo(() => {
     if (dashboard?.views?.length && views?.length) {
       setDisplay(views.map((v: any) => v.uuid))
-      return dashboard.views.map((v: string, i: number) => ({
-        size: dashboard.sizes[i],
-        ...views.find((view: any) => view.uuid === v),
-      }))
+      return views
+      // return dashboard.views.map((v: string, i: number) => ({
+      //   size: dashboard.sizes[i],
+      //   ...views.find((view: any) => view.uuid === v),
+      // }))
     }
   }, [dashboard?.sizes, dashboard?.views, views])
 
