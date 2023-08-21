@@ -243,7 +243,10 @@ type DocumentSetting struct {
 func (d *DocumentSetting) index(s *State) (string, error) {
 	client, ctx := s.Elastic, s.ElasticCtx
 	result, err := client.Index(indexConfiguration).Document(d).Refresh(refresh.True).Do(ctx)
-	return result.Id_, err
+	if err != nil {
+		return "", err
+	}
+	return result.Id_, nil 
 }
 
 // Update will attempt to update the document in the "configuration" with the provided
