@@ -40,7 +40,7 @@ services:
         constraints: [node.hostname == argus-w]
       labels:
         caddy: canids.staging.fyelabs.com
-        caddy.reverse_proxy: "@backend {{upstreams 6060}}"
+        caddy.reverse_proxy: "{{upstreams 6060}}"
         caddy.reverse_proxy.health_uri: /status
         caddy.reverse_proxy.health_interval: 10s
   
