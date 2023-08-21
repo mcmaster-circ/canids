@@ -1,82 +1,48 @@
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
-    env_file:
-      - config/config.env
-      - config/secret.env
+    environment:
+      - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - cluster.routing.allocation.disk.watermark.enable_for_single_data_node=true
     volumes:
       - elasticsearch:/usr/share/elasticsearch/data
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "1m"
-        max-file: "5"
-    restart: unless-stopped
-    security_opt:
-      - apparmor:unconfined
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
     deploy:
       placement:
         constraints: [node.hostname == bacchus-w]
   
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.9.0
-    depends_on:
-      - elasticsearch
-    env_file:
-      - config/config.env
-    deploy:
-      placement:
-        constraints: [node.hostname == bacchus-w]
-      labels:
-        caddy: canids-kibana.staging.fyelabs.com
-        caddy.route.1_reverse_proxy: "{{upstreams 5601}}"
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.9.0
+  #   depends_on:
+  #     - elasticsearch
+  #   env_file:
+  #     - config/config.env
+  #   deploy:
+  #     placement:
+  #       constraints: [node.hostname == bacchus-w]
+  #     labels:
+  #       caddy: canids-kibana.staging.fyelabs.com
+  #       caddy.route.1_reverse_proxy: "{{upstreams 5601}}"
 
   backend:
     image: 192.0.2.1:5000/canids-v2-staging-backend:latest
     build:
       context: .
       dockerfile: backend/Dockerfile
+    environment:
+      - ELASTIC_HOST=elasticsearch
+      - ELASTIC_PORT=9200
     depends_on:
       - elasticsearch
-    env_file:
-      - config/config.env
-      - config/secret.env
-    secrets:
-      - canids_server_cert
-      - canids_server_key
     deploy:
       placement:
         constraints: [node.hostname == bacchus-w]
       labels:
         caddy: canids-khaos.staging.fyelabs.com
-        caddy.@backend.path: /*
-        caddy.@backend.not: path /dashboard* /ingestion 
-        caddy.route.1_reverse_proxy: "@backend {{upstreams 6060}}"
-        caddy.route.1_reverse_proxy.health_uri: /status
-        caddy.route.1_reverse_proxy.health_interval: 10s
-
-  frontend:
-    image: 192.0.2.1:5000/canids-v2-staging-frontend:latest
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    depends_on:
-      - backend
-    volumes:
-      - caddy:/data
-    configs:
-      - source: canids_staging_caddy_config
-        target: /etc/caddy/Caddyfile
-    deploy:
-      placement:
-        constraints: [node.hostname == bacchus-w]
-      labels:
-        caddy: canids-khaos.staging.fyelabs.com
-        caddy.route.2_reverse_proxy: "{{upstreams 3000}}"
+        caddy.reverse_proxy: "@backend {{upstreams 6060}}"
+        caddy.reverse_proxy.health_uri: /status
+        caddy.reverse_proxy.health_interval: 10s
   
   ingestion:
     image: 192.0.2.1:5000/canids-v2-staging-ingestion:latest
@@ -85,10 +51,7 @@ services:
       dockerfile: ingestion/Dockerfile
     environment:
       - flags=--verbose
-      - asset=testdata2
       - hostname=backend:50000
-    secrets:
-      - canids_ca_cert
     volumes: 
       - /opt/zeek/logs/current:/logs
       - ingestiondb:/db
@@ -97,22 +60,6 @@ services:
       placement:
         constraints: [node.hostname == bacchus-w]
 
-secrets:
-  canids_server_cert:
-    external: true
-    name: canids_staging_server_cert
-  canids_server_key:
-    name: canids_staging_server_key
-    external: true
-  canids_ca_cert:
-    external: true
-    name: canids_staging_ca_cert
-
-configs:
-  canids_staging_caddy_config:
-    external: true
-
 volumes:
   elasticsearch:
-  caddy:
   ingestiondb:

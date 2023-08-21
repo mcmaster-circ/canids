@@ -1,9 +1,0 @@
-:3000 {
-	root * /app
-	file_server
-	header / {
-		-Server
-		Cache-Control "no-cache, no-store, must-revalidate"
-		Access-Controll-Allow-Origin "*"
-	}
-}
