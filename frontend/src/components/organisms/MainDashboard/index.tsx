@@ -12,13 +12,14 @@ import {
 } from '@mui/material'
 import { subMinutes, differenceInDays } from 'date-fns'
 import { SsidChart, Visibility, VisibilityOff } from '@mui/icons-material'
+import Button from '@mui/material/Button'
 import Grid from '@mui/material/Unstable_Grid2'
 import { getViewList } from '@api/view'
 import { getChartsData } from '@api/charts'
-import { getDashboard } from '@api/dashboard'
+import { getDashboard, updateDashboard } from '@api/dashboard'
 import { useRequest } from '@hooks'
 import { GRAPH_TYPES_ICONS } from '@constants/graphTypes'
-import { ViewListItemProps } from '@constants/types'
+import { UpdateDashboardProps, ViewListItemProps } from '@constants/types'
 import { TimeRangePicker } from '@molecules'
 import ChartCard from './ChartCard'
 import { Loader } from '@atoms'
@@ -37,7 +38,11 @@ export default () => {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [display, setDisplay] = useState<any>([])
 
-  const { data: dashboard, loading: loadingDashboard } = useRequest({
+  const {
+    data: dashboard,
+    loading: loadingDashboard,
+    makeRequest: GetDash,
+  } = useRequest({
     request: getDashboard,
   })
   const { data: views, loading: loadingList } = useRequest({
@@ -47,15 +52,30 @@ export default () => {
     request: getChartsData,
     requestByDefault: false,
   })
+  const { makeRequest: UpdateDashRequest } = useRequest({
+    request: updateDashboard,
+    requestByDefault: false,
+  })
 
+  console.log(dashboard)
   const viewsList = useMemo(() => {
     if (dashboard?.views?.length && views?.length) {
       setDisplay(views.map((v: any) => v.uuid))
-      return views
-      // return dashboard.views.map((v: string, i: number) => ({
-      //   size: dashboard.sizes[i],
-      //   ...views.find((view: any) => view.uuid === v),
-      // }))
+      // return views
+      // var viewSet: any[] = []
+      // dashboard.views.forEach((view: any) => {
+      //   views.forEach((jsonView: { uuid: any }) => {
+      //     if (view === jsonView.uuid) {
+      //       viewSet.push(jsonView)
+      //     }
+      //   })
+      // })
+
+      // return viewSet
+      return dashboard.views.map((v: string, i: number) => ({
+        size: dashboard.sizes[i],
+        ...views.find((view: any) => view.uuid === v),
+      }))
     }
   }, [dashboard?.sizes, dashboard?.views, views])
 
@@ -175,6 +195,28 @@ export default () => {
               </div>
             ))}
           </List>
+          <Button
+            variant="contained"
+            onClick={async () => {
+              var sizes: string[] = []
+              display.forEach(() => {
+                sizes.push('half')
+              })
+              var updatedDashboard: UpdateDashboardProps = {
+                uuid: dashboard.uuid,
+                name: dashboard.name,
+                views: display,
+                sizes: sizes,
+              }
+
+              console.log(updatedDashboard)
+
+              await UpdateDashRequest(updatedDashboard)
+              await GetDash()
+            }}
+          >
+            Save
+          </Button>
         </Paper>
       </Grid>
       <Grid xs={12} lg={8} xl={9} p={0}>

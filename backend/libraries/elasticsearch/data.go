@@ -242,13 +242,19 @@ func GetAlarms(s *state.State, indices []string, sources []string, destinations 
 		},
 	}
 
-	// respSources := types.Query{
-	// 	Terms: &types.TermsQuery{
-	// 		TermsQuery: map[string]types.TermsQueryField{
-	// 			"id_resp_h_pos": destinations,
-	// 		},
-	// 	},
-	// }
+	respSources := types.Query{
+		Terms: &types.TermsQuery{
+			TermsQuery: map[string]types.TermsQueryField{
+				"id_resp_h_pos": sources,
+			},
+		},
+	}
+
+	hasSource := types.Query{
+		Bool: &types.BoolQuery{
+			Should: []types.Query{origSources, respSources},
+		},
+	}
 
 	// sourceIPQuery := types.Query{
 	// 	MatchPhrasePrefix: map[string]types.MatchPhrasePrefixQuery{
@@ -267,7 +273,7 @@ func GetAlarms(s *state.State, indices []string, sources []string, destinations 
 		Bool: &types.BoolQuery{
 			Must: []types.Query{
 				r,
-				origSources,
+				hasSource,
 				// respSources,
 				// sourceIPQuery,
 				// destIPQuery,
