@@ -10,7 +10,7 @@ services:
       - elasticsearch:/usr/share/elasticsearch/data
     deploy:
       placement:
-        constraints: [node.hostname == bacchus-w]
+        constraints: [node.hostname == argus-w]
   
   # kibana:
   #   image: docker.elastic.co/kibana/kibana:8.9.0
@@ -20,7 +20,7 @@ services:
   #     - config/config.env
   #   deploy:
   #     placement:
-  #       constraints: [node.hostname == bacchus-w]
+  #       constraints: [node.hostname == argus-w]
   #     labels:
   #       caddy: canids-kibana.staging.fyelabs.com
   #       caddy.route.1_reverse_proxy: "{{upstreams 5601}}"
@@ -37,9 +37,9 @@ services:
       - elasticsearch
     deploy:
       placement:
-        constraints: [node.hostname == bacchus-w]
+        constraints: [node.hostname == argus-w]
       labels:
-        caddy: canids-khaos.staging.fyelabs.com
+        caddy: canids.staging.fyelabs.com
         caddy.reverse_proxy: "@backend {{upstreams 6060}}"
         caddy.reverse_proxy.health_uri: /status
         caddy.reverse_proxy.health_interval: 10s
@@ -58,7 +58,7 @@ services:
     deploy: #TODO: Replicate this globally once all servers are configured with zeek
       #mode: global
       placement:
-        constraints: [node.hostname == bacchus-w]
+        constraints: [node.hostname == argus-w]
 
 volumes:
   elasticsearch:
