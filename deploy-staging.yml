@@ -51,10 +51,12 @@ services:
   #    dockerfile: ingestion/Dockerfile
   #  environment:
   #    - flags=--verbose
-  #    - hostname=backend:50000
+  #    - hostname=:50000
   #  volumes: 
-  #    - /opt/zeek/logs/current:/logs
+  #    - ./ingestion/config/zeekctl.cfg:/usr/local/bin/etc/zeekctl.cfg
+  #    - ./ingestion/config/zeek-crontab:/etc/cron.d/zeek
   #    - ingestiondb:/db
+  #  network_mode: host
   #  deploy: #TODO: Replicate this globally once all servers are configured with zeek
   #    #mode: global
   #    placement:
