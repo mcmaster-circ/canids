@@ -58,20 +58,10 @@ export default () => {
   })
 
   console.log(dashboard)
+  console.log(views)
   const viewsList = useMemo(() => {
     if (dashboard?.views?.length && views?.length) {
-      setDisplay(views.map((v: any) => v.uuid))
-      // return views
-      // var viewSet: any[] = []
-      // dashboard.views.forEach((view: any) => {
-      //   views.forEach((jsonView: { uuid: any }) => {
-      //     if (view === jsonView.uuid) {
-      //       viewSet.push(jsonView)
-      //     }
-      //   })
-      // })
-
-      // return viewSet
+      setDisplay(dashboard.views.map((v: any) => v))
       return dashboard.views.map((v: string, i: number) => ({
         size: dashboard.sizes[i],
         ...views.find((view: any) => view.uuid === v),
@@ -116,6 +106,8 @@ export default () => {
       clearInterval(interval)
     }
   }, [chartData, handleRequest, viewsList])
+
+  console.log(display)
 
   return (
     <Grid container spacing={2} p={3} m={0}>
@@ -163,7 +155,7 @@ export default () => {
             All Visualizations
           </Typography>
           <List>
-            {viewsList?.map((v: ViewListItemProps) => (
+            {views?.map((v: ViewListItemProps) => (
               <div key={v.uuid}>
                 <ListItem sx={{ p: 0 }}>
                   <ListItemIcon>
@@ -209,10 +201,11 @@ export default () => {
                 sizes: sizes,
               }
 
-              console.log(updatedDashboard)
+              console.log('UpdatedDash: ', updatedDashboard)
 
               await UpdateDashRequest(updatedDashboard)
-              await GetDash()
+
+              setTimeout(async () => await GetDash(), 3000)
             }}
           >
             Save
