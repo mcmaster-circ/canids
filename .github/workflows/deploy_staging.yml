@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Build Ingestion client
-        run: docker build -f ingestion/Dockerfile -t 192.0.2.1:5000/canids-v2-staging-ingestion:latest .
+        run: docker build -f ingestion/Dockerfile-zeek -t 192.0.2.1:5000/canids-v2-staging-zeek:latest .
       - name: Build and push images
         run: docker compose -f deploy-staging.yml build --push
       - name: Deploy

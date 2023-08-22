@@ -44,24 +44,24 @@ services:
         caddy.reverse_proxy.health_uri: /status
         caddy.reverse_proxy.health_interval: 10s
   
-  #ingestion:
-  #  image: 192.0.2.1:5000/canids-v2-staging-ingestion:latest
-  #  build:
-  #    context: .
-  #    dockerfile: ingestion/Dockerfile
-  #  environment:
-  #    - flags=--verbose
-  #    - hostname=:50000
-  #  volumes: 
-  #    - ./ingestion/config/zeekctl.cfg:/usr/local/bin/etc/zeekctl.cfg
-  #    - ./ingestion/config/zeek-crontab:/etc/cron.d/zeek
-  #    - ingestiondb:/db
-  #  network_mode: host
-  #  deploy: #TODO: Replicate this globally once all servers are configured with zeek
-  #    #mode: global
-  #    placement:
-  #      constraints: [node.hostname == argus-w]
+  ingestion:
+    image: 192.0.2.1:5000/canids-v2-staging-ingestion:latest
+    build:
+      context: .
+      dockerfile: ingestion/Dockerfile
+    environment:
+      - flags=--verbose
+      - hostname=:50000
+    volumes: 
+      - zeek:/logs
+      - ingestiondb:/db
+    deploy: #TODO: Replicate this globally once all servers are configured with zeek
+      #mode: global
+      placement:
+        constraints: [node.hostname == argus-w]
 
 volumes:
   elasticsearch:
   ingestiondb:
+  zeek:
+    external: true
