@@ -2,13 +2,13 @@ import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 
 export const defaultValues = {
-  uuid: '',
+  name: '',
 }
 
 export const formConfig = [
   {
     component: 'input',
-    name: 'uuid',
+    name: 'name',
     label: 'Name',
     size: 'small',
     column: 12,
@@ -20,7 +20,7 @@ export const resolver = yupResolver(
   yup
     .object()
     .shape({
-      uuid: yup.string().required('Name is  a required field'),
+      name: yup.string().required('Name is a required field'),
     })
     .required()
 )

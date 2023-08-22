@@ -17,8 +17,11 @@ type listResponse struct {
 
 // User represents the list of clients in the system.
 type Ingestion struct {
-	UUID string `json:"uuid"` // Represents the name of the ingestion client
-	Key  string `json:"key"`  // Represents the encryption key shared with the ingestion client
+	UUID        string `json:"uuid"`      // Represents the name of the ingestion client
+	Approved    bool   `json:"approved"`  // Whether this ingestion client has been approved
+	IsConnected bool   `json:"connected"` // Whether this ingestion client is connected
+	Address     string `json:"address"`   // Network address for identification processes
+	Name        string `json:"name"`      // User defined name
 }
 
 // listHandler is "/api/ingestion/list". It will return the list of clients
@@ -47,10 +50,27 @@ func listHandler(s *state.State, w http.ResponseWriter, r *http.Request) {
 
 	for _, c := range clients {
 		out.Clients = append(out.Clients, Ingestion{
-			UUID: c.UUID,
-			Key:  c.Key,
+			UUID:        c.UUID,
+			Approved:    true,
+			IsConnected: active.exists(c.UUID),
+			Address:     c.Address,
+			Name:        c.Name,
 		})
 	}
+
+	s.Log.Println("out.clients 1 ", out.Clients)
+
+	for _, uuid := range waitList.getAllItems() {
+		out.Clients = append(out.Clients, Ingestion{
+			UUID:        uuid,
+			Approved:    waitList.getItem(uuid).Approved,
+			IsConnected: true,
+			Address:     waitList.getItem(uuid).Address,
+			Name:        uuid,
+		})
+	}
+
+	s.Log.Println("out. clients 2 ", out.Clients)
 
 	// return list of users
 	out.Success = true

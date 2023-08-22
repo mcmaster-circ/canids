@@ -7,7 +7,9 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -28,7 +30,7 @@ type Header struct {
 	MsgTimestamp time.Time `json:"msg_timestamp,omitempty"` // Message timestamp
 	ErrorMsg     string    `json:"error_msg,omitempty"`     // Request error message(s) (use with NACK)
 	Session      string    `json:"session,omitempty"`       // Connection session UUID
-	MsgType      int       `json:"type,omitempty"`          // Message type: 0 - data, 1 - pong, 2 - connection success
+	MsgType      int       `json:"type,omitempty"`          // Message type: 0 - data, 1 - pong, 2 - connection success, 3 - wait on approval
 	Encrypted    bool      `json:"encrypted,omitempty"`     // Whether the payload is encrypted (true) or not (false)
 }
 
@@ -41,8 +43,15 @@ type Frame struct {
 	GoingAway bool     // Will be set to true when ingestion client has been closed. Flag for ingest (backend) to be able to remove given ingestion client from delete map
 }
 
+type Authorization struct {
+	Key      string `json:"key"`
+	AssetID  string `json:"assetId"`
+	Address  string `json:"address"`
+	Approved bool
+}
+
 type Message struct {
-	MsgType int    `json:"type,omitempty"` // Message type: 0 - Misc, 1 - Ping
+	MsgType int    `json:"type,omitempty"` // Message type: 0 - Misc, 1 - Ping, 2 - connection success, 3 - wait on approval
 	Msg     string `json:"msg,omitempty"`
 }
 
@@ -55,7 +64,17 @@ var server = &WebSocketServer{
 	queue: make(chan *Frame, bufferSize),
 }
 
-var deleted = map[string]bool{} // String: ingestion client name. Bool: Whether index has been deleted from es
+var del = Deleted{
+	d: map[string]bool{},
+}
+
+var waitList = Waiting{
+	w: map[string]Authorization{},
+}
+
+var active = Active{
+	a: []string{},
+}
 
 var maxIndexSize = 1000000
 
@@ -70,13 +89,37 @@ func GetMaxElasticIndexSize() int {
 // HandleWebSocket handles incoming WebSocket connections.
 func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 
-	log.Println("Recieved connection request")
-	uuid := r.Header.Get("Authorization")
+	inES := true
 
-	ingestion, err := elasticsearch.QueryIngestionByUUID(s, uuid)
+	// Get header (base 64 encoded json) and turn it into useful stuff
+	log.Println("Recieved connection request")
+	headerEnc := r.Header.Get("Authorization")
+
+	headerb, err := base64.StdEncoding.DecodeString(headerEnc)
 	if err != nil {
-		log.Println("Unable to get specified ingestion from elasticsearch: ", err)
+		log.Println("Failed to get bytes from header: ", err)
 		return
+	}
+
+	var header Authorization
+	err = json.Unmarshal(headerb, &header)
+	if err != nil {
+		log.Println("Failed to unmarshal: ", err)
+		return
+	}
+
+	uuid := header.AssetID
+	log.Println("Uuid, ", uuid)
+
+	var key string
+	// If err was unable to get ingestion from elasticsearch - push to frontend for confirmation
+	ingestion, _, err := elasticsearch.QueryIngestionByUUID(s, uuid)
+	if err != nil {
+		inES = false
+		key = header.Key
+		log.Println("Unable to get specified ingestion from elasticsearch: ", err)
+	} else {
+		key = ingestion.Key
 	}
 
 	// Accept (temporarily) ws connection
@@ -86,6 +129,78 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close(websocket.StatusInternalError, "WebSocket closed")
+	active.append(uuid)
+	defer active.delete(uuid)
+
+	if !inES {
+		// Push to frontend, establish heartbeat, monitor for approval
+		waitList.update(uuid, header)
+		defer waitList.delete(uuid)
+
+		// Put ingestion client into 'waiting' mode
+		waitMsg := Message{
+			MsgType: 3,
+			Msg:     "",
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+		wsjson.Write(ctx, conn, waitMsg)
+		cancel()
+
+		lastTime := time.Now()
+		for {
+			// Heartbeat handling
+			if lastTime.Add(time.Second * 5).Before(time.Now()) {
+				// Send ping
+				pingMessage := Message{
+					MsgType: 1,
+					Msg:     "",
+				}
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+				err = wsjson.Write(ctx, conn, pingMessage)
+				cancel()
+				if err != nil {
+					log.Println("failed to send ping message")
+					return
+				}
+				var frame Frame
+				ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+				err := wsjson.Read(ctx, conn, &frame)
+				cancel()
+				if err != nil {
+					log.Println("Error reading WebSocket message: ", err)
+					return
+				}
+				// Pong received
+				if frame.Header.MsgType != 1 {
+					log.Println("Invalid message received")
+					return
+				}
+
+				lastTime = time.Now()
+			}
+
+			// When approved send a 4
+			if waitList.getItem(uuid).Approved {
+				approvedMessage := Message{
+					MsgType: 4,
+					Msg:     "",
+				}
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+				wsjson.Write(ctx, conn, approvedMessage)
+				cancel()
+				waitList.delete(uuid)
+				break
+			}
+		}
+	} else {
+		successMsg := Message{
+			MsgType: 2,
+			Msg:     "",
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+		wsjson.Write(ctx, conn, successMsg)
+		cancel()
+	}
 
 	// Generate random data for symmetrical encryption key check
 	randData := make([]byte, 32)
@@ -122,7 +237,7 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		log.Println("Failed to decode message", err)
 	}
 
-	decodedKey, err := base64.StdEncoding.DecodeString(ingestion.Key)
+	decodedKey, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
 		log.Println("Failed to decode key: ", err)
 	}
@@ -145,19 +260,19 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 	wsjson.Write(ctx, conn, successMsg)
 	cancel()
 
-	log.Println("Successful connection with: ", ingestion.UUID)
+	log.Println("Successful connection with: ", uuid)
 
 	var timeLastPong = time.Now()
 	var timeLastPing = time.Now()
 
 	for {
 
-		for name := range deleted {
-			if name == ingestion.UUID {
+		for _, name := range del.getIDs() {
+			if name == uuid {
 				conn.Close(websocket.StatusGoingAway, "Access revoked.")
 				closeFrame := Frame{
 					GoingAway: true,
-					AssetID:   ingestion.UUID,
+					AssetID:   uuid,
 				}
 
 				s.Log.Printf("Ingestion staged for deletion. Sending close frame")
@@ -170,7 +285,7 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 			timeLastPing = time.Now()
 			var pingMessage Message
 			pingMessage.MsgType = 1
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 			err := wsjson.Write(ctx, conn, pingMessage)
 			cancel()
 			if err != nil {
@@ -181,11 +296,13 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		}
 
 		var frame Frame
-		err := wsjson.Read(r.Context(), conn, &frame)
+		ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
+		err := wsjson.Read(ctx, conn, &frame)
+		cancel()
 		if err != nil {
-			log.Println("Error reading WebSocket message:", err)
-			conn.Close(websocket.StatusInvalidFramePayloadData, "Could not read websocket message")
-			break
+			log.Println("Error reading WebSocket message: ", err)
+			//conn.Close(websocket.StatusInvalidFramePayloadData, "Could not read websocket message")
+			continue
 		}
 		err = Validate(&frame.Header)
 		if err != nil {
@@ -217,6 +334,27 @@ func HandleQueue(s *state.State) {
 
 		ingest(chunk, s, maxIndexSize)
 	}
+}
+
+func Encrypt(text []byte, key []byte) ([]byte, error) {
+	c, err := aes.NewCipher(key)
+	if err != nil {
+		log.Println("Failed to generate cipher")
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(c)
+	if err != nil {
+		log.Println("Failed to generate gcm")
+		return nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+
+	return gcm.Seal(nonce, nonce, text, nil), nil
 }
 
 func Decrypt(text []byte, key []byte) ([]byte, error) {

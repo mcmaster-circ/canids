@@ -62,7 +62,7 @@ func deleteIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 
 	//Success
 
-	deleted[request.UUID] = false
+	del.update(request.UUID, false)
 
 	w.WriteHeader(http.StatusOK)
 	out := GeneralResponse{

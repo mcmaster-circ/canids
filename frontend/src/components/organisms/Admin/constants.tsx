@@ -128,7 +128,33 @@ export const userColumns = (actions: (props: any) => JSX.Element[]) => [
 ]
 
 export const ingestionColumns = (actions: (props: any) => JSX.Element[]) => [
-  { field: 'uuid', headerName: 'Name', flex: 0.27 },
+  {
+    field: 'name',
+    headerName: 'Name',
+    flex: 0.27,
+  },
+  { field: 'uuid', headerName: 'UUID', flex: 0.27 },
+  {
+    field: 'address',
+    headerName: 'Address',
+    flex: 0.27,
+  },
+  {
+    field: 'connected',
+    headerName: 'Connected',
+    flex: 0.2,
+    type: 'boolean',
+    renderCell: ({ value }: GridRenderCellParams) =>
+      value ? <Check color="success" /> : <Clear color="error" />,
+  },
+  {
+    field: 'approved',
+    headerName: 'Activated',
+    flex: 0.2,
+    type: 'boolean',
+    renderCell: ({ value }: GridRenderCellParams) =>
+      value ? <Check color="success" /> : <Clear color="error" />,
+  },
   {
     field: 'actions',
     type: 'actions',
@@ -177,4 +203,13 @@ export const defaultKeyModalState: {
   key: undefined,
   title: undefined,
   params: undefined,
+}
+export const defaultRenameModalState: {
+  isUpdate: boolean
+  open: boolean
+  values: any
+} = {
+  open: false,
+  values: undefined,
+  isUpdate: false,
 }

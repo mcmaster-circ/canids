@@ -1,8 +1,6 @@
 package websocket
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 
@@ -12,22 +10,13 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
-type createIngestionRequest struct {
+type approveIngestionRequest struct {
 	UUID string `json:"uuid"` // Name of the ingestion engine
 }
 
-type createIngestionResponse struct {
-	Key string `json:"key"` // Encryption key
-}
+func approveIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 
-type GeneralResponse struct {
-	Success bool   `json:"success"` // Success indicates if the request was successful
-	Message string `json:"message"` // Message describes the request response
-}
-
-func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
-
-	var request createIngestionRequest
+	var request approveIngestionRequest
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "application/json")
 
@@ -44,6 +33,8 @@ func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	auth := waitList.getItem(request.UUID)
+
 	err = utils.ValidateBasic(request.UUID)
 	if err != nil {
 		l.Warn("UUID name not specified")
@@ -57,7 +48,7 @@ func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ensure ingestion client uuid does not already exist
-	_, err = elasticsearch.QueryIngestionByUUID(s, request.UUID)
+	_, _, err = elasticsearch.QueryIngestionByUUID(s, request.UUID)
 	if err == nil {
 		// no error means we located a client
 		l.Warn("uuid already exists ", request.UUID)
@@ -70,27 +61,11 @@ func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate key
-
-	key := make([]byte, 32)
-
-	_, err = rand.Read(key)
-	if err != nil {
-		l.Error("Failed to generate key", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Please contact your system administrator.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
-	}
-
-	encodedKey := base64.StdEncoding.EncodeToString(key)
-
 	document := elasticsearch.DocumentIngestion{
-		Key:  encodedKey,
-		UUID: request.UUID,
+		Key:     auth.Key,
+		UUID:    request.UUID,
+		Address: auth.Address,
+		Name:    request.UUID,
 	}
 
 	_, err = document.Index(s)
@@ -106,9 +81,11 @@ func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Success
+	waitList.approve(request.UUID)
 
-	resp := createIngestionResponse{
-		Key: encodedKey,
+	resp := GeneralResponse{
+		Success: true,
+		Message: "Successfully created ingestion client",
 	}
 
 	l.Info("Created ingestion in elasticsearch")

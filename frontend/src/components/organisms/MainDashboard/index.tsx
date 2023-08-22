@@ -57,7 +57,7 @@ export default () => {
       //   ...views.find((view: any) => view.uuid === v),
       // }))
     }
-  }, [dashboard?.sizes, dashboard?.views, views])
+  }, [dashboard?.views, views])
 
   const chartDisplay = useMemo(
     () => chartData?.filter((c: any) => display.includes(c.uuid)),

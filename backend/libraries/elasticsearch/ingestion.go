@@ -10,8 +10,10 @@ import (
 )
 
 type DocumentIngestion struct {
-	UUID string `json:"uuid"` // Represents the name of the ingestion client
-	Key  string `json:"key"`  // Represents the encryption key shared with the ingestion client
+	UUID    string `json:"uuid"`    // Represents the name of the ingestion client
+	Key     string `json:"key"`     // Represents the encryption key shared with the ingestion client
+	Address string `json:"address"` // Debug network address string
+	Name    string `json:"string"`  // Set name for the ingestion client
 }
 
 const indexIngestion = "ingestion"
@@ -22,7 +24,7 @@ func (d *DocumentIngestion) Index(s *state.State) (string, error) {
 	return result.Id_, err
 }
 
-func QueryIngestionByUUID(s *state.State, uuid string) (DocumentIngestion, error) {
+func QueryIngestionByUUID(s *state.State, uuid string) (DocumentIngestion, string, error) {
 	var d DocumentIngestion
 	client, ctx := s.Elastic, s.ElasticCtx
 
@@ -33,20 +35,20 @@ func QueryIngestionByUUID(s *state.State, uuid string) (DocumentIngestion, error
 		},
 	}).Do(ctx)
 	if err != nil {
-		return d, err
+		return d, "", err
 	}
 	// ensure ingestion was returned
 	if result.Hits.Total.Value == 0 {
-		return d, errors.New("ingestion: no document with uuid found")
+		return d, "", errors.New("ingestion: no document with uuid found")
 	}
 	// select + parse ingestion into DocumentIngestion
 	ingestion := result.Hits.Hits[0]
 	err = json.Unmarshal(ingestion.Source_, &d)
 	if err != nil {
-		return d, err
+		return d, "", err
 	}
 	// successful query
-	return d, nil
+	return d, ingestion.Id_, nil
 }
 
 func DeleteIngestByUUID(s *state.State, uuid string) error {
@@ -83,4 +85,16 @@ func AllIngest(s *state.State) ([]DocumentIngestion, error) {
 		out = append(out, d)
 	}
 	return out, nil
+}
+
+func (d *DocumentIngestion) Update(s *state.State, esDocID string) error {
+	client, ctx := s.Elastic, s.ElasticCtx
+	_, err := client.Update(indexIngestion, esDocID).
+		Doc(map[string]interface{}{
+			"uuid":    d.UUID,
+			"name":    d.Name,
+			"address": d.Address,
+			"key":     d.Key,
+		}).DetectNoop(true).Do(ctx)
+	return err
 }

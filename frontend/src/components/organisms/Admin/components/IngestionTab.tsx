@@ -1,22 +1,28 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Loader, RowActionsMenu } from '@atoms'
 import { useRequest } from '@hooks'
-import { Delete } from '@mui/icons-material'
-import { Box, Button, Typography } from '@mui/material'
+import { Check, Delete, Redo } from '@mui/icons-material'
+import { Box, Typography } from '@mui/material'
 import { DataGrid, GridRenderCellParams } from '@mui/x-data-grid'
-import { ingestionDelete, ingestionList } from '@api/ingestion'
 import {
-  defaultAddModalState,
+  ingestionApprove,
+  ingestionDelete,
+  ingestionList,
+} from '@api/ingestion'
+import {
   defaultDeleteModalState,
   defaultKeyModalState,
+  defaultRenameModalState,
   ingestionColumns,
 } from '../constants'
-import { AddEditModal, DeleteModal } from '@modals'
-import AddIngestionForm from 'src/components/forms/AddIngestionForm'
+import { DeleteModal } from '@modals'
 import KeyModal from 'src/components/modals/KeyModal'
+import { ApproveClientProps } from '@constants/types/ingestionPropsTypes'
+import RenameModal from 'src/components/modals/RenameModal'
+import RenameIngestionForm from 'src/components/forms/RenameIngestionForm'
 
 export default () => {
-  const [addModal, setAddModal] = useState(defaultAddModalState)
+  const [renameModal, setRenameModal] = useState(defaultRenameModalState)
   const [deleteModal, setDeleteModal] = useState(defaultDeleteModalState)
   const [keyModal, setKeyModal] = useState(defaultKeyModalState)
   const { data, loading, makeRequest } = useRequest({
@@ -28,22 +34,27 @@ export default () => {
     requestByDefault: false,
     needSuccess: 'Successfully deleted',
   })
+  const { makeRequest: approveRequest } = useRequest({
+    request: ingestionApprove,
+    requestByDefault: false,
+    needSuccess: 'Successfully approved',
+  })
 
-  const handleCloseAddForm = useCallback(
-    (uuid: string, key: string) => {
-      setAddModal(defaultAddModalState)
-      setKeyModal(() => ({
-        key: key,
-        title: uuid,
-        open: true,
-      }))
-      setTimeout(() => makeRequest(), 3000)
-    },
-    [makeRequest]
-  )
+  // const handleCloseAddForm = useCallback(
+  //   (uuid: string, key: string) => {
+  //     setAddModal(defaultAddModalState)
+  //     setKeyModal(() => ({
+  //       key: key,
+  //       title: uuid,
+  //       open: true,
+  //     }))
+  //     setTimeout(() => makeRequest(), 3000)
+  //   },
+  //   [makeRequest]
+  // )
 
-  const handleCloseAdd = useCallback(() => {
-    setAddModal(defaultAddModalState)
+  const handleCloseRename = useCallback(() => {
+    setRenameModal(defaultRenameModalState)
     setTimeout(() => makeRequest(), 3000)
   }, [makeRequest])
 
@@ -56,6 +67,8 @@ export default () => {
     setKeyModal(defaultKeyModalState)
     setTimeout(() => makeRequest(), 3000)
   }, [makeRequest])
+
+  console.log(data)
 
   const columns = useMemo(
     () =>
@@ -75,11 +88,35 @@ export default () => {
                   }),
                 key: 'delete',
               },
+              {
+                label: 'Approve',
+                icon: <Check />,
+                action: () => {
+                  var props: ApproveClientProps = {
+                    uuid: row.uuid,
+                  }
+                  approveRequest(props)
+                  setTimeout(() => makeRequest(), 3000)
+                },
+                key: 'approve',
+              },
+              {
+                label: 'Rename',
+                icon: <Redo />,
+                action: () => {
+                  setRenameModal({
+                    isUpdate: true,
+                    values: row,
+                    open: true,
+                  })
+                },
+                key: 'rename',
+              },
             ]}
           />,
         ]
       }),
-    []
+    [approveRequest, makeRequest]
   )
 
   return (
@@ -97,12 +134,6 @@ export default () => {
         <Typography variant="h6" fontWeight={700}>
           Ingestion Clients
         </Typography>
-        <Button
-          variant="contained"
-          onClick={() => setAddModal((s) => ({ ...s, open: true }))}
-        >
-          Create Client
-        </Button>
       </Box>
       <Box
         sx={{
@@ -144,17 +175,16 @@ export default () => {
         )}
       </Box>
       {loading && <Loader />}
-      <AddEditModal
-        open={addModal.open}
+      <RenameModal
+        open={renameModal.open}
         title="Ingestion Client"
-        handleClose={handleCloseAdd}
+        handleClose={handleCloseRename}
       >
-        <AddIngestionForm
-          isUpdate={addModal.isUpdate}
-          values={addModal.values}
-          handleClose={handleCloseAddForm}
+        <RenameIngestionForm
+          values={renameModal.values}
+          handleClose={handleCloseRename}
         />
-      </AddEditModal>
+      </RenameModal>
       <DeleteModal
         open={deleteModal}
         title="Ingestion Client"

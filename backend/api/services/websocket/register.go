@@ -20,13 +20,16 @@ func RegisterUpdateFunctions(s *state.State, r *mux.Router) {
 	r.HandleFunc("/setESMax", func(w http.ResponseWriter, r *http.Request) {
 		setMaxHandler(s, w, r)
 	})
-	r.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
-		createIngestion(s, w, r)
-	})
 	r.HandleFunc("/delete", func(w http.ResponseWriter, r *http.Request) {
 		deleteIngestion(s, w, r)
 	})
 	r.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
 		listHandler(s, w, r)
+	})
+	r.HandleFunc("/approve", func(w http.ResponseWriter, r *http.Request) {
+		approveIngestion(s, w, r)
+	})
+	r.HandleFunc("/rename", func(w http.ResponseWriter, r *http.Request) {
+		renameIngestion(s, w, r)
 	})
 }

@@ -1,6 +1,7 @@
 import {
-  AddClientProps,
+  ApproveClientProps,
   DeleteClientProps,
+  RenameClientProps,
 } from '@constants/types/ingestionPropsTypes'
 
 import { get, post } from './fetchRequests'
@@ -12,8 +13,12 @@ export const ingestionList = async () => {
   return data?.clients
 }
 
-export const ingestionAdd = async ({ params }: { params: AddClientProps }) => {
-  const data = await post({ url: baseUrl + '/ingestion/create', body: params })
+export const ingestionApprove = async ({
+  params,
+}: {
+  params: ApproveClientProps
+}) => {
+  const data = await post({ url: baseUrl + '/ingestion/approve', body: params })
   return data
 }
 
@@ -23,5 +28,14 @@ export const ingestionDelete = async ({
   params: DeleteClientProps
 }) => {
   const data = await post({ url: baseUrl + '/ingestion/delete', body: params })
+  return data
+}
+
+export const ingestionRename = async ({
+  params,
+}: {
+  params: RenameClientProps
+}) => {
+  const data = await post({ url: baseUrl + '/ingestion/rename', body: params })
   return data
 }

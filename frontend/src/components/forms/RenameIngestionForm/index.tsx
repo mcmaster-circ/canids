@@ -4,29 +4,37 @@ import { Button } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
 import { FormRender } from '@molecules'
 import { useRequest } from '@hooks'
-import { defaultValues, formConfig, resolver } from './constants'
-import { AddClientProps } from '@constants/types/ingestionPropsTypes'
-import { ingestionAdd } from '@api/ingestion'
+import { formConfig, resolver } from './constants'
+import {
+  RenameClientProps,
+  RenameNameHouser,
+} from '@constants/types/ingestionPropsTypes'
+import { ingestionRename } from '@api/ingestion'
 
 interface FormProps {
-  handleClose: (uuid: string, key: string) => void
-  isUpdate?: boolean
-  values?: AddClientProps
+  handleClose: () => void
+  values: RenameClientProps
 }
 
-export default ({ handleClose, isUpdate, values }: FormProps) => {
+export default ({ handleClose, values }: FormProps) => {
   const { makeRequest } = useRequest({
-    request: ingestionAdd,
+    request: ingestionRename,
     requestByDefault: false,
-    needSuccess: 'Ingestion client has been created',
   })
 
   const onSubmit = useCallback(
-    async (data: AddClientProps) => {
-      var resp = await makeRequest(data)
-      handleClose(data.uuid, resp.key)
+    async (name: RenameNameHouser) => {
+      console.log(name)
+
+      var req: RenameClientProps = {
+        name: name.name,
+        uuid: values.uuid,
+      }
+      console.log(req)
+      await makeRequest(req)
+      handleClose()
     },
-    [handleClose, makeRequest]
+    [handleClose, makeRequest, values]
   )
 
   const {
@@ -35,7 +43,6 @@ export default ({ handleClose, isUpdate, values }: FormProps) => {
     formState: { errors },
   } = useForm({
     resolver: resolver,
-    defaultValues: isUpdate ? values : defaultValues,
   })
 
   return (
@@ -47,7 +54,7 @@ export default ({ handleClose, isUpdate, values }: FormProps) => {
           ))}
           <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
             <Button variant="contained" color="secondary" type="submit">
-              Save
+              Rename
             </Button>
           </Grid>
         </Grid>
