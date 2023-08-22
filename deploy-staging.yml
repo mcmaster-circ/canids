@@ -52,8 +52,6 @@ services:
     environment:
       - flags=--verbose
       - hostname=http://backend:6060/websocket
-      - asset=khaos
-      - key=3K5qeZAvn58csYvaOXlQBg==
     volumes: 
       - zeek:/logs
       - ingestiondb:/db
