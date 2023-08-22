@@ -109,10 +109,11 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 	}
 
 	uuid := header.AssetID
+	log.Println("Uuid, ", uuid)
 
 	var key string
 	// If err was unable to get ingestion from elasticsearch - push to frontend for confirmation
-	ingestion, err := elasticsearch.QueryIngestionByUUID(s, uuid)
+	ingestion, _, err := elasticsearch.QueryIngestionByUUID(s, uuid)
 	if err != nil {
 		inES = false
 		key = header.Key
@@ -146,42 +147,36 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		cancel()
 
 		lastTime := time.Now()
-		lastPongTime := time.Now()
 		for {
 			// Heartbeat handling
 			if lastTime.Add(time.Second * 5).Before(time.Now()) {
 				// Send ping
-				var pingMessage Message
-				pingMessage.MsgType = 1
+				pingMessage := Message{
+					MsgType: 1,
+					Msg:     "",
+				}
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
-				cancel()
 				err = wsjson.Write(ctx, conn, pingMessage)
+				cancel()
 				if err != nil {
 					log.Println("failed to send ping message")
-					continue
+					return
+				}
+				var frame Frame
+				ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
+				err := wsjson.Read(ctx, conn, &frame)
+				cancel()
+				if err != nil {
+					log.Println("Error reading WebSocket message: ", err)
+					return
+				}
+				// Pong received
+				if frame.Header.MsgType != 1 {
+					log.Println("Invalid message received")
+					return
 				}
 
 				lastTime = time.Now()
-			}
-			var frame Frame
-			ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
-			err := wsjson.Read(ctx, conn, &frame)
-			cancel()
-			if err != nil {
-				log.Println("Error reading WebSocket message: ", err)
-				continue
-			}
-			// Pong received
-			if frame.Header.MsgType == 1 {
-				lastPongTime = time.Now()
-				continue
-			}
-
-			// Pong timeout
-			if lastPongTime.Add(time.Second * 15).Before(time.Now()) {
-				log.Println("No pong recieved for 15 seconds")
-				conn.Close(websocket.StatusBadGateway, "No pong received")
-				return
 			}
 
 			// When approved send a 4
@@ -290,7 +285,7 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 			timeLastPing = time.Now()
 			var pingMessage Message
 			pingMessage.MsgType = 1
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 			err := wsjson.Write(ctx, conn, pingMessage)
 			cancel()
 			if err != nil {
@@ -301,7 +296,7 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		}
 
 		var frame Frame
-		ctx, cancel = context.WithTimeout(context.Background(), time.Second*2)
+		ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
 		err := wsjson.Read(ctx, conn, &frame)
 		cancel()
 		if err != nil {

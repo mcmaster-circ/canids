@@ -23,4 +23,4 @@ COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /entrypoint /entrypoint
 WORKDIR /db
 USER gopher
-ENTRYPOINT /entrypoint upload $flags --asset $asset --hostname $hostname /logs
+ENTRYPOINT /entrypoint upload $flags --hostname $hostname /logs

@@ -43,10 +43,13 @@ func syncScanner(s *state) (*database, error) {
 		// Generate new assetID
 		assetID, err := CreateAssetID()
 		if err != nil {
+			log.Println("Error creating uuid ", err)
 			db.AssetID = ""
 			return db, err
 		}
 
+		log.Println(assetID)
+		log.Println(key)
 		db.AssetID = assetID
 		s.AssetID = assetID
 

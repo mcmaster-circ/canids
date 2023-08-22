@@ -27,6 +27,7 @@ type Message struct {
 type MessageChannels struct {
 	pingQueue     chan *Message
 	approvedQueue chan *Message
+	goAwayQueue   chan int
 }
 
 type Authorization struct {
@@ -38,6 +39,7 @@ type Authorization struct {
 var queues = &MessageChannels{
 	pingQueue:     make(chan *Message, 10000),
 	approvedQueue: make(chan *Message, 1000),
+	goAwayQueue:   make(chan int, 1000),
 }
 
 func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
@@ -48,6 +50,8 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 	dialOptions := websocket.DialOptions{
 		HTTPHeader: http.Header{},
 	}
+
+	log.Println("Asset id ", s.AssetID)
 
 	auth := Authorization{
 		Key:     s.EncryptionKey,
@@ -65,15 +69,13 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
 	conn, _, err := websocket.Dial(ctx, endpoint, &dialOptions)
+	cancel()
 	if err != nil {
 		log.Printf("[CanIDS] failed to establish connection. %s. retrying in %s\n", err, s.RetryDelay)
 		return err
 	}
 	// Defer closure for client exit
 	defer conn.Close(websocket.StatusInternalError, "WebSocket closed")
-	cancel()
-
-	go wsReader(s, conn)
 
 	// Get status message for whether found in elasticsearch or not
 	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
@@ -87,6 +89,8 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 
 	if msg.MsgType == 3 {
 
+		go wsReader(s, conn)
+
 		// Waiting process...
 		for {
 			approved := false
@@ -99,9 +103,10 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 				approved = true
 			}
 			if approved {
+				queues.goAwayQueue <- 0
 				break
 			}
-			ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
+			ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
 			// Send frame to WebSocket server
 			err = wsjson.Write(ctx, conn, frame)
 			if err != nil {
@@ -113,8 +118,8 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 			}
 			cancel()
 		}
-
 	}
+	log.Println("Approved")
 
 	// Get random message for handshake
 	ctx, cancel = context.WithTimeout(context.Background(), time.Second*1)
@@ -173,6 +178,7 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 
 	log.Println("Successful connection")
 
+	go wsReader(s, conn)
 	// Start period poll of file system for new files and stale files
 	go fsPollingLoop(s, db)
 
@@ -240,6 +246,15 @@ func fsPollingLoop(s *state, db *database) {
 
 func wsReader(s *state, conn *websocket.Conn) {
 	for {
+		select {
+		case x := <-queues.goAwayQueue:
+			if x == 0 {
+				log.Println("wsReader going away")
+				return
+			}
+		default:
+
+		}
 		var msg Message
 		err := wsjson.Read(context.Background(), conn, &msg)
 		if err != nil {
@@ -311,6 +326,7 @@ func CreateKey() (string, error) {
 
 func CreateAssetID() (string, error) {
 	key := make([]byte, 8)
+	const chars = "abcdefghijklmnopqrstuvwxyz"
 
 	_, err := rand.Read(key)
 	if err != nil {
@@ -318,5 +334,11 @@ func CreateAssetID() (string, error) {
 		return "", err
 	}
 
-	return base64.StdEncoding.EncodeToString(key), nil
+	var stringKey []byte
+
+	for _, b := range key {
+		stringKey = append(stringKey, chars[int(b)%len(chars)])
+	}
+
+	return string(stringKey), nil
 }

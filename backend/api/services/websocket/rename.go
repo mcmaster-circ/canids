@@ -1,8 +1,6 @@
 package websocket
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 
@@ -12,17 +10,19 @@ import (
 	"github.com/mcmaster-circ/canids-v2/backend/state"
 )
 
-type createIngestionRequest struct {
-	UUID string `json:"uuid"` // Name of the ingestion engine
+type renameIngestionRequest struct {
+	UUID string `json:"uuid"` // UUID of the ingestion engine
+	Name string `json:"name"` // Name of the ingestion engine
 }
 
-type createIngestionResponse struct {
-	Key string `json:"key"` // Encryption key
+type GeneralResponse struct {
+	Success bool   `json:"success"` // Success indicates if the request was successful
+	Message string `json:"message"` // Message describes the request response
 }
 
-func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
+func renameIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 
-	var request createIngestionRequest
+	var request renameIngestionRequest
 	l := ctxlog.Log(r.Context())
 	w.Header().Set("Content-Type", "application/json")
 
@@ -39,39 +39,45 @@ func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = utils.ValidateBasic(request.UUID)
+	err = utils.ValidateBasic(request.Name)
 	if err != nil {
-		l.Warn("UUID name not specified")
+		l.Warn("Name name not specified")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "UUID " + err.Error(),
+			Message: "Name " + err.Error(),
 		}
 		json.NewEncoder(w).Encode(out)
 		return
 	}
 
-	// ensure ingestion client uuid does not already exist
-	_, err = elasticsearch.QueryIngestionByUUID(s, request.UUID)
-	if err == nil {
-		// no error means we located a client
-		l.Warn("uuid already exists ", request.UUID)
+	s.Log.Println("Name: ", request.Name)
+
+	document := elasticsearch.DocumentIngestion{
+		Name: request.Name,
+	}
+
+	// query current ingestion to update
+	existing, _, err := elasticsearch.QueryIngestionByUUID(s, request.UUID)
+	if err != nil {
+		l.Warn("invalid ingestion uuid ", request.UUID)
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
 			Success: false,
-			Message: "Ingestion with this name already defined.",
+			Message: "Invalid ingestion UUID specified.",
 		}
 		json.NewEncoder(w).Encode(out)
 		return
 	}
+	document.Address = existing.Address
+	document.Key = existing.Key
+	document.UUID = existing.UUID
 
-	// Generate key
+	s.Log.Println("Document: ", document)
 
-	key := make([]byte, 32)
-
-	_, err = rand.Read(key)
+	err = elasticsearch.DeleteIngestByUUID(s, existing.UUID)
 	if err != nil {
-		l.Error("Failed to generate key", err)
+		l.Error("Failed to update ingestion", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		out := GeneralResponse{
 			Success: false,
@@ -79,18 +85,11 @@ func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 		}
 		json.NewEncoder(w).Encode(out)
 		return
-	}
-
-	encodedKey := base64.StdEncoding.EncodeToString(key)
-
-	document := elasticsearch.DocumentIngestion{
-		Key:  encodedKey,
-		UUID: request.UUID,
 	}
 
 	_, err = document.Index(s)
 	if err != nil {
-		l.Error("Failed to index ingestion", err)
+		l.Error("Failed to update ingestion", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		out := GeneralResponse{
 			Success: false,
@@ -100,13 +99,12 @@ func createIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Success
-
-	resp := createIngestionResponse{
-		Key: encodedKey,
+	resp := GeneralResponse{
+		Success: true,
+		Message: "Successfully updates ingestion client",
 	}
 
-	l.Info("Created ingestion in elasticsearch")
+	l.Info("Updated ingestion in elasticsearch")
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)

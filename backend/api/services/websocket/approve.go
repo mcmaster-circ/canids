@@ -14,11 +14,6 @@ type approveIngestionRequest struct {
 	UUID string `json:"uuid"` // Name of the ingestion engine
 }
 
-type GeneralResponse struct {
-	Success bool   `json:"success"` // Success indicates if the request was successful
-	Message string `json:"message"` // Message describes the request response
-}
-
 func approveIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 
 	var request approveIngestionRequest
@@ -53,7 +48,7 @@ func approveIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ensure ingestion client uuid does not already exist
-	_, err = elasticsearch.QueryIngestionByUUID(s, request.UUID)
+	_, _, err = elasticsearch.QueryIngestionByUUID(s, request.UUID)
 	if err == nil {
 		// no error means we located a client
 		l.Warn("uuid already exists ", request.UUID)
@@ -70,6 +65,7 @@ func approveIngestion(s *state.State, w http.ResponseWriter, r *http.Request) {
 		Key:     auth.Key,
 		UUID:    request.UUID,
 		Address: auth.Address,
+		Name:    request.UUID,
 	}
 
 	_, err = document.Index(s)
