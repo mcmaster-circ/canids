@@ -11,8 +11,6 @@ FROM zeek/zeek:6.0
 RUN apt -y update && apt -y install cron
 COPY ./ingestion/config/zeekctl.cfg /usr/locla/bin/etc/zeekctl.cfg
 COPY --chmod=644 ./ingestion/config/zeek-crontab /etc/cron.d/zeek
-ENV flags=--verbose
-ENV hostname=backend:50000
 #TODO: How to point to backend on host network?
 RUN mkdir /db
 RUN mkdir /logs
@@ -20,4 +18,4 @@ RUN mkdir /logs
 # COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /entrypoint /entrypoint
 WORKDIR /db
-ENTRYPOINT /entrypoint upload $flags --hostname $hostname /logs
+ENTRYPOINT /entrypoint upload $flags --hostname $hostname --asset $asset /logs

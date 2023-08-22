@@ -51,7 +51,8 @@ services:
       dockerfile: ingestion/Dockerfile
     environment:
       - flags=--verbose
-      - hostname=:50000
+      - hostname=backend:6060
+      - asset=khaos
     volumes: 
       - zeek:/logs
       - ingestiondb:/db
