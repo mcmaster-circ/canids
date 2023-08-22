@@ -15,8 +15,9 @@ ENV flags=--verbose
 ENV hostname=backend:50000
 #TODO: How to point to backend on host network?
 RUN mkdir /db
+RUN mkdir /logs
 # COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 # COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /entrypoint /entrypoint
 WORKDIR /db
-CMD ["sh", "-c", "service start cron ; zeekctl cron enable ; zeekctl deploy ; /entrypoint upload $flags --hostname $hostname /usr/local/zeek/logs/current"] 
+ENTRYPOINT /entrypoint upload $flags --hostname $hostname /logs"
