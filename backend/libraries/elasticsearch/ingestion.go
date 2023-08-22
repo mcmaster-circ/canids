@@ -10,8 +10,9 @@ import (
 )
 
 type DocumentIngestion struct {
-	UUID string `json:"uuid"` // Represents the name of the ingestion client
-	Key  string `json:"key"`  // Represents the encryption key shared with the ingestion client
+	UUID    string `json:"uuid"`    // Represents the name of the ingestion client
+	Key     string `json:"key"`     // Represents the encryption key shared with the ingestion client
+	Address string `json:"address"` // Debug network address string
 }
 
 const indexIngestion = "ingestion"

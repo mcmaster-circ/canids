@@ -29,4 +29,7 @@ func RegisterUpdateFunctions(s *state.State, r *mux.Router) {
 	r.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
 		listHandler(s, w, r)
 	})
+	r.HandleFunc("/approve", func(w http.ResponseWriter, r *http.Request) {
+		approveIngestion(s, w, r)
+	})
 }

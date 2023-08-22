@@ -25,12 +25,37 @@ func syncScanner(s *state) (*database, error) {
 		if s.Debug {
 			log.Println("[CanIDS DEBUG] local database does not exist, creating new database")
 		}
+
 		// create new entry
 		db = &database{}
+
+		// Generate new encryption key
+		key, err := CreateKey()
+		if err != nil {
+			db.AssetID = ""
+			db.Key = ""
+			return db, err
+		}
+
+		db.Key = key
+		s.EncryptionKey = key
+
+		// Generate new assetID
+		assetID, err := CreateAssetID()
+		if err != nil {
+			db.AssetID = ""
+			return db, err
+		}
+
+		db.AssetID = assetID
+		s.AssetID = assetID
+
 	} else {
 		if s.Debug {
 			log.Println("[CanIDS DEBUG] local database exists, syncing database")
 		}
+		s.EncryptionKey = db.Key
+		s.AssetID = db.AssetID
 		// clear broken entries
 		db.clean()
 	}
@@ -53,7 +78,7 @@ func syncScanner(s *state) (*database, error) {
 	}
 
 	// commit database changes
-	err = db.commit()
+	err = db.commit(s)
 	if err != nil {
 		return db, err
 	}
@@ -96,7 +121,7 @@ func scannerGetFrame(s *state, db *database, key []byte) (*UploadRequest, error)
 			}
 			db.Files = removeFile(db.Files, i)
 			// commit database
-			err = db.commit()
+			err = db.commit(s)
 			s.DatabaseMutex.Unlock()
 			if err != nil {
 				return nil, errSavingDatabase
@@ -111,7 +136,7 @@ func scannerGetFrame(s *state, db *database, key []byte) (*UploadRequest, error)
 			}
 			db.Files = removeFile(db.Files, i)
 			// commit database
-			err = db.commit()
+			err = db.commit(s)
 			s.DatabaseMutex.Unlock()
 			if err != nil {
 				return nil, errSavingDatabase
@@ -164,7 +189,7 @@ func scannerGetFrame(s *state, db *database, key []byte) (*UploadRequest, error)
 			db.Next--
 		}
 		// commit database
-		err = db.commit()
+		err = db.commit(s)
 		s.DatabaseMutex.Unlock()
 		if err != nil {
 			return nil, errSavingDatabase
@@ -181,7 +206,7 @@ func scannerGetFrame(s *state, db *database, key []byte) (*UploadRequest, error)
 			db.Next--
 		}
 		// commit database
-		err = db.commit()
+		err = db.commit(s)
 		s.DatabaseMutex.Unlock()
 		if err != nil {
 			return nil, errSavingDatabase
@@ -203,7 +228,7 @@ func scannerGetFrame(s *state, db *database, key []byte) (*UploadRequest, error)
 		db.Next--
 	}
 	// commit database
-	err = db.commit()
+	err = db.commit(s)
 	s.DatabaseMutex.Unlock()
 	if err != nil {
 		return nil, errSavingDatabase

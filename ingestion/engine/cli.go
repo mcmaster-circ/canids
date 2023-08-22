@@ -4,10 +4,8 @@
 package engine
 
 import (
-	"encoding/base64"
 	"log"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -24,14 +22,12 @@ const (
 var (
 	// parameters are populated/modified by CLI app, defaults shown below (see
 	// state for comments)
-	valAssetID       = ""
 	valHostname      = ""
 	valDebug         = false
 	valRetryDelay    = 5 * time.Second
 	valFileMode      = zero
 	valFileScan      = 5 * time.Second
 	valFileChunkSize = 10
-	valEncryptionkey = ""
 	valEncrypt       = false
 )
 
@@ -47,13 +43,8 @@ func Run() error {
 
 	flags := []cli.Flag{
 		cli.StringFlag{
-			Name:        "asset, uid",
-			Usage:       "unique asset (network tap) identifier",
-			Destination: &valAssetID,
-		},
-		cli.StringFlag{
 			Name:        "hostname, host",
-			Usage:       "hostname and port of CanIDS gRPC backend",
+			Usage:       "hostname and port of CanIDS WS backend",
 			Destination: &valHostname,
 		},
 		cli.BoolFlag{
@@ -72,11 +63,6 @@ func Run() error {
 			Usage:       "how often to scan file system for new files in directory",
 			Value:       valFileScan,
 			Destination: &valFileScan,
-		},
-		cli.StringFlag{
-			Name:        "key",
-			Usage:       "set the encryption key",
-			Destination: &valEncryptionkey,
 		},
 		cli.BoolFlag{
 			Name:        "encrypt",
@@ -113,18 +99,6 @@ func cmd(c *cli.Context) error {
 	if valHostname == "" {
 		return errHostname
 	}
-	// ensure asset id provided
-	if valAssetID == "" || strings.ContainsAny(valAssetID, "`~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/? ") {
-		return errAssetID
-	}
-	if valEncryptionkey == "" {
-		return errBadKey
-	}
-
-	_, err := base64.StdEncoding.DecodeString(valEncryptionkey)
-	if err != nil {
-		return errBadKey
-	}
 
 	// ensure directory/file exists
 	valFilePath := args[0]
@@ -142,7 +116,7 @@ func cmd(c *cli.Context) error {
 
 	// generate state
 	config := &state{
-		AssetID:       valAssetID,
+		AssetID:       "",
 		NetworkMutex:  &sync.Mutex{},
 		DatabaseMutex: &sync.Mutex{},
 		Session:       "",
@@ -154,7 +128,7 @@ func cmd(c *cli.Context) error {
 		FileMode:      valFileMode,
 		FileScan:      valFileScan,
 		FileChunkSize: valFileChunkSize,
-		EncryptionKey: valEncryptionkey,
+		EncryptionKey: "",
 		Encryption:    valEncrypt,
 	}
 
@@ -173,7 +147,7 @@ func cmd(c *cli.Context) error {
 		}
 		// reset config
 		config = &state{
-			AssetID:       valAssetID,
+			AssetID:       db.AssetID,
 			NetworkMutex:  &sync.Mutex{},
 			DatabaseMutex: &sync.Mutex{},
 			Session:       "",
@@ -185,7 +159,7 @@ func cmd(c *cli.Context) error {
 			FileMode:      valFileMode,
 			FileScan:      valFileScan,
 			FileChunkSize: valFileChunkSize,
-			EncryptionKey: valEncryptionkey,
+			EncryptionKey: db.Key,
 			Encryption:    valEncrypt,
 		}
 		time.Sleep(config.RetryDelay)

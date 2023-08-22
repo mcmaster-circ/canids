@@ -10,8 +10,10 @@ import (
 
 // database is a small database used for tracking file progress.
 type database struct {
-	Files []file // Files is a list of files
-	Next  int    // Next indicates the index of the next file to scan
+	Files   []file // Files is a list of files
+	Next    int    // Next indicates the index of the next file to scan
+	AssetID string
+	Key     string
 }
 
 // file is a file and it's progress.
@@ -23,7 +25,9 @@ type file struct {
 
 // commit stores the database. It will return an error if the database cannot be
 // stored.
-func (db *database) commit() error {
+func (db *database) commit(s *state) error {
+	db.AssetID = s.AssetID
+	db.Key = s.EncryptionKey
 	file, err := os.Create(dbFileName)
 	if err != nil {
 		return err
