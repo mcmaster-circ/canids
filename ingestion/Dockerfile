@@ -18,4 +18,4 @@ RUN mkdir /logs
 # COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /entrypoint /entrypoint
 WORKDIR /db
-ENTRYPOINT /entrypoint upload $flags --hostname $hostname --asset $asset /logs
+ENTRYPOINT /entrypoint upload $flags --hostname $hostname --asset $asset --key $key /logs

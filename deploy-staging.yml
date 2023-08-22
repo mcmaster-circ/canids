@@ -53,6 +53,7 @@ services:
       - flags=--verbose
       - hostname=backend:6060
       - asset=khaos
+      - key=3K5qeZAvn58csYvaOXlQBg==
     volumes: 
       - zeek:/logs
       - ingestiondb:/db
