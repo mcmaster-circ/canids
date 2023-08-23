@@ -51,7 +51,7 @@ services:
       dockerfile: ingestion/Dockerfile
     environment:
       - flags=--verbose
-      - hostname=http://backend:6060/websocket
+      - hostname=http://backend:6060/websocket/
     volumes: 
       - zeek:/logs
       - ingestiondb:/db
