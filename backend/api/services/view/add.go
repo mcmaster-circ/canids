@@ -210,6 +210,46 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		json.NewEncoder(w).Encode(InternalServerError)
 		return
 	}
+
+	// index view into dashboard
+	existingDashboard, err := elasticsearch.GetDashboard(s)
+	if err != nil {
+		l.Warn("Could not get dashboard")
+		w.WriteHeader(http.StatusInternalServerError)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Please contact system administrator.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	existingDashboard.Views = append(existingDashboard.Views, viewUUID)
+	_, docID, err := elasticsearch.QueryDashboardByUUID(s, existingDashboard.UUID)
+	if err != nil {
+		l.Warn("Could not get dashboard")
+		w.WriteHeader(http.StatusInternalServerError)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Please contact system administrator.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
+	l.Println("Dashboard: ", existingDashboard)
+	existingDashboard.Update(s, docID)
+	if err != nil {
+		l.Warn("Could not update dashboard")
+		w.WriteHeader(http.StatusInternalServerError)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Please contact system administrator.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
 	// everything was successful, return success message
 	l.Info("successfully created new view ", view.UUID)
 	out := GeneralResponse{
