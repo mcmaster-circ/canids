@@ -57,7 +57,8 @@ func ValidateURLforIPAddr(url string) bool {
 		if len(ipAddress) > 0 && string(ipAddress[0]) == "#" {
 			continue
 		}
-		if net.ParseIP(ipAddress) == nil {
+		_, _, err := net.ParseCIDR(ipAddress)
+		if err != nil && net.ParseIP(ipAddress) == nil {
 			return false
 		}
 	}

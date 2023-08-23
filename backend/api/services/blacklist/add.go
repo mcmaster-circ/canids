@@ -85,9 +85,9 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 	}
 
 	_, err = url.ParseRequestURI(request.URL)
-	validUrl := utils.ValidateURLforIPAddr(request.URL)
+	// validUrl := utils.ValidateURLforIPAddr(request.URL)
 
-	if err != nil || !validUrl {
+	if err != nil {
 		l.Warn("blacklist url not valid")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
@@ -97,6 +97,17 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		json.NewEncoder(w).Encode(out)
 		return
 	}
+
+	// if !validUrl {
+	// 	l.Warn("blacklist url not valid")
+	// 	w.WriteHeader(http.StatusBadRequest)
+	// 	out := GeneralResponse{
+	// 		Success: false,
+	// 		Message: "Invalid URL.",
+	// 	}
+	// 	json.NewEncoder(w).Encode(out)
+	// 	return
+	// }
 
 	// generate new blacklist
 	blacklistUUID := uuid.Generate()
