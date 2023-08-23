@@ -36,7 +36,4 @@ func RegisterRoutes(s *state.State, a *jwtauth.Config, r *mux.Router) {
 	r.HandleFunc("/update", func(w http.ResponseWriter, r *http.Request) {
 		updateHandler(r.Context(), s, a, w, r)
 	})
-	r.HandleFunc("/addView", func(w http.ResponseWriter, r *http.Request) {
-		addViewHandler(r.Context(), s, a, w, r)
-	})
 }
