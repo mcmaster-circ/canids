@@ -13,12 +13,13 @@ import {
   logout as logoutApiCall,
   isActive as isActiveApiCall,
   setup as setupApiCall,
+  resetPassword as resetPasswordApiCall,
 } from '@api/auth'
 import { userInfo } from '@api/user'
 import { useRequest } from '@hooks'
 import useNotification, { NotificationType } from '@context/notificationContext'
 import { userProfileCookies, allCookies as ac } from '@constants/cookies'
-import { LoginProps, SetupProps, UserProps } from '@constants/types'
+import { LoginProps, ResetProps, SetupProps, UserProps } from '@constants/types'
 
 interface AuthContextType {
   user?: UserProps
@@ -28,6 +29,7 @@ interface AuthContextType {
   logout: () => void
   isActive: () => Promise<boolean>
   setup: (d: SetupProps) => void
+  resetPassword: (r: ResetProps) => void
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
@@ -57,6 +59,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     requestByDefault: false,
     request: logoutApiCall,
     needSuccess: 'Successfull Logout',
+  })
+  const { makeRequest: resetPasswordRequest } = useRequest({
+    requestByDefault: false,
+    request: resetPasswordApiCall,
+    needSuccess: 'Successfull reset',
   })
   const { makeRequest: isActiveRequest } = useRequest({
     requestByDefault: false,
@@ -117,6 +124,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLogedIn(false)
   }, [logoutRequest, removeCookie])
 
+  const resetPassword = useCallback(
+    async (r: ResetProps) => {
+      await resetPasswordRequest({ ...r })
+    },
+    [resetPasswordRequest]
+  )
+
   // Check if there is a currently active session
   // when the provider is mounted for the first time.
   useEffect(() => {
@@ -139,8 +153,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logout,
       isActive,
       setup,
+      resetPassword,
     }),
-    [user, loginLoading, userLoading, logedIn, login, logout, isActive, setup]
+    [
+      user,
+      loginLoading,
+      userLoading,
+      logedIn,
+      login,
+      logout,
+      isActive,
+      setup,
+      resetPassword,
+    ]
   )
 
   return (

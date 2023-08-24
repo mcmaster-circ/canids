@@ -42,6 +42,8 @@ func SendNewReset(s *state.State, name, email, url, senderName, senderEmail stri
 		HTML:       htmlContent,
 	}
 
+	s.Log.Println(s.Settings.EmailConfig)
+
 	// send message
 	_, err := s.Mailer.Send(tx)
 	return err

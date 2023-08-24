@@ -159,8 +159,8 @@ func addHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w http.R
 		return
 	}
 	// send account activation email
-	domain := s.Settings.EmailConfig.Domain
-	resetRequest := "http://" + domain + "/reset?token=" + token
+	// domain := s.Settings.EmailConfig.Domain
+	resetRequest := "http://" + "localhost:6060" + "/auth/reset-password?token=" + token
 	err = email.SendNewReset(s, user.Name, user.UUID, resetRequest, current.Name, current.UUID)
 	if err != nil {
 		l.Error("failed to send account activation ", err)

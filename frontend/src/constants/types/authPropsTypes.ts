@@ -15,6 +15,12 @@ export interface ForgotProps {
 }
 
 export interface ResetProps {
+  token: string
+  password: string
+  passwordConfirm: string
+}
+
+export interface ResetFormProps {
   password: string
   passwordConfirm: string
 }
