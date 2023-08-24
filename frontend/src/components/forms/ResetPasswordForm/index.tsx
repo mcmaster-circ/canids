@@ -19,16 +19,11 @@ export default () => {
   const token = searchParams.get('token') ?? ''
   const onSubmit = useCallback(
     (data: ResetFormProps) => {
-      console.log('OnSubmit')
-
-      console.log(token)
-
       var req: ResetProps = {
         password: data.password,
         passwordConfirm: data.passwordConfirm,
         token: token,
       }
-      console.log(req)
       resetPassword(req)
       push(authRoutes.LOGIN)
     },
