@@ -69,7 +69,7 @@ export default () => {
         ...views.find((view: any) => view.uuid === v),
       }))
     }
-  }, [dashboard?.views, views])
+  }, [dashboard?.views, dashboard?.sizes, views])
 
   const handleRequest = useCallback(
     async (

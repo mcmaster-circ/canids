@@ -8,13 +8,15 @@ import { deleteUser, resetUserPass, userList } from '@api/user'
 import {
   defaultAddModalState,
   defaultDeleteModalState,
+  defaultEditModalState,
   userColumns,
 } from '../constants'
-import { AddEditModal, DeleteModal } from '@modals'
-import { AddUserForm } from '@forms'
+import { AddEditModal, DeleteModal, EditModal } from '@modals'
+import { AddUserForm, EditUserForm } from '@forms'
 
 export default () => {
   const [addModal, setAddModal] = useState(defaultAddModalState)
+  const [editModal, setEditModal] = useState(defaultEditModalState)
   const [deleteModal, setDeleteModal] = useState(defaultDeleteModalState)
   const { data, loading, makeRequest } = useRequest({
     request: userList,
@@ -35,6 +37,11 @@ export default () => {
     setTimeout(() => makeRequest(), 3000)
   }, [makeRequest])
 
+  const handleCloseEdit = useCallback(() => {
+    setEditModal(defaultEditModalState)
+    setTimeout(() => makeRequest(), 3000)
+  }, [makeRequest])
+
   const handleCloseDelete = useCallback(() => {
     setDeleteModal(defaultDeleteModalState)
     setTimeout(() => makeRequest(), 3000)
@@ -50,8 +57,7 @@ export default () => {
               {
                 label: 'Edit',
                 icon: <Edit />,
-                action: () =>
-                  setAddModal({ open: true, isUpdate: true, values: row }),
+                action: () => setEditModal({ open: true, values: row }),
                 key: 'edit',
               },
               {
@@ -146,11 +152,18 @@ export default () => {
         handleClose={handleCloseAdd}
       >
         <AddUserForm
-          isUpdate={addModal.isUpdate}
+          isUpdate={false}
           values={addModal.values}
           handleClose={handleCloseAdd}
         />
       </AddEditModal>
+      <EditModal
+        open={editModal.open}
+        title="User"
+        handleClose={handleCloseEdit}
+      >
+        <EditUserForm values={editModal.values} handleClose={handleCloseEdit} />
+      </EditModal>
       <DeleteModal
         open={deleteModal}
         title="User"

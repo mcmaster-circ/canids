@@ -172,6 +172,13 @@ export const defaultAddModalState: {
   values: undefined,
   isUpdate: false,
 }
+export const defaultEditModalState: {
+  open: boolean
+  values: any
+} = {
+  open: false,
+  values: undefined,
+}
 export const defaultDeleteModalState: {
   open: boolean
   label?: string
