@@ -27,6 +27,7 @@ export default ({ handleClose, values }: SetupMailFormProps) => {
     fromAddress: values?.fromAddress.value,
     fromName: values?.fromName.value,
     domain: values?.domain.value,
+    accessURL: values?.accessURL.value,
   })
   const { makeRequest: saveRequest } = useRequest({
     request: updateConfiguration,
@@ -59,6 +60,10 @@ export default ({ handleClose, values }: SetupMailFormProps) => {
       {
         name: 'MAIL_DOMAIN',
         value: data.domain,
+      },
+      {
+        name: 'ACCESS_URL',
+        value: data.accessURL,
       },
     ]
     const req: UpdateConfigurationProps = {

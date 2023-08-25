@@ -17,6 +17,7 @@ export interface FormProps {
   fromAddress: string
   fromName: string
   domain: string
+  accessURL: string
 }
 
 export const defaultFormValues = {
@@ -26,6 +27,7 @@ export const defaultFormValues = {
   fromAddress: '',
   fromName: '',
   domain: '',
+  accessURL: '',
 }
 
 export const steps = ['Service', 'Configuration']

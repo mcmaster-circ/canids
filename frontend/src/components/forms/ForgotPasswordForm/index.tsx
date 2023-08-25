@@ -14,7 +14,6 @@ export default () => {
 
   const onSubmit = useCallback(
     (data: ForgotProps) => {
-      console.log(data)
       forgotPassword(data)
     },
     [forgotPassword]

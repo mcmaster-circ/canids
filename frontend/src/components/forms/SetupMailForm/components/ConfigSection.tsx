@@ -77,6 +77,20 @@ export default ({ data, setData }: SectionProps) => {
                 fullWidth
               />
             </Grid>
+            <Grid xs={12}>
+              <TextField
+                label="CanIDS Access URL"
+                value={data.accessURL}
+                size="small"
+                onChange={(e) =>
+                  setData((d: FormProps) => ({
+                    ...d,
+                    accessURL: e.target.value,
+                  }))
+                }
+                fullWidth
+              />
+            </Grid>
           </>
         )}
         {['MAILGUN'].includes(data.service) && (

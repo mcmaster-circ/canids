@@ -113,6 +113,8 @@ export default () => {
     }
   }, [chartData, handleRequest, viewsList, display])
 
+  console.log(chartDisplay)
+
   return (
     <Grid container spacing={2} p={3} m={0}>
       <Grid xs={12} p={0}>
@@ -192,6 +194,11 @@ export default () => {
             ))}
           </List>
           <Button
+            sx={{
+              width: 'calc(100% - 2px)',
+              p: 1,
+              borderRadius: 1,
+            }}
             variant="contained"
             onClick={async () => {
               var sizes: string[] = []
@@ -204,9 +211,7 @@ export default () => {
                 views: display,
                 sizes: sizes,
               }
-
               await UpdateDashRequest(updatedDashboard)
-
               setTimeout(async () => await GetDash(), 3000)
             }}
           >

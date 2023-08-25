@@ -92,8 +92,8 @@ func resetPassHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w 
 		return
 	}
 	// send password reset email
-	// domain := s.Settings.EmailConfig.Domain
-	resetRequest := "http://" + "localhost:6060" + "/auth/reset-password?token=" + token
+	accessURL := s.Settings.AccessURL
+	resetRequest := "http://" + accessURL + "/auth/reset-password?token=" + token
 	err = email.SendPasswordReset(s, existing.Name, existing.UUID, resetRequest)
 	if err != nil {
 		l.Error("failed to send password reset ", err)
