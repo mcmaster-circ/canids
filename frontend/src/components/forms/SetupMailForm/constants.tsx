@@ -9,6 +9,7 @@ import { Cancel } from '@mui/icons-material'
 export interface SectionProps {
   data: any
   setData: (a: any) => void
+  initialData: any
 }
 export interface FormProps {
   service: string

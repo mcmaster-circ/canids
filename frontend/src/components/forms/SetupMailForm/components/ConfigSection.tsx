@@ -2,7 +2,7 @@ import { TextField, Typography } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
 import { FormProps, SectionProps } from '../constants'
 
-export default ({ data, setData }: SectionProps) => {
+export default ({ data, setData, initialData }: SectionProps) => {
   return (
     <>
       <Typography variant="h6" textAlign="center" mb={4}>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Loader, RowActionsMenu } from '@atoms'
 import { useRequest } from '@hooks'
 import { Check, Delete, Redo } from '@mui/icons-material'
@@ -29,6 +29,11 @@ export default () => {
     request: ingestionList,
   })
 
+  useEffect(() => {
+    const interval = setInterval(() => makeRequest(), 10000)
+    return () => clearInterval(interval)
+  }, [makeRequest])
+
   const { makeRequest: deleteRequest } = useRequest({
     request: ingestionDelete,
     requestByDefault: false,
@@ -39,19 +44,6 @@ export default () => {
     requestByDefault: false,
     needSuccess: 'Successfully approved',
   })
-
-  // const handleCloseAddForm = useCallback(
-  //   (uuid: string, key: string) => {
-  //     setAddModal(defaultAddModalState)
-  //     setKeyModal(() => ({
-  //       key: key,
-  //       title: uuid,
-  //       open: true,
-  //     }))
-  //     setTimeout(() => makeRequest(), 3000)
-  //   },
-  //   [makeRequest]
-  // )
 
   const handleCloseRename = useCallback(() => {
     setRenameModal(defaultRenameModalState)

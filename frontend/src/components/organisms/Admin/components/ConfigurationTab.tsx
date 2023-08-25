@@ -94,6 +94,7 @@ export default () => {
     }
   }, [data])
 
+  console.log(setupMailSettings)
   return (
     <>
       <Box

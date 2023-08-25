@@ -31,8 +31,6 @@ func listHandler(s *state.State, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	l := ctxlog.Log(r.Context())
 
-	l.Println("Received list request")
-
 	// output
 	var out listResponse
 
@@ -58,8 +56,6 @@ func listHandler(s *state.State, w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	s.Log.Println("out.clients 1 ", out.Clients)
-
 	for _, uuid := range waitList.getAllItems() {
 		out.Clients = append(out.Clients, Ingestion{
 			UUID:        uuid,
@@ -69,8 +65,6 @@ func listHandler(s *state.State, w http.ResponseWriter, r *http.Request) {
 			Name:        uuid,
 		})
 	}
-
-	s.Log.Println("out. clients 2 ", out.Clients)
 
 	// return list of users
 	out.Success = true

@@ -35,6 +35,8 @@ export default ({ handleClose, values }: SetupMailFormProps) => {
     needSuccess: 'Successfully saved configuration',
   })
 
+  const initialVals = values
+
   const handleSubmit = useCallback(async () => {
     const settings: UpdateSetting[] = [
       {
@@ -76,9 +78,21 @@ export default ({ handleClose, values }: SetupMailFormProps) => {
   const renderSection = () => {
     switch (activeStep) {
       case 0:
-        return <ServiceSection data={data} setData={setData} />
+        return (
+          <ServiceSection
+            data={data}
+            setData={setData}
+            initialData={initialVals}
+          />
+        )
       case 1:
-        return <ConfigSection data={data} setData={setData} />
+        return (
+          <ConfigSection
+            data={data}
+            setData={setData}
+            initialData={initialVals}
+          />
+        )
       default:
         return null
     }
