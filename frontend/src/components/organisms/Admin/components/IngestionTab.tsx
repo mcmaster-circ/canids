@@ -68,47 +68,75 @@ export default () => {
         return [
           <RowActionsMenu
             key={id}
-            actions={[
-              {
-                label: 'Delete',
-                icon: <Delete />,
-                action: () =>
-                  setDeleteModal({
-                    open: true,
-                    label: row.uuid,
-                    params: { uuid: id },
-                  }),
-                key: 'delete',
-              },
-              {
-                label: 'Approve',
-                icon: <Check />,
-                action: () => {
-                  var props: ApproveClientProps = {
-                    uuid: row.uuid,
-                  }
-                  approveRequest(props)
-                  setTimeout(() => makeRequest(), 3000)
-                },
-                key: 'approve',
-              },
-              {
-                label: 'Rename',
-                icon: <Redo />,
-                action: () => {
-                  setRenameModal({
-                    isUpdate: true,
-                    values: row,
-                    open: true,
-                  })
-                },
-                key: 'rename',
-              },
-            ]}
+            actions={
+              data.approved
+                ? [
+                    {
+                      label: 'Delete',
+                      icon: <Delete />,
+                      action: () =>
+                        setDeleteModal({
+                          open: true,
+                          label: row.uuid,
+                          params: { uuid: id },
+                        }),
+                      key: 'delete',
+                    },
+                    {
+                      label: 'Approve',
+                      icon: <Check />,
+                      action: () => {
+                        var props: ApproveClientProps = {
+                          uuid: row.uuid,
+                        }
+                        approveRequest(props)
+                        setTimeout(() => makeRequest(), 3000)
+                      },
+                      key: 'approve',
+                    },
+                    {
+                      label: 'Rename',
+                      icon: <Redo />,
+                      action: () => {
+                        setRenameModal({
+                          isUpdate: true,
+                          values: row,
+                          open: true,
+                        })
+                      },
+                      key: 'rename',
+                    },
+                  ]
+                : [
+                    {
+                      label: 'Delete',
+                      icon: <Delete />,
+                      action: () =>
+                        setDeleteModal({
+                          open: true,
+                          label: row.uuid,
+                          params: { uuid: id },
+                        }),
+                      key: 'delete',
+                    },
+                    {
+                      label: 'Approve',
+                      icon: <Check />,
+                      action: () => {
+                        var props: ApproveClientProps = {
+                          uuid: row.uuid,
+                        }
+                        approveRequest(props)
+                        setTimeout(() => makeRequest(), 3000)
+                      },
+                      key: 'approve',
+                    },
+                  ]
+            }
           />,
         ]
       }),
-    [approveRequest, makeRequest]
+    [approveRequest, makeRequest, data.approved]
   )
 
   return (
