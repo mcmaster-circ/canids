@@ -16,4 +16,4 @@ COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=build /entrypoint /entrypoint
 WORKDIR /db
 USER gopher
-ENTRYPOINT /entrypoint upload $flags --hostname $hostname /logs/current
+ENTRYPOINT /entrypoint upload $flags --hostname $hostname /logs
