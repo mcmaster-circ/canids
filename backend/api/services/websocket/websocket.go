@@ -281,7 +281,7 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if timeLastPing.Add(time.Second * 5).Before(time.Now()) {
+		if timeLastPing.Add(time.Second * 3).Before(time.Now()) {
 			timeLastPing = time.Now()
 			var pingMessage Message
 			pingMessage.MsgType = 1
