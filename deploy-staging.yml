@@ -55,10 +55,8 @@ services:
     volumes: 
       - zeek:/logs
       - ingestiondb:/db
-    deploy: #TODO: Replicate this globally once all servers are configured with zeek
-      #mode: global
-      placement:
-        constraints: [node.hostname == argus-w]
+    deploy: 
+      mode: global
 
 volumes:
   elasticsearch:

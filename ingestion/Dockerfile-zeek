@@ -8,4 +8,7 @@ ENV flags=--verbose
 #TODO: How to point to backend on host network?
 # COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 # COPY --from=build /etc/passwd /etc/passwd
+
+# NOTE(Kaitlyn): Bind the volume to /usr/local/zeek/spool/zeek. $ZEEK_HOME/logs/current is a symlink to this location that will break
+# because the volume is shared across containers
 CMD ["sh", "-c", "service cron start ; zeekctl cron enable ; zeekctl deploy ; tail -f /dev/null"]
