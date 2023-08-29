@@ -149,7 +149,7 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		lastTime := time.Now()
 		for {
 			// Heartbeat handling
-			if lastTime.Add(time.Second * 5).Before(time.Now()) {
+			if lastTime.Add(time.Second * 3).Before(time.Now()) {
 				// Send ping
 				pingMessage := Message{
 					MsgType: 1,
