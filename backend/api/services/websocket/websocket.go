@@ -263,13 +263,14 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 	log.Println("Successful connection with: ", uuid)
 
 	var timeLastPong = time.Now()
-	var timeLastPing = time.Now()
+	msgQueue := make(chan Message)
+	go writePump(conn, msgQueue)
 
 	for {
 
 		for _, name := range del.getIDs() {
 			if name == uuid {
-				conn.Close(websocket.StatusGoingAway, "Access revoked.")
+				close(msgQueue) // Will send the Close frame
 				closeFrame := Frame{
 					GoingAway: true,
 					AssetID:   uuid,
@@ -277,20 +278,6 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 
 				s.Log.Printf("Ingestion staged for deletion. Sending close frame")
 				server.queue <- &closeFrame
-				break
-			}
-		}
-
-		if timeLastPing.Add(time.Second * 3).Before(time.Now()) {
-			timeLastPing = time.Now()
-			var pingMessage Message
-			pingMessage.MsgType = 1
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
-			err := wsjson.Write(ctx, conn, pingMessage)
-			cancel()
-			if err != nil {
-				log.Println("Failed to send ping message: ", err)
-				conn.Close(websocket.StatusBadGateway, "Failed to send ping message")
 				break
 			}
 		}
@@ -321,10 +308,40 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 
 		if timeLastPong.Add(time.Second * 15).Before(time.Now()) {
 			log.Println("No pong recieved for 15 seconds")
-			conn.Close(websocket.StatusBadGateway, "No pong received")
+			close(msgQueue)
 			break
 		}
 		server.queue <- &frame
+	}
+}
+
+func writePump(conn *websocket.Conn, msgQueue chan Message) error {
+	ticker := time.NewTicker(3*time.Second)
+
+	for {
+		select {
+		case <-ticker.C:
+			msg := Message{
+				MsgType: 1,
+				Msg: "Ping",
+			}
+			err := wsjson.Write(context.Background(), conn, msg)
+			if err != nil {
+				return err
+			}
+			break;
+			
+		case message, ok := <-msgQueue:
+			if !ok {
+				err := conn.Close(websocket.StatusGoingAway, "")
+				return err
+			}
+		
+			err := wsjson.Write(context.Background(), conn, message)
+			if err != nil {
+				return err
+			}
+		}
 	}
 }
 
