@@ -94,9 +94,9 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 	}
 
 	_, err = url.ParseRequestURI(request.URL)
-	validUrl := utils.ValidateURLforIPAddr(request.URL)
+	// validUrl := utils.ValidateURLforIPAddr(request.URL)
 
-	if err != nil || !validUrl {
+	if err != nil { // || !validUrl {
 		l.Warn("blacklist url not valid")
 		w.WriteHeader(http.StatusBadRequest)
 		out := GeneralResponse{
@@ -150,9 +150,22 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 		return
 	}
 
+	// query elasticsearch for document ID
+	existing, esDocID, err := elasticsearch.QueryBlacklistByUUID(s, request.UUID)
+	if err != nil {
+		l.Warn("invalid blacklist uuid ", request.UUID)
+		w.WriteHeader(http.StatusBadRequest)
+		out := GeneralResponse{
+			Success: false,
+			Message: "Invalid blacklist UUID provided.",
+		}
+		json.NewEncoder(w).Encode(out)
+		return
+	}
+
 	// ensure request name and url is unique
 	for _, blacklist := range blacklists {
-		if request.Name == blacklist.Name && blacklist.UUID != request.UUID {
+		if request.Name == blacklist.Name && blacklist.UUID != request.UUID && blacklist.Name != existing.Name {
 			l.Warn("blacklist name in use")
 			w.WriteHeader(http.StatusBadRequest)
 			out := GeneralResponse{
@@ -163,7 +176,7 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 			return
 		}
 
-		if request.URL == blacklist.URL {
+		if request.URL == blacklist.URL && blacklist.URL != existing.URL {
 			l.Warn("blacklist url in use")
 			w.WriteHeader(http.StatusBadRequest)
 			out := GeneralResponse{
@@ -173,19 +186,6 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 			json.NewEncoder(w).Encode(out)
 			return
 		}
-	}
-
-	// query elasticsearch for document ID
-	_, esDocID, err := elasticsearch.QueryBlacklistByUUID(s, request.UUID)
-	if err != nil {
-		l.Warn("invalid blacklist uuid ", request.UUID)
-		w.WriteHeader(http.StatusBadRequest)
-		out := GeneralResponse{
-			Success: false,
-			Message: "Invalid blacklist UUID provided.",
-		}
-		json.NewEncoder(w).Encode(out)
-		return
 	}
 
 	// update document

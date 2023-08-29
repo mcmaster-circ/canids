@@ -13,12 +13,20 @@ import {
   logout as logoutApiCall,
   isActive as isActiveApiCall,
   setup as setupApiCall,
+  resetPassword as resetPasswordApiCall,
+  forgotPassword as forgotPasswordApiCall,
 } from '@api/auth'
 import { userInfo } from '@api/user'
 import { useRequest } from '@hooks'
 import useNotification, { NotificationType } from '@context/notificationContext'
 import { userProfileCookies, allCookies as ac } from '@constants/cookies'
-import { LoginProps, SetupProps, UserProps } from '@constants/types'
+import {
+  ForgotProps,
+  LoginProps,
+  ResetProps,
+  SetupProps,
+  UserProps,
+} from '@constants/types'
 
 interface AuthContextType {
   user?: UserProps
@@ -28,6 +36,8 @@ interface AuthContextType {
   logout: () => void
   isActive: () => Promise<boolean>
   setup: (d: SetupProps) => void
+  resetPassword: (r: ResetProps) => void
+  forgotPassword: (f: ForgotProps) => void
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
@@ -42,12 +52,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { makeRequest: loginRequest, loading: loginLoading } = useRequest({
     requestByDefault: false,
     request: loginApiCall,
-    needSuccess: 'Successfull Login',
+    needSuccess: 'Successful Login',
   })
   const { makeRequest: setupRequest, loading: setupLoading } = useRequest({
     requestByDefault: false,
     request: setupApiCall,
-    needSuccess: 'Successfull Login',
+    needSuccess: 'Successful Login',
   })
   const { makeRequest: userInfoRequest, loading: userLoading } = useRequest({
     requestByDefault: false,
@@ -56,7 +66,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { makeRequest: logoutRequest } = useRequest({
     requestByDefault: false,
     request: logoutApiCall,
-    needSuccess: 'Successfull Logout',
+    needSuccess: 'Successful Logout',
+  })
+  const { makeRequest: resetPasswordRequest } = useRequest({
+    requestByDefault: false,
+    request: resetPasswordApiCall,
+    needSuccess: 'Successful reset',
+  })
+  const { makeRequest: forgotPasswordRequest } = useRequest({
+    requestByDefault: false,
+    request: forgotPasswordApiCall,
+    needSuccess: 'Successfully sent reset link to provided email',
   })
   const { makeRequest: isActiveRequest } = useRequest({
     requestByDefault: false,
@@ -117,6 +137,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLogedIn(false)
   }, [logoutRequest, removeCookie])
 
+  const resetPassword = useCallback(
+    async (r: ResetProps) => {
+      await resetPasswordRequest({ ...r })
+    },
+    [resetPasswordRequest]
+  )
+
+  const forgotPassword = useCallback(
+    async (f: ForgotProps) => {
+      await forgotPasswordRequest({ ...f })
+    },
+    [forgotPasswordRequest]
+  )
+
   // Check if there is a currently active session
   // when the provider is mounted for the first time.
   useEffect(() => {
@@ -139,8 +173,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logout,
       isActive,
       setup,
+      resetPassword,
+      forgotPassword,
     }),
-    [user, loginLoading, userLoading, logedIn, login, logout, isActive, setup]
+    [
+      user,
+      loginLoading,
+      userLoading,
+      logedIn,
+      login,
+      logout,
+      isActive,
+      setup,
+      resetPassword,
+      forgotPassword,
+    ]
   )
 
   return (

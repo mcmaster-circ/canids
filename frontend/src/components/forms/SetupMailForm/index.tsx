@@ -27,12 +27,15 @@ export default ({ handleClose, values }: SetupMailFormProps) => {
     fromAddress: values?.fromAddress.value,
     fromName: values?.fromName.value,
     domain: values?.domain.value,
+    accessURL: values?.accessURL.value,
   })
   const { makeRequest: saveRequest } = useRequest({
     request: updateConfiguration,
     requestByDefault: false,
     needSuccess: 'Successfully saved configuration',
   })
+
+  const initialVals = values
 
   const handleSubmit = useCallback(async () => {
     const settings: UpdateSetting[] = [
@@ -60,6 +63,10 @@ export default ({ handleClose, values }: SetupMailFormProps) => {
         name: 'MAIL_DOMAIN',
         value: data.domain,
       },
+      {
+        name: 'ACCESS_URL',
+        value: data.accessURL,
+      },
     ]
     const req: UpdateConfigurationProps = {
       configuration: settings,
@@ -71,9 +78,21 @@ export default ({ handleClose, values }: SetupMailFormProps) => {
   const renderSection = () => {
     switch (activeStep) {
       case 0:
-        return <ServiceSection data={data} setData={setData} />
+        return (
+          <ServiceSection
+            data={data}
+            setData={setData}
+            initialData={initialVals}
+          />
+        )
       case 1:
-        return <ConfigSection data={data} setData={setData} />
+        return (
+          <ConfigSection
+            data={data}
+            setData={setData}
+            initialData={initialVals}
+          />
+        )
       default:
         return null
     }

@@ -12,13 +12,14 @@ import {
 } from '@mui/material'
 import { subMinutes, differenceInDays } from 'date-fns'
 import { SsidChart, Visibility, VisibilityOff } from '@mui/icons-material'
+import Button from '@mui/material/Button'
 import Grid from '@mui/material/Unstable_Grid2'
 import { getViewList } from '@api/view'
 import { getChartsData } from '@api/charts'
-import { getDashboard } from '@api/dashboard'
+import { getDashboard, updateDashboard } from '@api/dashboard'
 import { useRequest } from '@hooks'
 import { GRAPH_TYPES_ICONS } from '@constants/graphTypes'
-import { ViewListItemProps } from '@constants/types'
+import { UpdateDashboardProps, ViewListItemProps } from '@constants/types'
 import { TimeRangePicker } from '@molecules'
 import ChartCard from './ChartCard'
 import { Loader } from '@atoms'
@@ -37,41 +38,52 @@ export default () => {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [display, setDisplay] = useState<any>([])
 
-  const { data: dashboard, loading: loadingDashboard } = useRequest({
+  const {
+    data: dashboard,
+    loading: loadingDashboard,
+    makeRequest: GetDash,
+  } = useRequest({
     request: getDashboard,
   })
-  const { data: views, loading: loadingList } = useRequest({
+  const {
+    data: views,
+    makeRequest: getViews,
+    loading: loadingList,
+  } = useRequest({
     request: getViewList,
   })
   const { data: chartData, makeRequest: requestChartData } = useRequest({
     request: getChartsData,
     requestByDefault: false,
   })
+  const { makeRequest: UpdateDashRequest } = useRequest({
+    request: updateDashboard,
+    requestByDefault: false,
+  })
 
   const viewsList = useMemo(() => {
     if (dashboard?.views?.length && views?.length) {
-      setDisplay(views.map((v: any) => v.uuid))
-      return views
-      // return dashboard.views.map((v: string, i: number) => ({
-      //   size: dashboard.sizes[i],
-      //   ...views.find((view: any) => view.uuid === v),
-      // }))
+      setDisplay(dashboard.views.map((v: any) => v))
+      return dashboard.views.map((v: string, i: number) => ({
+        size: dashboard.sizes[i],
+        ...views.find((view: any) => view.uuid === v),
+      }))
     }
-  }, [dashboard?.views, views])
-
-  const chartDisplay = useMemo(
-    () => chartData?.filter((c: any) => display.includes(c.uuid)),
-    [chartData, display]
-  )
+  }, [dashboard?.views, dashboard?.sizes, views])
 
   const handleRequest = useCallback(
-    async ({ st, en, p, rpp }: ChartRequestProps = {}) => {
+    async (
+      { st, en, p, rpp }: ChartRequestProps = {},
+      displayPassed = undefined
+    ) => {
       const s = st || start
       const e = en || end
       const pg = p || page
       const rperp = rpp || rowsPerPage
+      let check = displayPassed ?? display
+      var outViews = views?.filter((c: any) => check.includes(c.uuid))
       return await requestChartData({
-        views: viewsList,
+        views: outViews,
         params: {
           start: s.toISOString(),
           end: e.toISOString(),
@@ -81,8 +93,12 @@ export default () => {
         },
       })
     },
-    [end, page, requestChartData, rowsPerPage, start, viewsList]
+    [end, page, requestChartData, rowsPerPage, start, display, views]
   )
+
+  const chartDisplay = useMemo(() => {
+    return chartData?.filter((c: any) => display.includes(c.uuid))
+  }, [chartData, display])
 
   useEffect(() => {
     const interval =
@@ -95,7 +111,9 @@ export default () => {
     return () => {
       clearInterval(interval)
     }
-  }, [chartData, handleRequest, viewsList])
+  }, [chartData, handleRequest, viewsList, display])
+
+  console.log(chartDisplay)
 
   return (
     <Grid container spacing={2} p={3} m={0}>
@@ -143,7 +161,7 @@ export default () => {
             All Visualizations
           </Typography>
           <List>
-            {viewsList?.map((v: ViewListItemProps) => (
+            {views?.map((v: ViewListItemProps) => (
               <div key={v.uuid}>
                 <ListItem sx={{ p: 0 }}>
                   <ListItemIcon>
@@ -156,13 +174,13 @@ export default () => {
                     secondary={'Type: ' + v.class}
                   />
                   <IconButton
-                    onClick={() =>
-                      setDisplay(
-                        display.includes(v.uuid)
-                          ? display.filter((d: string) => d !== v.uuid)
-                          : [...display, v.uuid]
-                      )
-                    }
+                    onClick={() => {
+                      let set = display.includes(v.uuid)
+                        ? display.filter((d: string) => d !== v.uuid)
+                        : [...display, v.uuid]
+                      setDisplay(set)
+                      handleRequest(undefined, set)
+                    }}
                   >
                     {display.includes(v.uuid) ? (
                       <Visibility />
@@ -175,6 +193,30 @@ export default () => {
               </div>
             ))}
           </List>
+          <Button
+            sx={{
+              width: 'calc(100% - 2px)',
+              p: 1,
+              borderRadius: 1,
+            }}
+            variant="contained"
+            onClick={async () => {
+              var sizes: string[] = []
+              display.forEach(() => {
+                sizes.push('half')
+              })
+              var updatedDashboard: UpdateDashboardProps = {
+                uuid: dashboard.uuid,
+                name: dashboard.name,
+                views: display,
+                sizes: sizes,
+              }
+              await UpdateDashRequest(updatedDashboard)
+              setTimeout(async () => await GetDash(), 3000)
+            }}
+          >
+            Save
+          </Button>
         </Paper>
       </Grid>
       <Grid xs={12} lg={8} xl={9} p={0}>

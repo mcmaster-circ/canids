@@ -2,7 +2,7 @@ import { TextField, Typography } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
 import { FormProps, SectionProps } from '../constants'
 
-export default ({ data, setData }: SectionProps) => {
+export default ({ data, setData, initialData }: SectionProps) => {
   return (
     <>
       <Typography variant="h6" textAlign="center" mb={4}>
@@ -72,6 +72,20 @@ export default ({ data, setData }: SectionProps) => {
                   setData((d: FormProps) => ({
                     ...d,
                     fromName: e.target.value,
+                  }))
+                }
+                fullWidth
+              />
+            </Grid>
+            <Grid xs={12}>
+              <TextField
+                label="CanIDS Access URL"
+                value={data.accessURL}
+                size="small"
+                onChange={(e) =>
+                  setData((d: FormProps) => ({
+                    ...d,
+                    accessURL: e.target.value,
                   }))
                 }
                 fullWidth

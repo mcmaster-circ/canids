@@ -8,7 +8,7 @@ import {
   YAxis,
 } from 'recharts'
 
-export default ({ chartData }: any) => (
+export default ({ chartData, props }: any) => (
   <ResponsiveContainer width="100%" height="100%">
     <BarChart
       data={chartData}
@@ -16,10 +16,21 @@ export default ({ chartData }: any) => (
         top: 5,
         right: 30,
         left: 20,
-        bottom: 30,
+        bottom: 40,
       }}
     >
-      <XAxis dataKey="name" style={{ fontSize: '12px' }} />
+      <XAxis
+        dataKey="name"
+        style={{ fontSize: '12px' }}
+        label={{
+          value: props.fieldNames[0],
+          angle: 0,
+          orientation: 'bottom',
+          fontSize: '12px',
+          dx: 0,
+          dy: 15,
+        }}
+      />
       <YAxis
         style={{ fontSize: '12px' }}
         label={{

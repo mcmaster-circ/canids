@@ -41,7 +41,7 @@ export default ({
   const renderData = useCallback(() => {
     switch (type) {
       case GRAPH_TYPES.BAR:
-        return <BarChart chartData={chartData} />
+        return <BarChart chartData={chartData} props={...props} />
       case GRAPH_TYPES.PIE:
         return <PieChart chartData={chartData} />
       case GRAPH_TYPES.TABLE:
@@ -53,7 +53,7 @@ export default ({
 
   return (
     <Grid xs={12} xl={size === GRAPH_WIDTH_TYPES.FULL ? 12 : 6}>
-      <Paper sx={{ p: 2, borderRadius: 2, height: '35vh', minHeight: '400px' }}>
+      <Paper sx={{ p: 2, borderRadius: 2, height: '37vh', minHeight: '400px' }}>
         <Typography
           variant="h5"
           fontWeight={700}

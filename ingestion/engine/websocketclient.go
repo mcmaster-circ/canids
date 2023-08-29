@@ -10,9 +10,9 @@ import (
 	"errors"
 	"io"
 	"log"
+	"net"
 	"net/http"
-
-	// "net/http"
+	"strings"
 	"time"
 
 	"nhooyr.io/websocket"
@@ -53,10 +53,23 @@ func ConnectWebsocketServer(s *state, db *database, endpoint string) error {
 
 	log.Println("Asset id ", s.AssetID)
 
+	addresses, err := net.InterfaceAddrs()
+	address := ""
+	if err != nil || len(addresses) == 0 {
+		log.Printf("[CanIDS] Failed to get interface addresses. Continuing")
+	} else {
+
+		addressesStr := []string{}
+		for _, item := range addresses {
+			addressesStr = append(addressesStr, item.String())
+		}
+		address = strings.Join(addressesStr, " ")
+	}
+
 	auth := Authorization{
 		Key:     s.EncryptionKey,
 		AssetID: s.AssetID,
-		Address: "TestAddress",
+		Address: address,
 	}
 
 	jsonbytes, err := json.Marshal(auth)

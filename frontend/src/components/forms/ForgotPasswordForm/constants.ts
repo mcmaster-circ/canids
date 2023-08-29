@@ -8,7 +8,7 @@ export const defaultValues = {
 export const loginFormConfig = [
   {
     component: 'input',
-    name: 'email',
+    name: 'uuid',
     label: 'Email',
     size: 'small',
     column: 12,

@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/elasticsearch"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/ipsetmgr"
 	"github.com/mcmaster-circ/canids-v2/backend/libraries/uuid"
 	"github.com/mcmaster-circ/canids-v2/backend/state"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
 // Provision will accept: a map of ip set names to their urls, a time interval to schedule provisioning,
@@ -154,15 +154,15 @@ func loadBlacklists(s *state.State) map[string]string {
 // CreateAndLoadDefaultBlacklists will create an index with the default blacklists
 func createAndLoadDefaultBlacklists(s *state.State) map[string]string {
 	blacklistMap := map[string]string{
-		"firehol_abusers_1d":  "https://iplists.firehol.org/files/firehol_abusers_1d.netset",
-		"firehol_abusers_30d": "https://iplists.firehol.org/files/firehol_abusers_30d.netset",
-		"firehol_anonymous":   "https://iplists.firehol.org/files/firehol_anonymous.netset",
-		"firehol_level1":      "https://iplists.firehol.org/files/firehol_level1.netset",
-		"firehol_level2":      "https://iplists.firehol.org/files/firehol_level2.netset",
-		"firehol_level3":      "https://iplists.firehol.org/files/firehol_level3.netset",
+		"firehol_abusers_1d": "https://iplists.firehol.org/files/firehol_abusers_1d.netset",
+		// "firehol_abusers_30d": "https://iplists.firehol.org/files/firehol_abusers_30d.netset",
+		// "firehol_anonymous":   "https://iplists.firehol.org/files/firehol_anonymous.netset",
+		// "firehol_level1":      "https://iplists.firehol.org/files/firehol_level1.netset",
+		// "firehol_level2":      "https://iplists.firehol.org/files/firehol_level2.netset",
+		// "firehol_level3":      "https://iplists.firehol.org/files/firehol_level3.netset",
 	}
 
-	esapi.IndicesCreateRequest{ Index: "blacklist" }.Do(s.ElasticCtx, s.Elastic)
+	esapi.IndicesCreateRequest{Index: "blacklist"}.Do(s.ElasticCtx, s.Elastic)
 
 	for name, url := range blacklistMap {
 		blacklist := elasticsearch.DocumentBlacklist{

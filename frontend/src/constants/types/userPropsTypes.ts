@@ -14,6 +14,12 @@ export interface AddUserProps {
   activated: string
 }
 
+export interface EditUserProps {
+  name: string
+  class: 'admin' | 'standard' | string
+  activated: string
+}
+
 export interface UpdateUserProps extends AddUserProps {
   userId: string
   updatePermission: true

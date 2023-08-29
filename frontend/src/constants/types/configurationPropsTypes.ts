@@ -20,6 +20,7 @@ export interface SetupMailSettings {
   fromAddress: Setting
   fromName: Setting
   domain: Setting
+  accessURL: Setting
 }
 
 export interface BooleanSettings {
@@ -46,4 +47,5 @@ export interface UpdateMailSetupProps {
   fromAddress: string
   fromName: string
   domain: string
+  accessURL: string
 }

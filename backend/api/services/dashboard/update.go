@@ -89,8 +89,10 @@ func updateHandler(ctx context.Context, s *state.State, a *jwtauth.Config, w htt
 		json.NewEncoder(w).Encode(out)
 		return
 	}
+	s.Log.Println("Views: ", request.Views)
 	// ensure each view exists
 	for _, view := range request.Views {
+		s.Log.Println(view)
 		// query the view
 		_, _, err := elasticsearch.QueryViewByUUID(s, view)
 		if err != nil {

@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { useRouter } from 'next/router'
 import { useForm } from 'react-hook-form'
 import { Button, Divider, Link, Typography } from '@mui/material'
 import Grid from '@mui/material/Unstable_Grid2'
@@ -8,16 +7,16 @@ import { FormRender } from '@molecules'
 import packageJson from 'package.json'
 import { authRoutes } from '@constants/routes'
 import { ForgotProps } from '@constants/types'
+import useAuth from '@context/authContext'
 
 export default () => {
-  const { push } = useRouter()
+  const { forgotPassword } = useAuth()
 
   const onSubmit = useCallback(
     (data: ForgotProps) => {
-      console.log(data)
-      push(authRoutes.RESET_PASSWORD)
+      forgotPassword(data)
     },
-    [push]
+    [forgotPassword]
   )
 
   const {

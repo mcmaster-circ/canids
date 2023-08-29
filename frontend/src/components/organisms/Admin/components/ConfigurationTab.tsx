@@ -29,6 +29,7 @@ export default () => {
     fromAddress: { name: 'MAIL_FROM_ADDRESS', label: 'Mail From Address', value: '', prevValue: '', isAdvanced: false },
     fromName: { name: 'MAIL_FROM_NAME', label: 'Mail From Name', value: '', prevValue: '', isAdvanced: false },
     domain: { name: 'MAIL_DOMAIN', label: 'Mail Domain', value: '', prevValue: '', isAdvanced: false},
+    accessURL: { name: 'ACCESS_URL', label: 'CanIDS URL', value: '', prevValue: '', isAdvanced: false},
   })
 
   const { data, loading, makeRequest } = useRequest({
@@ -65,6 +66,7 @@ export default () => {
       const fromAddress = d.find((s) => s.name === setupMailSettings.fromAddress.name)
       const fromName = d.find((s) => s.name === setupMailSettings.fromName.name)
       const domain = d.find((s) => s.name === setupMailSettings.domain.name)
+      const accessURL = d.find((s) => s.name === setupMailSettings.accessURL.name)
       const sms: SetupMailSettings = {
         service: { ...setupMailSettings.service, value: service?.value || 'NONE', prevValue: service?.value || 'NONE'},
         url: { ...setupMailSettings.url, value: url?.value || '', prevValue: url?.value || '' },
@@ -72,6 +74,7 @@ export default () => {
         fromAddress: { ...setupMailSettings.fromAddress, value: fromAddress?.value || '', prevValue: fromAddress?.value || '' },
         fromName: { ...setupMailSettings.fromName, value: fromName?.value || '', prevValue: fromName?.value || '' },
         domain: { ...setupMailSettings.domain, value: domain?.value || '', prevValue: domain?.value || '' },
+        accessURL: { ...setupMailSettings.accessURL, value: accessURL?.value || '', prevValue: accessURL?.value || '' }
       }
       setSetupMailSettings(sms)
 
@@ -91,6 +94,7 @@ export default () => {
     }
   }, [data])
 
+  console.log(setupMailSettings)
   return (
     <>
       <Box

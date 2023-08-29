@@ -29,6 +29,8 @@ type Settings struct {
 	// EmailDomain      string // EmailDomain is the domain used for password resets
 	EmailConfig mail.Config
 
+	AccessURL string // URL from which CanIDS can be accessed
+
 	MiddlewareDisable bool // MiddlewareDisable indicates if middleware is to be disabled
 	HTTPSEnabled      bool // HTTPSEnabled indicates if the site is accessible over HTTPS
 
@@ -69,6 +71,7 @@ func (settings *Settings) init(s *State) error {
 			{"USER_REGISTRATION", "true", false},
 			{"USER_ACTIVATED", "false", false},
 			{"DEBUG_LOGGING", "true", true},
+			{"ACCESS_URL", "", false},
 		}
 
 		s.Elastic.Indices.Create(indexConfiguration).Do(s.ElasticCtx)
@@ -203,14 +206,21 @@ func refreshSetting(s *State, name string, value string) error {
 		setMailDriver(s)
 	case "MAIL_URL":
 		s.Settings.EmailConfig.URL = value
+		setMailDriver(s)
 	case "MAIL_API_KEY":
 		s.Settings.EmailConfig.APIKey = value
+		setMailDriver(s)
 	case "MAIL_FROM_ADDRESS":
 		s.Settings.EmailConfig.FromAddress = value
+		setMailDriver(s)
 	case "MAIL_FROM_NAME":
 		s.Settings.EmailConfig.FromName = value
+		setMailDriver(s)
 	case "MAIL_DOMAIN":
 		s.Settings.EmailConfig.Domain = value
+		setMailDriver(s)
+	case "ACCESS_URL":
+		s.Settings.AccessURL = value
 	case "MIDDLEWARE_DISABLE":
 		s.Settings.MiddlewareDisable = value == "true"
 	case "HTTPS_ENABLED":

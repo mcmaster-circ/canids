@@ -7,16 +7,27 @@ import { FormRender } from '@molecules'
 import packageJson from 'package.json'
 import { authRoutes } from '@constants/routes'
 import { useRouter } from 'next/router'
-import { ResetProps } from '@constants/types'
+import { ResetFormProps, ResetProps } from '@constants/types'
+import { useSearchParams } from 'next/navigation'
+import useAuth from '@context/authContext'
 
 export default () => {
+  const { resetPassword } = useAuth()
   const { push } = useRouter()
+
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token') ?? ''
   const onSubmit = useCallback(
-    (data: ResetProps) => {
-      console.log(data)
+    (data: ResetFormProps) => {
+      var req: ResetProps = {
+        password: data.password,
+        passwordConfirm: data.passwordConfirm,
+        token: token,
+      }
+      resetPassword(req)
       push(authRoutes.LOGIN)
     },
-    [push]
+    [push, resetPassword, token]
   )
 
   const {

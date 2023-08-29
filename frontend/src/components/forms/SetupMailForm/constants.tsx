@@ -9,6 +9,7 @@ import { Cancel } from '@mui/icons-material'
 export interface SectionProps {
   data: any
   setData: (a: any) => void
+  initialData: any
 }
 export interface FormProps {
   service: string
@@ -17,6 +18,7 @@ export interface FormProps {
   fromAddress: string
   fromName: string
   domain: string
+  accessURL: string
 }
 
 export const defaultFormValues = {
@@ -26,6 +28,7 @@ export const defaultFormValues = {
   fromAddress: '',
   fromName: '',
   domain: '',
+  accessURL: '',
 }
 
 export const steps = ['Service', 'Configuration']
