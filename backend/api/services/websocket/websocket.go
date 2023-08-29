@@ -283,9 +283,7 @@ func HandleWebSocket(s *state.State, w http.ResponseWriter, r *http.Request) {
 		}
 
 		var frame Frame
-		ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
-		err := wsjson.Read(ctx, conn, &frame)
-		cancel()
+		err := wsjson.Read(context.Background(), conn, &frame)
 		if err != nil {
 			log.Println("Error reading WebSocket message: ", err)
 			//conn.Close(websocket.StatusInvalidFramePayloadData, "Could not read websocket message")
@@ -329,7 +327,6 @@ func writePump(conn *websocket.Conn, msgQueue chan Message) error {
 			if err != nil {
 				return err
 			}
-			break;
 			
 		case message, ok := <-msgQueue:
 			if !ok {
