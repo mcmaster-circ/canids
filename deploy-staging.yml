@@ -8,6 +8,11 @@ services:
       - cluster.routing.allocation.disk.watermark.enable_for_single_data_node=true
     volumes:
       - elasticsearch:/usr/share/elasticsearch/data
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+        max-file: '5'
     deploy:
       placement:
         constraints: [node.hostname == argus-w]
@@ -35,6 +40,11 @@ services:
       - ELASTIC_PORT=9200
     depends_on:
       - elasticsearch
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+        max-file: '5'
     deploy:
       placement:
         constraints: [node.hostname == argus-w]
@@ -52,6 +62,11 @@ services:
     environment:
       - flags=--verbose
       - hostname=http://backend:6060/websocket/
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+        max-file: '5'
     volumes: 
       - zeek:/logs
       - ingestiondb:/db
