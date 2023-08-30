@@ -1,0 +1,23 @@
+services:
+  ingestion:
+    image: 192.0.2.1:5000/canids-v2-staging-ingestion:latest
+    environment:
+      - flags=--verbose
+      - hostname=http://<BACKEND HOST>/websocket/
+    depends_on:
+      - zeek
+    volumes: 
+      - zeek:/logs
+      - ingestiondb:/db
+  
+  zeek:
+    image: 192.0.2.1:5000/canids-v2-staging-zeek:latest
+    network_mode: host
+    volumes:
+      - zeek:/usr/local/zeek/spool/zeek
+    environment:
+      - ZEEK_CMD=
+
+volumes:
+  ingestiondb:
+  zeek:
