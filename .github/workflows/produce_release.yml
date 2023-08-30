@@ -55,19 +55,19 @@ jobs:
           context: .
           file: ingestion/Dockerfile-zeek
           push: true
-          tags: mcmaster-circ/canids-v2-zeek:latest,mcmaster-circ/canids-v2-zeek:${{ steps.version.outputs.version }}
+          tags: ghcr.io/mcmaster-circ/canids-v2-zeek:latest,ghcr.io/mcmaster-circ/canids-v2-zeek:${{ steps.version.outputs.version }}
           labels: ${{ steps.zeek-meta.outputs.labels }}
       - name: Build and push Backend
         uses: docker/build-push-action@v4
         with:
           context: .
           file: backend/Dockerfile
-          tags: mcmaster-circ/canids-v2-backend:latest,mcmaster-circ/canids-v2-backend:${{ steps.version.outputs.version }}
+          tags: ghcr.io/mcmaster-circ/canids-v2-backend:latest,ghcr.io/mcmaster-circ/canids-v2-backend:${{ steps.version.outputs.version }}
           labels: ${{ steps.backend-meta.outputs.labels }}
       - name: Build and push Ingestion
         uses: docker/build-push-action@v4
         with:
           context: .
           file: ingestion/Dockerfile
-          tags: mcmaster-circ/canids-v2-ingestion:latest,mcmaster-circ/canids-v2-ingestion:${{ steps.version.outputs.version }}
+          tags: ghcr.io/mcmaster-circ/canids-v2-ingestion:latest,ghcr.io/mcmaster-circ/canids-v2-ingestion:${{ steps.version.outputs.version }}
           labels: ${{ steps.ingestion-meta.outputs.labels }}
