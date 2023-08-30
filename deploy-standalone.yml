@@ -1,37 +1,38 @@
 services:
-  # elasticsearch:
-  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
-  #   environment:
-  #     - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
-  #     - discovery.type=single-node
-  #     - xpack.security.enabled=false
-  #     - cluster.routing.allocation.disk.watermark.enable_for_single_data_node=true
-  #   volumes:
-  #     - elasticsearch:/usr/share/elasticsearch/data
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    environment:
+      - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - cluster.routing.allocation.disk.watermark.enable_for_single_data_node=true
+    volumes:
+      - elasticsearch:/usr/share/elasticsearch/data
 
-  # backend:
-  #   image: 192.0.2.1:5000/canids-v2-staging-backend:latest
-  #   ports:
-  #     - 6060:6060
-  #   environment:
-  #     - ELASTIC_HOST=elasticsearch
-  #     - ELASTIC_PORT=9200
-  #   depends_on:
-  #     - elasticsearch
+  backend:
+    image: ghcr.io/mcmaster-circ/canids-v2-backend:latest
+    ports:
+      - 6060:6060
+    environment:
+      - ELASTIC_HOST=elasticsearch
+      - ELASTIC_PORT=9200
+    depends_on:
+      - elasticsearch
   
   ingestion:
-    image: 192.0.2.1:5000/canids-v2-staging-ingestion:latest
+    image: ghcr.io/mcmaster-circ/canids-v2-ingestion:latest
     environment:
       - flags=--verbose
       - hostname=http://backend:6060/websocket/
     depends_on:
       - zeek
+      - backend
     volumes: 
       - zeek:/logs
       - ingestiondb:/db
   
   zeek:
-    image: 192.0.2.1:5000/canids-v2-staging-zeek:latest
+    image: ghcr.io/mcmaster-circ/canids-v2-zeek:latest
     network_mode: host
     volumes:
       - zeek:/usr/local/zeek/spool/zeek
