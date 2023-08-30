@@ -1,0 +1,23 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    environment:
+      - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - cluster.routing.allocation.disk.watermark.enable_for_single_data_node=true
+    volumes:
+      - elasticsearch:/usr/share/elasticsearch/data
+
+  backend:
+    image: 192.0.2.1:5000/canids-v2-staging-backend:latest
+    ports:
+      - 6060:6060
+    environment:
+      - ELASTIC_HOST=elasticsearch
+      - ELASTIC_PORT=9200
+    depends_on:
+      - elasticsearch
+
+volumes:
+  elasticsearch:

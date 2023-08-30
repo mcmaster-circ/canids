@@ -1,7 +1,8 @@
 FROM zeek/zeek:6.0
 RUN apt -y update && apt -y install cron iproute2
-COPY ./ingestion/config/zeekctl.cfg /usr/locla/bin/etc/zeekctl.cfg
+COPY ./ingestion/config/zeekctl.cfg /usr/local/zeek/etc/zeekctl.cfg
 COPY --chmod=644 ./ingestion/config/zeek-crontab /etc/cron.d/zeek
+COPY --chmod=755 ./ingestion/config/zeek-entrypoint.sh /entrypoint
 ENV flags=--verbose
 
 
@@ -11,4 +12,4 @@ ENV flags=--verbose
 
 # NOTE(Kaitlyn): Bind the volume to /usr/local/zeek/spool/zeek. $ZEEK_HOME/logs/current is a symlink to this location that will break
 # because the volume is shared across containers
-CMD ["sh", "-c", "service cron start ; zeekctl cron enable ; zeekctl deploy ; tail -f /dev/null"]
+ENTRYPOINT ["/entrypoint"]
