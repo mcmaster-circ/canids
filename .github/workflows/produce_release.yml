@@ -29,7 +29,7 @@ jobs:
         run: |
           echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
       - name: Test
-        run: echo ${{ steps.version.version }}
+        run: echo ${{ steps.version.outputs.version }}
       # - name: Log in to Container Registry
       #   uses: docker/login-action@v2
       #   with:
