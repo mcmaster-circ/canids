@@ -69,7 +69,7 @@ export default () => {
           <RowActionsMenu
             key={id}
             actions={
-              data.approved
+              data?.approved
                 ? [
                     {
                       label: 'Delete',
@@ -136,7 +136,7 @@ export default () => {
           />,
         ]
       }),
-    [approveRequest, makeRequest, data.approved]
+    [approveRequest, makeRequest, data?.approved]
   )
 
   return (
