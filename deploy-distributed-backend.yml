@@ -10,7 +10,7 @@ services:
       - elasticsearch:/usr/share/elasticsearch/data
 
   backend:
-    image: 192.0.2.1:5000/canids-v2-staging-backend:latest
+    image: ghcr.io/mcmaster-circ/canids-v2-backend:latest
     ports:
       - 6060:6060
     environment:

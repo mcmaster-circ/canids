@@ -1,6 +1,6 @@
 services:
   ingestion:
-    image: 192.0.2.1:5000/canids-v2-staging-ingestion:latest
+    image: ghcr.io/mcmaster-circ/canids-v2-ingestion:latest
     environment:
       - flags=--verbose
       - hostname=http://<BACKEND HOST>/websocket/
@@ -11,7 +11,7 @@ services:
       - ingestiondb:/db
   
   zeek:
-    image: 192.0.2.1:5000/canids-v2-staging-zeek:latest
+    image: ghcr.io/mcmaster-circ/canids-v2-zeek:latest
     network_mode: host
     volumes:
       - zeek:/usr/local/zeek/spool/zeek
