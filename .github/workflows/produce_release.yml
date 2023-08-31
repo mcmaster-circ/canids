@@ -1,0 +1,68 @@
+name: Produce release images
+
+on:
+ push:
+   tags:
+     - v*
+
+jobs:
+  push_images:
+    name: Push images to GHCR
+    runs-on: [self-hosted, khaos]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Parse version tag
+        id: version
+        run: |
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          VERSION=$(echo $VERSION | sed -e 's/^v//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Zeek metadata for Docker
+        id: zeek-meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/mcmaster-circ/canids-v2-zeek
+      - name: Extract Backend metadata for Docker
+        id: backend-meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/mcmaster-circ/canids-v2-backend
+      - name: Extract Ingestion metadata for Docker
+        id: ingestion-meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/mcmaster-circ/canids-v2-ingestion
+      - name: Build and push Zeek
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ingestion/Dockerfile-zeek
+          push: true
+          tags: ghcr.io/mcmaster-circ/canids-v2-zeek:latest,ghcr.io/mcmaster-circ/canids-v2-zeek:${{ steps.version.outputs.version }}
+          labels: ${{ steps.zeek-meta.outputs.labels }}
+      - name: Build and push Backend
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: backend/Dockerfile
+          tags: ghcr.io/mcmaster-circ/canids-v2-backend:latest,ghcr.io/mcmaster-circ/canids-v2-backend:${{ steps.version.outputs.version }}
+          push: true
+          labels: ${{ steps.backend-meta.outputs.labels }}
+      - name: Build and push Ingestion
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ingestion/Dockerfile
+          tags: ghcr.io/mcmaster-circ/canids-v2-ingestion:latest,ghcr.io/mcmaster-circ/canids-v2-ingestion:${{ steps.version.outputs.version }}
+          push: true
+          labels: ${{ steps.ingestion-meta.outputs.labels }}
