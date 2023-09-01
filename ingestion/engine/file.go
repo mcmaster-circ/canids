@@ -7,7 +7,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
+
+	"golang.org/x/exp/slices"
 )
 
 // processRegularFile will add the file path to the database if it's not already
@@ -31,9 +32,11 @@ func processRegularFile(s *state, filePath string, fileName string, db *database
 		Lines: 0,
 		Size:  0,
 	}
-	if !strings.Contains(abs, ".log") || strings.Contains(abs, "stderr.log") || strings.Contains(abs, "stdout.log") || strings.Contains(abs, "conn-summary.log") || strings.Contains(abs, "ntp.log") || strings.Contains(abs, "kerberos.log") {
+	// conn.log dns.log http.log notice.log sip.log ssl.log stats.log weird.log telemetry.log capture_loss.log
+	whitelist := []string{"conn.log", "dns.log", "http.log", "sip.log", "ssl.log", "stats.log", "weird.log", "telemetry.log"}
+	if !slices.Contains(whitelist, fileName) {
 		if s.Debug {
-			log.Println("[CanIDS DEBUG]", "ignoring non-log file", abs)
+			log.Println("[CanIDS DEBUG]", "Ignoring non-whitelisted file", abs)
 		}
 		return nil
 	}
