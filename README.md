@@ -1,103 +1,74 @@
-# CANIDS
+# Fyelabs CanIDS User Manual
 
-## Running in Development
-An initial build will take a few minutes to setup the docker environment and run. Ensure that the keys are generated prior to building for development. Consecutive builds will utilize caching and will be much faster.
+This manual will explain the process for deploying CanIDS in two different topologies, as well as the initial configuration of the CanIDS backend once the application has been deployed.
 
-```sh
-# generate missing dependency files
-cd backend
-go mod vendor
-cd ../ingestion
-go mod vendor
-cd ..
+To deploy CanIDS, the user must have access to the CanIDS github repository at https://github.com/mcmaster-circ/canids, which will contain the configuration files required for deployment. The server that CanIDS will be deployed to must have Docker installed.
 
-# generate certs
-cd certfiles
-./gen-certs.sh CA Ontario Hamilton FYELABS Ingestion Backend host.docker.internal
-cd ..
+The two deployment topologies are as follows:
 
-# start server
-docker-compose -f deploy-dev.yml up -d --build
+## Standalone Deployment
 
-# start ingestion client
-docker-compose -f deploy-ingestion.yml up -d --build
+In the standalone deployment of CanIDS, the software will only monitor the network traffic on a single machine. This configuration corresponds to the `deploy-standalone.yml` configuration file in the Git repository.
+
+The standalone deployment only deploys a single ingestion client, on the same server as the backend and elasticsearch instances, and ingest all network traffic on this server to Zeek, with no filters to exclude CanIDS traffic.
+
+### Instructions
+
+1. Copy the `deploy-standalone.yml` configuration file to the server. Note the location this file has been copied to on that server
+
+2. Connect to the desired server, navigate to the directory containing the `deploy-standalone.yml` file.
+
+3. Execute the command `docker compose -f deploy-standalone.yml up -d` to deploy CanIDS to the server. This command will take some time to execute
+
+4. Once the command has completed, the deployment can be verified using `docker ps`. Four containers will have been created 
+
+   ![Standalone Deployment docker ps](./docs/deploy-standalone.png)
+
+5. The CanIDS backend will be accessible on port 6060 of the host machine. The backend can be exposed to the internet using a reverse proxying webserver, an example of which is provided below.
+
+## Distributed Deployment
+
+In the distributed deployment of CanIDS, the backend server will not be deployed with an ingestion client. Ingestion clients can be deployed on other desired servers, and target the single backend to ingest all traffic to one centralized dashboard. This configuration corresponds to the `deploy-distributed-backend.yml` and `deploy-distributed-ingestion.yml` configuration files in the Git repository.
+
+### Instructions
+
+1. Copy the `deploy-distributed-backend.yml` configuration file to the desired backend server. Note the location this file has been copied to on that server
+2. Connect to the desired server, navigate to the directory containing the `deploy-distributed-ingestion.yml` file.
+3. Execute the command `docker compose -f deploy-distributed-backend.yml up -d` to deploy the CanIDS backend and database to this server. This command will take some time to execute.
+4. Once the command has been completed, the deployment can be verified using `docker ps`. Two containers will have been created
+   ![Distributed deployment docker ps](./docs/deploy-distributed-backend.png)
+5. The CanIDS backend will be accessible on port 6060 of the host machine. The backend can be exposed to the internet using a reverse proxying webserver, an example of which is provided below.
+6. Open `deploy-distributed-ingestion.yml` with a text editor, and modify line 6, replacing `<BACKEND HOST>` with the connection information for the host of the CanIDS backend server (This may be a url, such as `https://canids.example.com/websocket/`, or a host/port pair such as `http://192.168.0.2:6060/websocket/`)
+   * In order to avoid traffic between the CanIDS backend and ingestion clients being ingested by zeek, a filter should be added by modifying the `ZEEK_CMD=` environment variable in this configuration file. An example configuration would be `ZEEK_CMD=-f "not (src net 192.168 and dst net 192.168)"` to only ingest network traffic that is not traffic internal to the 192.168.0.0/16 subnet. The filter syntax provided to zeek is described in [pcap-filter(7)](https://linux.die.net/man/7/pcap-filter).
+   * Note: This is only a concern if traffic is routed outside docker networks, as traffic contained within docker networks is not ingested by Zeek.
+7. On each server that should be monitored by this CanIDS instance, copy the `deploy-distributed-ingestion.yml` configuration file, nothing the location it has been copied to
+8. Navigate to the location on the monitored server, and execute the command `docker compose -f deploy-distributed-ingestion.yml up -d` to deploy the ingestion client and Zeek network monitor to that server. This command will take some time to execute
+9. Once the command has been completed, the deployment can be verified using `docker ps`. Two containers will have been created
+   ![Distributed Deployment ingestion docker ps](./docs/deploy-distributed-ingestion.png)
+
+
+
+# Post-Deployment configuration
+
+## Initial Backend Configuration
+
+On first launch of the CanIDS backend, navigating to the webserver will lead to the configuration landing page. This allows the user to create an initial admin account, before redirecting to the dashboard.
+
+![McMaster CanIDS configuration landing page](./docs/backend-configuration.png)
+
+Any further account creations must be approved by an admin user prior to gaining access to the dashboard.
+
+## Approving ingestion clients
+
+## Reverse proxying the backend
+
+If exposing the backend dashboard to the internet is desirable, a reverse proxying webserver can be used. An example configuration for the [Caddy](caddyserver.com/) webserver is provided, which will route traffic from `canids.example.com` to the CanIDS backend.
+
+```
+canids.example.com {
+	reverse_proxy localhost:6060
+}
 ```
 
-Opens ports 80 (HTTP), 443 (HTTPS), 50000 (Ingestion client upload), 9200 (elasticsearch), 5601 (kibana), 8080 (swagger documentation) & 6060 (backend)
 
-## Building for Production
-```sh
-# Update Caddyfile with your server's URL if it has one
 
-# generate missing dependency files
-cd backend
-go mod vendor
-cd ../ingestion
-go mod vendor
-cd ..
-
-# generate certs
-cd certfiles
-# run ./gen-certs.sh -h to see what each parameter represents
-./gen-certs.sh CA Ontario Hamilton FYELABS Ingestion Backend host.docker.internal
-cd ..
-
-# build & package server
-docker-compose -f deploy-prod.yml build
-
-mkdir canids-release-v2.0.0
-docker save mcmaster-circ/canids-v2-backend > canids-release-v2.0.0/canids-backend-v2.0.0.tar
-docker save mcmaster-circ/canids-v2-frontend > canids-release-v2.0.0/canids-frontend-v2.0.0.tar
-cp ./deploy-prod.yml ./canids-release-v2.0.0/docker-compose.yml
-cp ./Caddyfile ./canids-release-v2.0.0/Caddyfile
-cp -R ./cert ./canids-release-v2.0.0/cert
-cp -R ./config ./canids-release-v2.0.0/config
-
-tar -czvf canids-release-v2.0.0.tar.gz canids-release-v2.0.0/
-
-# build & package ingestion client
-docker-compose -f deploy-ingestion.yml build
-
-mkdir canids-ingest-v2.0.0
-docker save mcmaster-circ/canids-v2-ingestion > canids-ingest-v2.0.0/canids-ingestion-v2.0.0.tar
-cp ./deploy-ingestion.yml ./canids-ingest-v2.0.0/docker-compose.yml
-cp -R ./ingestion/cert ./canids-ingest-v2.0.0/cert
-
-tar -czvf canids-ingest-v2.0.0.tar.gz canids-ingest-v2.0.0/
-```
-
-## Running in Server Production
-```sh
-tar xzf canids-release-v2.0.0.tar.gz
-cd canids-release-v2.0.0
-
-docker load --input canids-backend-v2.0.0.tar
-docker load --input canids-frontend-v2.0.0.tar
-
-docker-compose up -d --no-build
-```
-
-Opens ports 80 (HTTP), 443 (HTTPS) & 50000 (Ingestion client upload)
-
-## Running in Ingestion Client Production
-```sh
-tar xzf canids-ingest-v2.0.0.tar.gz
-cd canids-ingest-v2.0.0
-
-docker load --input canids-ingestion-v2.0.0.tar
-
-docker-compose up -d --no-build
-
-# logs will be read from the ./logs directory
-```
-
-## Generating SSH keys
-Navigate to `/certfiles`. `gen-certs.sh` contains the commands to run to generate the keys.
-
-### Parameters
-Please ensure `config/config.env` is present. Any
-adjustable parameters may be found in these files.
-
-## Backend Documentation
-The `docker-compose` command launches Swagger. API documentation is listening on
-`http://localhost:8080`.
