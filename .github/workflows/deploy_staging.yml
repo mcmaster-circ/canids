@@ -3,7 +3,7 @@ name: Deploy onto staging
 on:
   push:
     branches:
-      - "khaos-staging"
+      - "staging"
     paths:
       - "backend/**"
       - "frontend/**"
