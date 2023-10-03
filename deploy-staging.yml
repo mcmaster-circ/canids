@@ -9,9 +9,12 @@ services:
     volumes:
       - elasticsearch:/usr/share/elasticsearch/data
     logging:
-      driver: 'json-file'
+      driver: loki
       options:
-        max-size: '1m'
+        loki-url: "http://192.0.2.1:3100/loki/api/v1/push"
+        loki-retries: 5
+        loki-batch-size: 400
+        max-size: '10m'
         max-file: '5'
     deploy:
       placement:
@@ -41,9 +44,12 @@ services:
     depends_on:
       - elasticsearch
     logging:
-      driver: 'json-file'
+      driver: loki
       options:
-        max-size: '1m'
+        loki-url: "http://192.0.2.1:3100/loki/api/v1/push"
+        loki-retries: 5
+        loki-batch-size: 400
+        max-size: '10m'
         max-file: '5'
     deploy:
       placement:
@@ -63,9 +69,12 @@ services:
       - flags=--verbose
       - hostname=http://backend:6060/websocket/
     logging:
-      driver: 'json-file'
+      driver: loki
       options:
-        max-size: '1m'
+        loki-url: "http://192.0.2.1:3100/loki/api/v1/push"
+        loki-retries: 5
+        loki-batch-size: 400
+        max-size: '10m'
         max-file: '5'
     volumes: 
       - zeek:/logs
